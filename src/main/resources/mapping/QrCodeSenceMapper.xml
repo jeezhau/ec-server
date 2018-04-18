@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.QrCodeSenceMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.QrCodeSence">
+    <id column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="sence_id" jdbcType="INTEGER" property="senceId" />
+    <result column="expire_seconds" jdbcType="INTEGER" property="expireSeconds" />
+    <result column="ticket" jdbcType="VARCHAR" property="ticket" />
+    <result column="url" jdbcType="VARCHAR" property="url" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    user_id, sence_id, expire_seconds, ticket, url, create_time
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_qrcode_sence
+    where user_id = #{userId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from tb_qrcode_sence
+    where user_id = #{userId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.mofangyouxuan.model.QrCodeSence">
+    insert into tb_qrcode_sence (user_id, sence_id, expire_seconds, 
+      ticket, url, create_time
+      )
+    values (#{userId,jdbcType=INTEGER}, #{senceId,jdbcType=INTEGER}, #{expireSeconds,jdbcType=INTEGER}, 
+      #{ticket,jdbcType=VARCHAR}, #{url,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.QrCodeSence">
+    insert into tb_qrcode_sence
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="userId != null">
+        user_id,
+      </if>
+      <if test="senceId != null">
+        sence_id,
+      </if>
+      <if test="expireSeconds != null">
+        expire_seconds,
+      </if>
+      <if test="ticket != null">
+        ticket,
+      </if>
+      <if test="url != null">
+        url,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="userId != null">
+        #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="senceId != null">
+        #{senceId,jdbcType=INTEGER},
+      </if>
+      <if test="expireSeconds != null">
+        #{expireSeconds,jdbcType=INTEGER},
+      </if>
+      <if test="ticket != null">
+        #{ticket,jdbcType=VARCHAR},
+      </if>
+      <if test="url != null">
+        #{url,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.QrCodeSence">
+    update tb_qrcode_sence
+    <set>
+      <if test="senceId != null">
+        sence_id = #{senceId,jdbcType=INTEGER},
+      </if>
+      <if test="expireSeconds != null">
+        expire_seconds = #{expireSeconds,jdbcType=INTEGER},
+      </if>
+      <if test="ticket != null">
+        ticket = #{ticket,jdbcType=VARCHAR},
+      </if>
+      <if test="url != null">
+        url = #{url,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where user_id = #{userId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.QrCodeSence">
+    update tb_qrcode_sence
+    set sence_id = #{senceId,jdbcType=INTEGER},
+      expire_seconds = #{expireSeconds,jdbcType=INTEGER},
+      ticket = #{ticket,jdbcType=VARCHAR},
+      url = #{url,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP}
+    where user_id = #{userId,jdbcType=INTEGER}
+  </update>
+</mapper>

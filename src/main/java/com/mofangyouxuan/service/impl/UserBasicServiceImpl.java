@@ -1,0 +1,65 @@
+package com.mofangyouxuan.service.impl;
+
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.mofangyouxuan.mapper.UserBasicMapper;
+import com.mofangyouxuan.model.UserBasic;
+import com.mofangyouxuan.service.UserBasicService;
+
+@Service
+public class UserBasicServiceImpl implements UserBasicService{
+	
+	@Autowired
+	private UserBasicMapper userBasicMapper;
+	
+	/**
+	 * 添加新用户
+	 * @param userBasic
+	 * @return 新用户ID或null
+	 */
+	@Override
+	public Integer add(UserBasic userBasic) {
+		userBasic.setId(null);
+		userBasic.setRegistTime(new Date());
+		userBasic.setUpdateTime(new Date());
+		this.userBasicMapper.insert(userBasic);
+		Integer id = userBasic.getId();
+		return id;
+	}
+	
+	/**
+	 * 更新用户信息
+	 * @param userBasic
+	 * @return 更新记录数
+	 */
+	@Override
+	public int update(UserBasic userBasic) {
+		userBasic.setUpdateTime(new Date());
+		int cnt = this.userBasicMapper.updateByPrimaryKey(userBasic);
+		return cnt;
+	}
+	
+	/**
+	 * 根据ID获取用户
+	 * @param id
+	 * @return
+	 */
+	@Override
+	public UserBasic get(Integer id) {
+		return this.userBasicMapper.selectByPrimaryKey(id);
+	}
+	
+	/**
+	 * 根据微信OPENID获取用户信息
+	 * @param openId 公众号下的OPENID或UNIONID
+	 * @return
+	 */
+	@Override
+	public UserBasic get(String openId) {
+		return this.userBasicMapper.selectByOpenId(openId);
+	}
+
+}

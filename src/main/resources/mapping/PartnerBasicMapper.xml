@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.PartnerBasicMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.PartnerBasic">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="country" jdbcType="VARCHAR" property="country" />
+    <result column="province" jdbcType="VARCHAR" property="province" />
+    <result column="city" jdbcType="VARCHAR" property="city" />
+    <result column="area" jdbcType="VARCHAR" property="area" />
+    <result column="addr" jdbcType="VARCHAR" property="addr" />
+    <result column="busi_name" jdbcType="VARCHAR" property="busiName" />
+    <result column="legal_pername" jdbcType="VARCHAR" property="legalPername" />
+    <result column="legal_peridno" jdbcType="VARCHAR" property="legalPeridno" />
+    <result column="comp_name" jdbcType="VARCHAR" property="compName" />
+    <result column="licence_no" jdbcType="VARCHAR" property="licenceNo" />
+    <result column="cert_dir" jdbcType="VARCHAR" property="certDir" />
+    <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="location_x" jdbcType="DECIMAL" property="locationX" />
+    <result column="location_y" jdbcType="DECIMAL" property="locationY" />
+    <result column="status" jdbcType="CHAR" property="status" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, user_id, country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
+    comp_name, licence_no, cert_dir, phone, location_x, location_y, status
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_partner_basic
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from tb_partner_basic
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.mofangyouxuan.model.PartnerBasic">
+    insert into tb_partner_basic (id, user_id, country, 
+      province, city, area, 
+      addr, busi_name, legal_pername, 
+      legal_peridno, comp_name, licence_no, 
+      cert_dir, phone, location_x, 
+      location_y, status)
+    values (#{id,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{country,jdbcType=VARCHAR}, 
+      #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
+      #{addr,jdbcType=VARCHAR}, #{busiName,jdbcType=VARCHAR}, #{legalPername,jdbcType=VARCHAR}, 
+      #{legalPeridno,jdbcType=VARCHAR}, #{compName,jdbcType=VARCHAR}, #{licenceNo,jdbcType=VARCHAR}, 
+      #{certDir,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, #{locationX,jdbcType=DECIMAL}, 
+      #{locationY,jdbcType=DECIMAL}, #{status,jdbcType=CHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.PartnerBasic">
+    insert into tb_partner_basic
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="userId != null">
+        user_id,
+      </if>
+      <if test="country != null">
+        country,
+      </if>
+      <if test="province != null">
+        province,
+      </if>
+      <if test="city != null">
+        city,
+      </if>
+      <if test="area != null">
+        area,
+      </if>
+      <if test="addr != null">
+        addr,
+      </if>
+      <if test="busiName != null">
+        busi_name,
+      </if>
+      <if test="legalPername != null">
+        legal_pername,
+      </if>
+      <if test="legalPeridno != null">
+        legal_peridno,
+      </if>
+      <if test="compName != null">
+        comp_name,
+      </if>
+      <if test="licenceNo != null">
+        licence_no,
+      </if>
+      <if test="certDir != null">
+        cert_dir,
+      </if>
+      <if test="phone != null">
+        phone,
+      </if>
+      <if test="locationX != null">
+        location_x,
+      </if>
+      <if test="locationY != null">
+        location_y,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null">
+        #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="country != null">
+        #{country,jdbcType=VARCHAR},
+      </if>
+      <if test="province != null">
+        #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null">
+        #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="area != null">
+        #{area,jdbcType=VARCHAR},
+      </if>
+      <if test="addr != null">
+        #{addr,jdbcType=VARCHAR},
+      </if>
+      <if test="busiName != null">
+        #{busiName,jdbcType=VARCHAR},
+      </if>
+      <if test="legalPername != null">
+        #{legalPername,jdbcType=VARCHAR},
+      </if>
+      <if test="legalPeridno != null">
+        #{legalPeridno,jdbcType=VARCHAR},
+      </if>
+      <if test="compName != null">
+        #{compName,jdbcType=VARCHAR},
+      </if>
+      <if test="licenceNo != null">
+        #{licenceNo,jdbcType=VARCHAR},
+      </if>
+      <if test="certDir != null">
+        #{certDir,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="locationX != null">
+        #{locationX,jdbcType=DECIMAL},
+      </if>
+      <if test="locationY != null">
+        #{locationY,jdbcType=DECIMAL},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.PartnerBasic">
+    update tb_partner_basic
+    <set>
+      <if test="userId != null">
+        user_id = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="country != null">
+        country = #{country,jdbcType=VARCHAR},
+      </if>
+      <if test="province != null">
+        province = #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null">
+        city = #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="area != null">
+        area = #{area,jdbcType=VARCHAR},
+      </if>
+      <if test="addr != null">
+        addr = #{addr,jdbcType=VARCHAR},
+      </if>
+      <if test="busiName != null">
+        busi_name = #{busiName,jdbcType=VARCHAR},
+      </if>
+      <if test="legalPername != null">
+        legal_pername = #{legalPername,jdbcType=VARCHAR},
+      </if>
+      <if test="legalPeridno != null">
+        legal_peridno = #{legalPeridno,jdbcType=VARCHAR},
+      </if>
+      <if test="compName != null">
+        comp_name = #{compName,jdbcType=VARCHAR},
+      </if>
+      <if test="licenceNo != null">
+        licence_no = #{licenceNo,jdbcType=VARCHAR},
+      </if>
+      <if test="certDir != null">
+        cert_dir = #{certDir,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="locationX != null">
+        location_x = #{locationX,jdbcType=DECIMAL},
+      </if>
+      <if test="locationY != null">
+        location_y = #{locationY,jdbcType=DECIMAL},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PartnerBasic">
+    update tb_partner_basic
+    set user_id = #{userId,jdbcType=INTEGER},
+      country = #{country,jdbcType=VARCHAR},
+      province = #{province,jdbcType=VARCHAR},
+      city = #{city,jdbcType=VARCHAR},
+      area = #{area,jdbcType=VARCHAR},
+      addr = #{addr,jdbcType=VARCHAR},
+      busi_name = #{busiName,jdbcType=VARCHAR},
+      legal_pername = #{legalPername,jdbcType=VARCHAR},
+      legal_peridno = #{legalPeridno,jdbcType=VARCHAR},
+      comp_name = #{compName,jdbcType=VARCHAR},
+      licence_no = #{licenceNo,jdbcType=VARCHAR},
+      cert_dir = #{certDir,jdbcType=VARCHAR},
+      phone = #{phone,jdbcType=VARCHAR},
+      location_x = #{locationX,jdbcType=DECIMAL},
+      location_y = #{locationY,jdbcType=DECIMAL},
+      status = #{status,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

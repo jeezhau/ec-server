@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.UserBasicMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.UserBasic">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="nickname" jdbcType="VARCHAR" property="nickname" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="birthday" jdbcType="DATE" property="birthday" />
+    <result column="sex" jdbcType="CHAR" property="sex" />
+    <result column="passwd" jdbcType="VARCHAR" property="passwd" />
+    <result column="country" jdbcType="VARCHAR" property="country" />
+    <result column="province" jdbcType="VARCHAR" property="province" />
+    <result column="city" jdbcType="VARCHAR" property="city" />
+    <result column="favourite" jdbcType="VARCHAR" property="favourite" />
+    <result column="profession" jdbcType="VARCHAR" property="profession" />
+    <result column="introduce" jdbcType="VARCHAR" property="introduce" />
+    <result column="headimgurl" jdbcType="VARCHAR" property="headimgurl" />
+    <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="regist_type" jdbcType="CHAR" property="registType" />
+    <result column="open_id" jdbcType="VARCHAR" property="openId" />
+    <result column="union_id" jdbcType="VARCHAR" property="unionId" />
+    <result column="sence_id" jdbcType="INTEGER" property="senceId" />
+    <result column="regist_time" jdbcType="TIMESTAMP" property="registTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="status" jdbcType="CHAR" property="status" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, nickname, email, birthday, sex, passwd, country, province, city, favourite, profession, 
+    introduce, headimgurl, phone, regist_type, open_id, union_id, sence_id, regist_time, 
+    update_time, status
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_user_basic
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  
+  <select id="selectByOpenId" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_user_basic
+    where open_id = #{openId,jdbcType=VARCHAR} 
+    		or union_id = #{openId,jdbcType=VARCHAR} 
+    		or email=#{openId,jdbcType=VARCHAR}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from tb_user_basic
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.UserBasic"  keyProperty="id" useGeneratedKeys="true">
+    insert into tb_user_basic (id, nickname, email, 
+      birthday, sex, passwd, country, 
+      province, city, favourite, 
+      profession, introduce, headimgurl, 
+      phone, regist_type, open_id, 
+      union_id, sence_id, regist_time, 
+      update_time, status)
+    values (#{id,jdbcType=INTEGER}, #{nickname,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
+      #{birthday,jdbcType=DATE}, #{sex,jdbcType=CHAR}, #{passwd,jdbcType=VARCHAR}, #{country,jdbcType=VARCHAR}, 
+      #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{favourite,jdbcType=VARCHAR}, 
+      #{profession,jdbcType=VARCHAR}, #{introduce,jdbcType=VARCHAR}, #{headimgurl,jdbcType=VARCHAR}, 
+      #{phone,jdbcType=VARCHAR}, #{registType,jdbcType=CHAR}, #{openId,jdbcType=VARCHAR}, 
+      #{unionId,jdbcType=VARCHAR}, #{senceId,jdbcType=INTEGER}, #{registTime,jdbcType=TIMESTAMP}, 
+      #{updateTime,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR})
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.UserBasic"  keyProperty="id" useGeneratedKeys="true">
+    insert into tb_user_basic
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="nickname != null">
+        nickname,
+      </if>
+      <if test="email != null">
+        email,
+      </if>
+      <if test="birthday != null">
+        birthday,
+      </if>
+      <if test="sex != null">
+        sex,
+      </if>
+      <if test="passwd != null">
+        passwd,
+      </if>
+      <if test="country != null">
+        country,
+      </if>
+      <if test="province != null">
+        province,
+      </if>
+      <if test="city != null">
+        city,
+      </if>
+      <if test="favourite != null">
+        favourite,
+      </if>
+      <if test="profession != null">
+        profession,
+      </if>
+      <if test="introduce != null">
+        introduce,
+      </if>
+      <if test="headimgurl != null">
+        headimgurl,
+      </if>
+      <if test="phone != null">
+        phone,
+      </if>
+      <if test="registType != null">
+        regist_type,
+      </if>
+      <if test="openId != null">
+        open_id,
+      </if>
+      <if test="unionId != null">
+        union_id,
+      </if>
+      <if test="senceId != null">
+        sence_id,
+      </if>
+      <if test="registTime != null">
+        regist_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="nickname != null">
+        #{nickname,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null">
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="birthday != null">
+        #{birthday,jdbcType=DATE},
+      </if>
+      <if test="sex != null">
+        #{sex,jdbcType=CHAR},
+      </if>
+      <if test="passwd != null">
+        #{passwd,jdbcType=VARCHAR},
+      </if>
+      <if test="country != null">
+        #{country,jdbcType=VARCHAR},
+      </if>
+      <if test="province != null">
+        #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null">
+        #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="favourite != null">
+        #{favourite,jdbcType=VARCHAR},
+      </if>
+      <if test="profession != null">
+        #{profession,jdbcType=VARCHAR},
+      </if>
+      <if test="introduce != null">
+        #{introduce,jdbcType=VARCHAR},
+      </if>
+      <if test="headimgurl != null">
+        #{headimgurl,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="registType != null">
+        #{registType,jdbcType=CHAR},
+      </if>
+      <if test="openId != null">
+        #{openId,jdbcType=VARCHAR},
+      </if>
+      <if test="unionId != null">
+        #{unionId,jdbcType=VARCHAR},
+      </if>
+      <if test="senceId != null">
+        #{senceId,jdbcType=INTEGER},
+      </if>
+      <if test="registTime != null">
+        #{registTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.UserBasic">
+    update tb_user_basic
+    <set>
+      <if test="nickname != null">
+        nickname = #{nickname,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null">
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="birthday != null">
+        birthday = #{birthday,jdbcType=DATE},
+      </if>
+      <if test="sex != null">
+        sex = #{sex,jdbcType=CHAR},
+      </if>
+      <if test="passwd != null">
+        passwd = #{passwd,jdbcType=VARCHAR},
+      </if>
+      <if test="country != null">
+        country = #{country,jdbcType=VARCHAR},
+      </if>
+      <if test="province != null">
+        province = #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null">
+        city = #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="favourite != null">
+        favourite = #{favourite,jdbcType=VARCHAR},
+      </if>
+      <if test="profession != null">
+        profession = #{profession,jdbcType=VARCHAR},
+      </if>
+      <if test="introduce != null">
+        introduce = #{introduce,jdbcType=VARCHAR},
+      </if>
+      <if test="headimgurl != null">
+        headimgurl = #{headimgurl,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="registType != null">
+        regist_type = #{registType,jdbcType=CHAR},
+      </if>
+      <if test="openId != null">
+        open_id = #{openId,jdbcType=VARCHAR},
+      </if>
+      <if test="unionId != null">
+        union_id = #{unionId,jdbcType=VARCHAR},
+      </if>
+      <if test="senceId != null">
+        sence_id = #{senceId,jdbcType=INTEGER},
+      </if>
+      <if test="registTime != null">
+        regist_time = #{registTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=CHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.UserBasic">
+    update tb_user_basic
+    set nickname = #{nickname,jdbcType=VARCHAR},
+      email = #{email,jdbcType=VARCHAR},
+      birthday = #{birthday,jdbcType=DATE},
+      sex = #{sex,jdbcType=CHAR},
+      passwd = #{passwd,jdbcType=VARCHAR},
+      country = #{country,jdbcType=VARCHAR},
+      province = #{province,jdbcType=VARCHAR},
+      city = #{city,jdbcType=VARCHAR},
+      favourite = #{favourite,jdbcType=VARCHAR},
+      profession = #{profession,jdbcType=VARCHAR},
+      introduce = #{introduce,jdbcType=VARCHAR},
+      headimgurl = #{headimgurl,jdbcType=VARCHAR},
+      phone = #{phone,jdbcType=VARCHAR},
+      regist_type = #{registType,jdbcType=CHAR},
+      open_id = #{openId,jdbcType=VARCHAR},
+      union_id = #{unionId,jdbcType=VARCHAR},
+      sence_id = #{senceId,jdbcType=INTEGER},
+      regist_time = #{registTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      status = #{status,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>
