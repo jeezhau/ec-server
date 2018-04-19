@@ -98,8 +98,12 @@ public class UserBasic {
         this.email = email == null ? null : email.trim();
     }
 
-    public Date getBirthday() {
-        return birthday;
+    public String getBirthday() {
+    		if(this.birthday != null) {
+			return new SimpleDateFormat("yyyy-MM-dd").format(birthday);
+		}else {
+			return null;
+		}
     }
 
     public void setBirthday(Date birthday) {

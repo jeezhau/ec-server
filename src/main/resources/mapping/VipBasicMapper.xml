@@ -13,16 +13,19 @@
   <sql id="Base_Column_List">
     vip_id, scores, balance, freeze, is_partner, create_time, status
   </sql>
+  
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
     from tb_vip_basic
     where vip_id = #{vipId,jdbcType=INTEGER}
   </select>
+  
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from tb_vip_basic
     where vip_id = #{vipId,jdbcType=INTEGER}
   </delete>
+  
   <insert id="insert" parameterType="com.mofangyouxuan.model.VipBasic">
     insert into tb_vip_basic (vip_id, scores, balance, 
       freeze, is_partner, create_time, 
@@ -31,56 +34,8 @@
       #{freeze,jdbcType=DECIMAL}, #{isPartner,jdbcType=CHAR}, #{createTime,jdbcType=TIMESTAMP}, 
       #{status,jdbcType=CHAR})
   </insert>
-  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.VipBasic">
-    insert into tb_vip_basic
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="vipId != null">
-        vip_id,
-      </if>
-      <if test="scores != null">
-        scores,
-      </if>
-      <if test="balance != null">
-        balance,
-      </if>
-      <if test="freeze != null">
-        freeze,
-      </if>
-      <if test="isPartner != null">
-        is_partner,
-      </if>
-      <if test="createTime != null">
-        create_time,
-      </if>
-      <if test="status != null">
-        status,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="vipId != null">
-        #{vipId,jdbcType=INTEGER},
-      </if>
-      <if test="scores != null">
-        #{scores,jdbcType=INTEGER},
-      </if>
-      <if test="balance != null">
-        #{balance,jdbcType=DECIMAL},
-      </if>
-      <if test="freeze != null">
-        #{freeze,jdbcType=DECIMAL},
-      </if>
-      <if test="isPartner != null">
-        #{isPartner,jdbcType=CHAR},
-      </if>
-      <if test="createTime != null">
-        #{createTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="status != null">
-        #{status,jdbcType=CHAR},
-      </if>
-    </trim>
-  </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.VipBasic">
+ 
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.VipBasic">
     update tb_vip_basic
     <set>
       <if test="scores != null">
@@ -104,14 +59,5 @@
     </set>
     where vip_id = #{vipId,jdbcType=INTEGER}
   </update>
-  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.VipBasic">
-    update tb_vip_basic
-    set scores = #{scores,jdbcType=INTEGER},
-      balance = #{balance,jdbcType=DECIMAL},
-      freeze = #{freeze,jdbcType=DECIMAL},
-      is_partner = #{isPartner,jdbcType=CHAR},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      status = #{status,jdbcType=CHAR}
-    where vip_id = #{vipId,jdbcType=INTEGER}
-  </update>
+
 </mapper>

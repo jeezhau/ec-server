@@ -12,8 +12,11 @@ public class ErrCodes {
 	public static int USER_EXCEPTION = -100000;	//出现系统异常
 	public static int USER_PARAM_ERROR = -100001;	//参数格式不正确
 	public static int USER_DB_ERROR = -100002;	//数据库处理失败
+	public static int USER_NO_USER = -100003;		//系统中没有该用户
 	
-	
+	//推广二维码功能码：101
+	public static int QRCODE_EXCEPTION = -101000;	//出现系统异常
+	public static int QRCODE_ERROR = -100001; //生成二维码失败
 	
 
 }

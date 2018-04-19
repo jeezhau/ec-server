@@ -7,13 +7,17 @@ import org.springframework.stereotype.Service;
 
 import com.mofangyouxuan.mapper.UserBasicMapper;
 import com.mofangyouxuan.model.UserBasic;
+import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.UserBasicService;
+import com.mofangyouxuan.service.VipBasicService;
 
 @Service
 public class UserBasicServiceImpl implements UserBasicService{
 	
 	@Autowired
 	private UserBasicMapper userBasicMapper;
+	@Autowired
+	private VipBasicService vipBasicService;
 	
 	/**
 	 * 添加新用户
@@ -27,6 +31,11 @@ public class UserBasicServiceImpl implements UserBasicService{
 		userBasic.setUpdateTime(new Date());
 		this.userBasicMapper.insert(userBasic);
 		Integer id = userBasic.getId();
+		if(id != null) {//初始化会员信息
+			VipBasic vipBasic = new VipBasic();
+			vipBasic.setVipId(id);
+			vipBasicService.add(vipBasic);
+		}
 		return id;
 	}
 	
@@ -60,6 +69,15 @@ public class UserBasicServiceImpl implements UserBasicService{
 	@Override
 	public UserBasic get(String openId) {
 		return this.userBasicMapper.selectByOpenId(openId);
+	}
+	
+	/**
+	 * 统计指定用户的已推广用户数
+	 * @param userId
+	 * @return
+	 */
+	public int countSpreadUsers(Integer userId) {
+		return this.userBasicMapper.countSpreadUsers(userId);
 	}
 
 }

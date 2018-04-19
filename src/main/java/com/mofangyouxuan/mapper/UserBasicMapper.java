@@ -14,4 +14,6 @@ public interface UserBasicMapper {
     
     UserBasic selectByOpenId(String openId);
     
+    int countSpreadUsers(Integer id);
+    
 }

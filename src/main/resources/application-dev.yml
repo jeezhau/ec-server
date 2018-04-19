@@ -27,8 +27,11 @@ logging:
 ######业务参数############
 #用户注册URL、注销URL
 busi:
-  user-create-url: 'http://localhost:8080/mfyx/user-create'
-  user-cancel-url: 'http://localhost:8080/mfyx/user-cancel'
+  wxmp-server-url: 'http://localhost:9000/wxmp'
+  qrcode-apply-url: '/qrcode/createTmp'
+  qrcode-get-url: '/qrcode/getqrcode'
+  qrcode-show-url: '/qrcode/show/'
+  
   
 ######系统参数############  
 sys:

@@ -202,7 +202,7 @@
     </trim>
   </insert>
   
-  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.UserBasic">
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.UserBasic">
     update tb_user_basic
     <set>
       <if test="nickname != null">
@@ -268,28 +268,11 @@
     </set>
     where id = #{id,jdbcType=INTEGER}
   </update>
-  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.UserBasic">
-    update tb_user_basic
-    set nickname = #{nickname,jdbcType=VARCHAR},
-      email = #{email,jdbcType=VARCHAR},
-      birthday = #{birthday,jdbcType=DATE},
-      sex = #{sex,jdbcType=CHAR},
-      passwd = #{passwd,jdbcType=VARCHAR},
-      country = #{country,jdbcType=VARCHAR},
-      province = #{province,jdbcType=VARCHAR},
-      city = #{city,jdbcType=VARCHAR},
-      favourite = #{favourite,jdbcType=VARCHAR},
-      profession = #{profession,jdbcType=VARCHAR},
-      introduce = #{introduce,jdbcType=VARCHAR},
-      headimgurl = #{headimgurl,jdbcType=VARCHAR},
-      phone = #{phone,jdbcType=VARCHAR},
-      regist_type = #{registType,jdbcType=CHAR},
-      open_id = #{openId,jdbcType=VARCHAR},
-      union_id = #{unionId,jdbcType=VARCHAR},
-      sence_id = #{senceId,jdbcType=INTEGER},
-      regist_time = #{registTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP},
-      status = #{status,jdbcType=CHAR}
-    where id = #{id,jdbcType=INTEGER}
-  </update>
+  
+  <select id="countSpreadUsers" parameterType="java.lang.Integer" resultType="int">
+    select count(1)
+    from tb_user_basic
+    where sence_id = #{id,jdbcType=INTEGER}
+  </select>
+
 </mapper>

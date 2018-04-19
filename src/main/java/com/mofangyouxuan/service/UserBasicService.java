@@ -31,5 +31,12 @@ public interface UserBasicService {
 	 * @return
 	 */
 	public UserBasic get(String openId);
+	
+	/**
+	 * 统计指定用户的已推广用户数
+	 * @param userId
+	 * @return
+	 */
+	public int countSpreadUsers(Integer userId);
 
 }

@@ -14,6 +14,8 @@ public class QrCodeSence {
     private String url;
 
     private Date createTime;
+    
+    private String wxmpPicnane;
 
     public Integer getUserId() {
         return userId;
@@ -62,4 +64,14 @@ public class QrCodeSence {
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
     }
+
+	public String getWxmpPicnane() {
+		return wxmpPicnane;
+	}
+
+	public void setWxmpPicnane(String wxmpPicnane) {
+		this.wxmpPicnane = wxmpPicnane;
+	}
+    
+    
 }
