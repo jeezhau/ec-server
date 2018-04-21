@@ -40,13 +40,13 @@ public class VipBasicAction {
 		JSONObject jsonRet = new JSONObject();
 		UserBasic userBasic = this.userBasicService.get(openId);
 		if(userBasic == null) {
-			jsonRet.put("errcode", ErrCodes.USER_NO_USER);
+			jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 			jsonRet.put("errmsg", "系统中没有该会员用户！");
 			return jsonRet.toString();
 		}
 		VipBasic vipBasic = this.vipBasicService.get(userBasic.getId());
 		if(vipBasic == null) {
-			jsonRet.put("errcode", ErrCodes.USER_NO_USER);
+			jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 			jsonRet.put("errmsg", "系统中没有该会员用户！");
 			return jsonRet.toString();
 		}

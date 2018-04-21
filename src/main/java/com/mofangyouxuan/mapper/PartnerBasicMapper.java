@@ -12,5 +12,6 @@ public interface PartnerBasicMapper {
 
     int updateByPrimaryKey(PartnerBasic record);
     
+    PartnerBasic selectByBindUser(Integer userId);
     
 }

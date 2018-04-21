@@ -58,7 +58,7 @@ public class QrCodeSenceAction {
 		JSONObject jsonRet = new JSONObject();
 		UserBasic user = this.userBasicService.get(openId);
 		if(user == null || !"0".equals(user.getStatus())) {
-			jsonRet.put("errcode", ErrCodes.USER_NO_USER);
+			jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 			jsonRet.put("errmsg", "系统中没有该用户！");
 			return jsonRet.toString();
 		}
@@ -116,7 +116,7 @@ public class QrCodeSenceAction {
 			}
 		}catch(Exception e) {
 			e.printStackTrace();
-			jsonRet.put("errcode", ErrCodes.QRCODE_EXCEPTION);
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现系统异常，异常信息：" + e.getMessage());
 			return jsonRet.toString();
 		}

@@ -104,7 +104,7 @@ public class UserBasicAction {
 			userBasic.setStatus("0"); //用户正常
 			Integer id = this.userBasicService.add(userBasic);
 			if(id == null) {
-				jsonRet.put("errcode", ErrCodes.USER_DB_ERROR);
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
 				jsonRet.put("errcode", 0);
@@ -112,7 +112,7 @@ public class UserBasicAction {
 			}
 		}catch(Exception e) {
 			//数据处理
-			jsonRet.put("errcode", ErrCodes.USER_EXCEPTION);
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
 		return jsonRet.toString();
@@ -176,7 +176,7 @@ public class UserBasicAction {
 			if(unique != null && unique.length()>0) {
 				old = this.userBasicService.get(unique);
 				if( old == null || !"0".equals(old.getStatus())) {//不存在或不正常
-					jsonRet.put("errcode", ErrCodes.USER_NO_USER);
+					jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 					jsonRet.put("errmsg", "系统中没有该用户或已注销！如果是注销用户则请先激活！");
 					return jsonRet.toString();
 				}
@@ -194,7 +194,7 @@ public class UserBasicAction {
 			userBasic.setSenceId(old.getSenceId());
 			int cnt = this.userBasicService.update(userBasic);
 			if(cnt < 1) {
-				jsonRet.put("errcode", ErrCodes.USER_DB_ERROR);
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
 				jsonRet.put("errcode", 0);
@@ -202,7 +202,7 @@ public class UserBasicAction {
 			}
 		}catch(Exception e) {
 			//数据处理
-			jsonRet.put("errcode", ErrCodes.USER_EXCEPTION);
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
 		return jsonRet.toString();
@@ -226,7 +226,7 @@ public class UserBasicAction {
 		UserBasic user = this.userBasicService.get(openId);
 		
 		if(user == null || !"0".equals(user.getStatus())){
-			jsonRet.put("errcode", ErrCodes.USER_NO_USER);
+			jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 			jsonRet.put("errmsg", " 系统中没有该用户！ ");
 			jsonRet.toString();
 		}
