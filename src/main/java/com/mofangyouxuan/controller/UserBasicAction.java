@@ -6,8 +6,6 @@ import java.util.List;
 
 import javax.validation.Valid;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.validation.BindingResult;
@@ -18,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.service.UserBasicService;
@@ -43,11 +42,12 @@ public class UserBasicAction {
 	
 	/**
 	 * 创建用户
-	 * @return
+	 * @param userBasic 用户基本信息
+	 * @return {errcode:0,errmsg:"ok"}
 	 * @throws JSONException
 	 */
 	@RequestMapping(value="/create",method=RequestMethod.POST)
-	public String create(@Valid UserBasic userBasic,BindingResult result) throws JSONException {
+	public String create(@Valid UserBasic userBasic,BindingResult result) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//用户信息验证结果处理
@@ -121,13 +121,15 @@ public class UserBasicAction {
 	
 	/**
 	 * 更新用户
+	 * 
 	 * @param userBasic
 	 * @param result
-	 * @return
+	 * 
+	 * @return {errcode:0,errmsg:"ok"}
 	 * @throws JSONException 
 	 */
 	@RequestMapping(value="/update",method=RequestMethod.POST)
-	public String update(@Valid UserBasic userBasic,BindingResult result) throws JSONException {
+	public String update(@Valid UserBasic userBasic,BindingResult result) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//用户信息验证结果处理
@@ -211,25 +213,32 @@ public class UserBasicAction {
 	/**
 	 * 根据OpenId或UnionId或Email获取用户的基本信息
 	 * @param openId
-	 * @return
+	 * 
+	 * @return {errcode:0,errmsg:"ok"} 或 {用户所有字段}
 	 * @throws JSONException 
 	 */
 	@RequestMapping(value="/get",method=RequestMethod.POST)
-	public Object getUser(String openId) throws JSONException {
+	public Object getUser(String openId) {
 		JSONObject jsonRet = new JSONObject();
 		if(openId == null || openId.trim().length()<6) {
 			jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
 			jsonRet.put("errmsg", " OpenId或UnionId或Email长度至少为6个字符！ ");
 			jsonRet.toString();
 		}
-		
-		UserBasic user = this.userBasicService.get(openId);
-		
-		if(user == null || !"0".equals(user.getStatus())){
-			jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
-			jsonRet.put("errmsg", " 系统中没有该用户！ ");
-			jsonRet.toString();
+		try {
+			UserBasic user = this.userBasicService.get(openId);
+			
+			if(user == null || !"0".equals(user.getStatus())){
+				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+				jsonRet.put("errmsg", " 系统中没有该用户！ ");
+				jsonRet.toString();
+			}
+			return user;
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+			return jsonRet.toString();
 		}
-		return user;
 	}
 }

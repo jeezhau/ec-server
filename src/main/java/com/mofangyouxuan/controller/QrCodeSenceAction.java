@@ -4,13 +4,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.model.QrCodeSence;
 import com.mofangyouxuan.model.UserBasic;
@@ -27,16 +26,16 @@ import com.mofangyouxuan.utils.HttpUtils;
 @RequestMapping("/qrcode")
 public class QrCodeSenceAction {
 	
-	@Value("${busi.wxmp-server-url}")
+	@Value("${wxmp.wxmp-server-url}")
 	private String wxmpServerUrl;//微信管理平台服务器路径
 	
-	@Value("${busi.qrcode-apply-url}")
+	@Value("${wxmp.qrcode-apply-url}")
 	private String qrCodeApplyUrl;
 	
-	@Value("${busi.qrcode-get-url}")
+	@Value("${wxmp.qrcode-get-url}")
 	private String qrCodeGetUrl;
 	
-	@Value("${busi.qrcode-show-url}")
+	@Value("${wxmp.qrcode-show-url}")
 	private String qrCodeShowUrl;
 	
 	@Autowired
@@ -54,7 +53,7 @@ public class QrCodeSenceAction {
 	 * @throws JSONException 
 	 */
 	@RequestMapping("/spread")
-	public Object getSpreadInfo(String openId,String create) throws JSONException {
+	public Object getSpreadInfo(String openId,String create) {
 		JSONObject jsonRet = new JSONObject();
 		UserBasic user = this.userBasicService.get(openId);
 		if(user == null || !"0".equals(user.getStatus())) {
@@ -72,10 +71,10 @@ public class QrCodeSenceAction {
 				Map<String,Object> params = new HashMap<String,Object>();
 				params.put("sceneId", user.getId());
 				String strRet = HttpUtils.doPost(this.wxmpServerUrl + this.qrCodeApplyUrl, params);
-				JSONObject ret = new JSONObject(strRet);
-				if(ret.has("errcode") && ret.getInt("errcode") == 0) {
+				JSONObject ret = JSONObject.parseObject(strRet);
+				if(ret.containsKey("errcode") && ret.getIntValue("errcode") == 0) {
 					String ticket = ret.getString("ticket");
-					int expire_seconds = ret.getInt("expire_seconds");
+					int expire_seconds = ret.getIntValue("expire_seconds");
 					String url = ret.getString("url");
 					if(qrcode != null) {
 						this.qrCodeSenceService.delete(user.getId());
@@ -84,8 +83,8 @@ public class QrCodeSenceAction {
 					params = new HashMap<String,Object>();
 					params.put("ticket", ticket);
 					strRet = HttpUtils.doPost(this.wxmpServerUrl + this.qrCodeGetUrl, params);
-					ret = new JSONObject(strRet);
-					if(ret.has("errcode") && ret.getInt("errcode") == 0) {
+					ret = JSONObject.parseObject(strRet);
+					if(ret.containsKey("errcode") && ret.getIntValue("errcode") == 0) {
 						qrcode = new QrCodeSence();
 						qrcode.setSenceId(user.getId());
 						qrcode.setUserId(user.getId());

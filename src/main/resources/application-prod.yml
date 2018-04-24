@@ -9,7 +9,7 @@ server:
 spring:
     datasource:
         name: mfyx
-        url: 'jdbc:mysql://47.106.70.72:3306/db_mfyx'
+        url: 'jdbc:mysql://172.18.235.107:3306/db_mfyx'
         username: 'aoksen'
         password: 'YesOrNoAnd0+1'
         # 使用druid数据源
@@ -27,7 +27,7 @@ logging:
 ######业务参数############
 #访问微信管理平台服务接口
 wxmp:
-  wxmp-server-url: 'http://localhost:9000'
+  wxmp-server-url: 'http://172.18.235.107:9000'
   qrcode-apply-url: '/qrcode/createTmp'
   qrcode-get-url: '/qrcode/getqrcode'
   qrcode-show-url: '/qrcode/show/'
@@ -35,9 +35,9 @@ wxmp:
   
 ######系统参数############  
 sys:
-  tmp-file-dir: '/Users/jeekhan/mfyx/tmp/'
-  partner-cert-dir: '/Users/jeekhan/mfyx/partner-cert/'
-  partner-goods-dir: '/Users/jeekhan/mfyx/goods-img/'
+  tmp-file-dir: '/tmp/mfyx-server/'
+  partner-cert-dir: '/var/mfyx-server/partner-cert/'
+  partner-goods-dir: '/var/mfyx-server/goods-img/'
   
 
 

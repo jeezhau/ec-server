@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.ProvinceMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Province">
+    <id column="prov_code" jdbcType="VARCHAR" property="provCode" />
+    <result column="prov_name" jdbcType="VARCHAR" property="provName" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    prov_code, prov_name
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_provinces
+    where prov_code = #{provCode,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectByCodeName" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_provinces
+    where prov_code = #{codeName,jdbcType=VARCHAR} or prov_name = #{codeName,jdbcType=VARCHAR}
+  </select>
+    
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from tb_provinces
+    where prov_code = #{provCode,jdbcType=VARCHAR}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Province">
+    insert into tb_provinces (prov_code, prov_name)
+    values (#{provCode,jdbcType=VARCHAR}, #{provName,jdbcType=VARCHAR})
+  </insert>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Province">
+    update tb_provinces
+    set prov_name = #{provName,jdbcType=VARCHAR}
+    where prov_code = #{provCode,jdbcType=VARCHAR}
+  </update>
+  
+  <select id="selectAll" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_provinces
+  </select>
+  
+</mapper>

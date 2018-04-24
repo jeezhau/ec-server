@@ -8,9 +8,10 @@ import org.springframework.stereotype.Service;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.mapper.PartnerBasicMapper;
 import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.service.PartnerBasicService;
 
 @Service
-public class PartnerBasicServiceImpl {
+public class PartnerBasicServiceImpl implements PartnerBasicService{
 	
 	@Autowired
 	private PartnerBasicMapper partnerBasicMapper;
@@ -20,7 +21,7 @@ public class PartnerBasicServiceImpl {
 	 * @param id	
 	 * @return
 	 */
-	@Autowired
+	@Override
 	public PartnerBasic getByID(Integer id) {
 		return this.partnerBasicMapper.selectByPrimaryKey(id);
 	}
@@ -30,7 +31,7 @@ public class PartnerBasicServiceImpl {
 	 * @param userId
 	 * @return
 	 */
-	@Autowired
+	@Override
 	public PartnerBasic getByBindUser(Integer userId) {
 		return this.partnerBasicMapper.selectByBindUser(userId);
 	}
@@ -41,7 +42,7 @@ public class PartnerBasicServiceImpl {
 	 * @param basic
 	 * @return 新ID或小于0的错误码
 	 */
-	@Autowired
+	@Override
 	public Integer add(PartnerBasic basic) {
 		basic.setId(null);
 		basic.setUpdateTime(new Date());
@@ -57,7 +58,7 @@ public class PartnerBasicServiceImpl {
 	 * @param basic
 	 * @return 更新记录数
 	 */
-	@Autowired
+	@Override
 	public int update(PartnerBasic basic) {
 		basic.setUpdateTime(new Date());
 		return this.partnerBasicMapper.updateByPrimaryKey(basic);
@@ -71,7 +72,7 @@ public class PartnerBasicServiceImpl {
 	 * @param result	审批结果
 	 * @return 更新记录数
 	 */
-	@Autowired
+	@Override
 	public int review(Integer partnerId,Integer oprId,String review,String result) {
 		PartnerBasic basic = new PartnerBasic();
 		basic.setId(partnerId);
@@ -89,7 +90,7 @@ public class PartnerBasicServiceImpl {
 	 * @param newStatus 新的状态：S-正常，C-关闭
 	 * @return 更新记录数
 	 */
-	@Autowired
+	@Override
 	public int changeShopStatus(Integer partnerId,String newStatus) {
 		PartnerBasic basic = new PartnerBasic();
 		basic.setId(partnerId);

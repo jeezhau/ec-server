@@ -5,6 +5,7 @@ import java.util.Date;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 public class PartnerBasic {
@@ -41,15 +42,20 @@ public class PartnerBasic {
     @Size(min=2,max=100,message=" 法人姓名：长度范围2-100字符 ！")
     private String legalPername;
 
-    @NotNull(message=" 法人省份证：不可为空！")
+    @NotNull(message=" 法人身份证：不可为空！")
     @Size(min=18,max=18,message=" 法人省份证：长度18字符 ！")
     private String legalPeridno;
 
+    @NotNull(message=" 公司类型：不可为空！")
+    @Pattern(regexp="^[12]&",message=" 公司类型：取值为【1-个体户，2-公司】")
+    private String comp_type;
+    
     @NotNull(message=" 公司名称：不可为空！")
     @Size(min=2,max=100,message=" 公司名称：长度范围2-100字符 ！")
     private String compName;
 
-    
+    @NotNull(message=" 营业执照号/身份证号 不可为空！")
+    @Size(min=2,max=100,message=" 营业执照号/身份证号：长度范围5-50字符 ！")
     private String licenceNo;
 
     @Null
@@ -158,7 +164,15 @@ public class PartnerBasic {
         this.legalPeridno = legalPeridno == null ? null : legalPeridno.trim();
     }
 
-    public String getCompName() {
+    public String getComp_type() {
+		return comp_type;
+	}
+
+	public void setComp_type(String comp_type) {
+		this.comp_type = comp_type;
+	}
+
+	public String getCompName() {
         return compName;
     }
 

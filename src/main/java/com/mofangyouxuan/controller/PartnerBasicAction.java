@@ -1,14 +1,16 @@
 package com.mofangyouxuan.controller;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 import javax.validation.Valid;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
@@ -19,7 +21,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.UserBasic;
@@ -30,6 +34,7 @@ import com.mofangyouxuan.service.VipBasicService;
 
 /**
  * 合作伙伴信息管理
+ * 1	、合作伙伴证件照文件路径: /证件照主目录/partern_合作伙伴ID/证件类型.jpg
  * @author jeekhan
  *
  */
@@ -37,6 +42,10 @@ import com.mofangyouxuan.service.VipBasicService;
 @RequestMapping("/partner")
 public class PartnerBasicAction {
 	
+	@Value("${sys.partner-cert-dir}")
+	private String partnerCertDir;	//合作伙伴证件照片保存目录
+	
+	private String[] certTypeArr = {"idcard","licence"}; 	//当前支持的证件类型
 	@Autowired
 	private UserBasicService userBasicService;
 	@Autowired
@@ -60,34 +69,41 @@ public class PartnerBasicAction {
 	 * @throws JSONException 
 	 */
 	@RequestMapping("/get/byuser/{userId}")
-	public Object getPartnerByUser(@PathVariable(value="userId",required=true)Integer userId) throws JSONException {
+	public Object getPartnerByUser(@PathVariable(value="userId",required=true)Integer userId){
 		JSONObject jsonRet = new JSONObject();
-		UserBasic user = this.userBasicService.get(userId);
-		if(user == null) {
-			jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
-			jsonRet.put("errmsg", "系统中没有该用户！");
+		try {
+			UserBasic user = this.userBasicService.get(userId);
+			if(user == null) {
+				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该用户！");
+				return jsonRet.toString();
+			}
+			
+			VipBasic vip = this.vipBasicService.get(user.getId());
+			if(vip == null || !"1".equals(vip.getStatus()) ) {
+				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+				return jsonRet.toString();
+			}
+			if(!"1".equals(vip.getIsPartner())) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
+				jsonRet.put("errmsg", "您还没开通合作伙伴功能！");
+				return jsonRet.toString();
+			}
+			
+			PartnerBasic partner = this.partnerBasicService.getByBindUser(user.getId());
+			if(partner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
+				jsonRet.put("errmsg", "您还没开通合作伙伴功能！");
+				return jsonRet.toString();
+			}
+			return partner;
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
 			return jsonRet.toString();
 		}
-		
-		VipBasic vip = this.vipBasicService.get(user.getId());
-		if(vip == null || !"1".equals(vip.getStatus()) ) {
-			jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-			jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-			return jsonRet.toString();
-		}
-		if(!"1".equals(vip.getIsPartner())) {
-			jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-			jsonRet.put("errmsg", "您还没开通合作伙伴功能！");
-			return jsonRet.toString();
-		}
-		
-		PartnerBasic partner = this.partnerBasicService.getByBindUser(user.getId());
-		if(partner == null) {
-			jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-			jsonRet.put("errmsg", "您还没开通合作伙伴功能！");
-			return jsonRet.toString();
-		}
-		return partner;
 	}
 	
 	/**
@@ -98,16 +114,22 @@ public class PartnerBasicAction {
 	 * @throws JSONException 
 	 */
 	@RequestMapping("/get/byid/{partnerId}")
-	public Object getPartnerByID(@PathVariable("partnerId")Integer partnerId) throws JSONException {
+	public Object getPartnerByID(@PathVariable("partnerId")Integer partnerId){
 		JSONObject jsonRet = new JSONObject();
-		
-		PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-		if(partner == null) {
-			jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-			jsonRet.put("errmsg", "您还没开通合作伙伴功能！");
+		try {
+			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
+			if(partner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
+				jsonRet.put("errmsg", "您还没开通合作伙伴功能！");
+				return jsonRet.toString();
+			}
+			return partner;
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
 			return jsonRet.toString();
 		}
-		return partner;
 	}
 	
 	
@@ -117,11 +139,11 @@ public class PartnerBasicAction {
 	 * @param basic	合作伙伴信息
 	 * @param result 字段验证结果
 	 * 
-	 * @return {errcode:0,errmsg:"ok"} 
+	 * @return {errcode:0,errmsg:"ok","partnerId":111} 
 	 * @throws JSONException
 	 */
 	@RequestMapping(value="/create",method=RequestMethod.POST)
-	public String create(@Valid PartnerBasic basic,BindingResult result) throws JSONException {
+	public String create(@Valid PartnerBasic basic,BindingResult result) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//用户信息验证结果处理
@@ -152,17 +174,36 @@ public class PartnerBasicAction {
 			PartnerBasic old = this.partnerBasicService.getByBindUser(user.getId());
 			if( old != null) {	//已有，直接返回成功
 				jsonRet.put("errcode", 0);
+				jsonRet.put("partnerId", old.getId());
 				jsonRet.put("errmsg", "系统中已有该合作伙伴，如果需要修改信息请使用修改功能！");
 				return jsonRet.toString();
 			}
+			//证件照检查
+			
+			
 			//数据处理
 			basic.setStatus("0"); //待审核
+			basic.setReviewLog("");
+			basic.setReviewOpr(null);
+			basic.setReviewTime(null);
+			basic.setCertDir(this.partnerCertDir + "partner_[ID]"); //初次确立后不可变更,[ID]为占位符，指代合作伙伴的实际ID
 			Integer id = this.partnerBasicService.add(basic);
+			
+			String oldChildDir = "partner_" + basic.getUserId(); //旧子目录
 			if(id == null) {
+				File oldDir = new File(this.partnerCertDir,oldChildDir);
+				File[] list = oldDir.listFiles();
+				for(File f:list) {
+					f.delete();
+				}
+				oldDir.delete();
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
+				String newChildDir = "partner_" + id; //新子目录
+				new File(this.partnerCertDir,oldChildDir).renameTo(new File(this.partnerCertDir,newChildDir)); //更新合作伙伴证件目录
 				jsonRet.put("errcode", 0);
+				jsonRet.put("partnerId", id);
 				jsonRet.put("errmsg", "ok");
 			}
 		}catch(Exception e) {
@@ -184,7 +225,7 @@ public class PartnerBasicAction {
 	 * @throws JSONException 
 	 */
 	@RequestMapping(value="/update",method=RequestMethod.POST)
-	public String update(@Valid PartnerBasic basic,BindingResult result) throws JSONException {
+	public String update(@Valid PartnerBasic basic,BindingResult result) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//用户信息验证结果处理
@@ -200,12 +241,6 @@ public class PartnerBasicAction {
 			}
 
 			//数据检查
-			VipBasic vip = this.vipBasicService.get(basic.getUserId());
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-				return jsonRet.toString();
-			}
 			if(basic.getId() == null || basic.getUserId() == null) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "合作伙伴ID和绑定的用户ID均不可为空！");
@@ -215,9 +250,18 @@ public class PartnerBasicAction {
 			PartnerBasic old2 = this.partnerBasicService.getByBindUser(basic.getUserId());
 			if(old1 == null || old2 == null || !old1.getId().equals(old2.getId())) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "合作伙伴ID和绑定的用户ID不匹配！");
+				jsonRet.put("errmsg", "用户不存在或合作伙伴ID和绑定的用户ID不匹配！");
 				return jsonRet.toString();
 			}
+			String oldStatus = old1.getStatus();
+			if(!"0".equals(oldStatus) && !"S".equals(oldStatus) && !"C".equals(oldStatus)) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+				jsonRet.put("errmsg", "您当前不可变更信息，状态不正确！");
+				return jsonRet.toString();
+			}
+			//证件照检查
+			
+			
 			//数据处理
 			basic.setStatus("0"); //待审核
 			basic.setReviewLog("");
@@ -242,7 +286,7 @@ public class PartnerBasicAction {
 	}
 	
 	/**
-	 * 变更合作伙伴状态：关闭、打开
+	 * 合作伙伴自我变更状态：关闭、打开
 	 * 
 	 * @param partnerId
 	 * @param currUserId	当前用户ID
@@ -251,8 +295,8 @@ public class PartnerBasicAction {
 	 * @throws JSONException 
 	 */
 	@RequestMapping("/changeStatus")
-	public String changeStatus(@RequestParam(value="partnerId",required=true)Integer partnerId,
-			@RequestParam(value="currUserId",required=true)Integer currUserId) throws JSONException {
+	public String changeOwnStatus(@RequestParam(value="partnerId",required=true)Integer partnerId,
+			@RequestParam(value="currUserId",required=true)Integer currUserId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			PartnerBasic old1 = this.partnerBasicService.getByID(partnerId);
@@ -305,7 +349,7 @@ public class PartnerBasicAction {
 	public String review(@RequestParam(value="partnerId",required=true)Integer partnerId,
 			@RequestParam(value="currUserId",required=true)Integer currUserId,
 			@RequestParam(value="review",required=true)String review,
-			@RequestParam(value="result",required=true)String result) throws JSONException {
+			@RequestParam(value="result",required=true)String result){
 		JSONObject jsonRet = new JSONObject();
 		try {
 			UserBasic user = this.userBasicService.get(currUserId);
@@ -315,7 +359,7 @@ public class PartnerBasicAction {
 				return jsonRet.toString();
 			}
 			PartnerBasic old = this.partnerBasicService.getByID(partnerId);
-			if(old == null || "0".equals(old.getStatus())) {
+			if(old == null || !"0".equals(old.getStatus())) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
 				jsonRet.put("errmsg", "该合作伙伴不存在或状态不正确！");
 				return jsonRet.toString();
@@ -339,6 +383,75 @@ public class PartnerBasicAction {
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
 		return jsonRet.toString();
+	}
+	
+	/**
+	 * 证件照上传
+	 * @param certType	证件类型
+	 * @param image		照片,jpg格式
+	 * @param currUserId	当前操作用户
+	 * @return
+	 */
+	@RequestMapping("/upload")
+	public String upload(@RequestParam(value="certType",required=true)String certType,
+			@RequestParam(value="image")MultipartFile image,
+			@RequestParam(value="currUserId",required=true)String currUserId) {
+		
+		JSONObject jsonRet = new JSONObject();
+		try {
+			if(image == null || image.isEmpty()) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "证件照片信息不可为空！");
+				return jsonRet.toString();
+			}
+			//文件类型判断
+			String imgType = image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf('.')+1);
+			if(!"jpg".equalsIgnoreCase(imgType)) {
+				jsonRet.put("errcode", -888);
+				jsonRet.put("errmsg", "证件图片文件必须是jpg格式！");
+				return jsonRet.toString();
+			}
+			//证件类型判断
+			boolean flag = false;
+			for(String tp:certTypeArr) {
+				if(tp.equals(certType)) {
+					flag = true;
+					break;
+				}
+			}
+			if(!flag) {
+				jsonRet.put("errcode", -888);
+				jsonRet.put("errmsg", "证件类型只可是：" + Arrays.toString(certTypeArr) + "！");
+				return jsonRet.toString();
+			}
+			//数据检查
+			UserBasic user = this.userBasicService.get(currUserId);
+			if(user == null) {
+				jsonRet.put("errmsg", "系统中该用户不存在！");
+				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(user.getId());
+			if(vip == null || !"1".equals(vip.getStatus()) ) {
+				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+				return jsonRet.toString();
+			}
+			//照片保存
+			File certDir = new File(this.partnerCertDir,"partner_" + currUserId);
+			if(!certDir.exists()) {
+				certDir.mkdirs();
+			}
+			File newFile = new File(certDir,certType + ".jpg");
+			FileUtils.copyInputStreamToFile(image.getInputStream(), newFile);
+		} catch (Exception e) {
+			e.printStackTrace();
+			jsonRet = new JSONObject();
+			jsonRet.put("errcode", -777);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+		
 	}
 
 }

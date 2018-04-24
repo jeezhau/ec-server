@@ -13,6 +13,7 @@
     <result column="legal_pername" jdbcType="VARCHAR" property="legalPername" />
     <result column="legal_peridno" jdbcType="VARCHAR" property="legalPeridno" />
     <result column="comp_name" jdbcType="VARCHAR" property="compName" />
+    <result column="comp_type" jdbcType="CHAR" property="compType" />
     <result column="licence_no" jdbcType="VARCHAR" property="licenceNo" />
     <result column="cert_dir" jdbcType="VARCHAR" property="certDir" />
     <result column="phone" jdbcType="VARCHAR" property="phone" />
@@ -26,7 +27,7 @@
   </resultMap>
   <sql id="Base_Column_List">
     id, user_id, country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
-    comp_name, licence_no, cert_dir, phone, location_x, location_y, status, update_time, 
+    comp_type, comp_name, licence_no, cert_dir, phone, location_x, location_y, status, update_time, 
     review_log, review_opr, review_time
   </sql>
   
@@ -53,7 +54,7 @@
     insert into tb_partner_basic (id, user_id, country, 
       province, city, area, 
       addr, busi_name, legal_pername, 
-      legal_peridno, comp_name, licence_no, 
+      legal_peridno, comp_type,comp_name, licence_no, 
       cert_dir, phone, location_x, 
       location_y, status, update_time, 
       review_log, review_opr, review_time
@@ -61,7 +62,7 @@
     values (#{id,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{country,jdbcType=VARCHAR}, 
       #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
       #{addr,jdbcType=VARCHAR}, #{busiName,jdbcType=VARCHAR}, #{legalPername,jdbcType=VARCHAR}, 
-      #{legalPeridno,jdbcType=VARCHAR}, #{compName,jdbcType=VARCHAR}, #{licenceNo,jdbcType=VARCHAR}, 
+      #{legalPeridno,jdbcType=VARCHAR}, #{compType,jdbcType=CHAR},#{compName,jdbcType=VARCHAR}, #{licenceNo,jdbcType=VARCHAR}, 
       #{certDir,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, #{locationX,jdbcType=DECIMAL}, 
       #{locationY,jdbcType=DECIMAL}, #{status,jdbcType=CHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
       #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP}
@@ -99,6 +100,9 @@
       <if test="legalPeridno != null">
         legal_peridno = #{legalPeridno,jdbcType=VARCHAR},
       </if>
+      <if test="compType != null">
+        comp_type = #{compType,jdbcType=CHAR},
+      </if>      
       <if test="compName != null">
         comp_name = #{compName,jdbcType=VARCHAR},
       </if>

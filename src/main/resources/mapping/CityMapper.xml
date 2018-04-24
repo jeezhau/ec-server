@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.CityMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.City">
+    <id column="city_code" jdbcType="VARCHAR" property="cityCode" />
+    <result column="city_name" jdbcType="VARCHAR" property="cityName" />
+    <result column="prov_code" jdbcType="VARCHAR" property="provCode" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    city_code, city_name, prov_code
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_cities
+    where city_code = #{cityCode,jdbcType=VARCHAR}
+  </select>
+  
+  <select id="selectByCodeName" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_cities
+    where city_code = #{codeName,jdbcType=VARCHAR} or city_name = #{codeName,jdbcType=VARCHAR}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from tb_cities
+    where city_code = #{cityCode,jdbcType=VARCHAR}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.City">
+    insert into tb_cities (city_code, city_name, prov_code
+      )
+    values (#{cityCode,jdbcType=VARCHAR}, #{cityName,jdbcType=VARCHAR}, #{provCode,jdbcType=VARCHAR}
+      )
+  </insert>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.City">
+    update tb_cities
+    set city_name = #{cityName,jdbcType=VARCHAR},
+      prov_code = #{provCode,jdbcType=VARCHAR}
+    where city_code = #{cityCode,jdbcType=VARCHAR}
+  </update>
+  
+  <select id="selectByProvCode" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_cities
+    where prov_code = #{provCode,jdbcType=VARCHAR}
+  </select>  
+  
+</mapper>

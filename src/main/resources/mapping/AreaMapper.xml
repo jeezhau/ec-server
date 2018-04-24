@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.AreaMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Area">
+    <id column="area_code" jdbcType="VARCHAR" property="areaCode" />
+    <result column="area_name" jdbcType="VARCHAR" property="areaName" />
+    <result column="city_code" jdbcType="VARCHAR" property="cityCode" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    area_code, area_name, city_code
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_areas
+    where area_code = #{areaCode,jdbcType=VARCHAR}
+  </select>
+  
+  <select id="selectByCodeName" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_areas
+    where area_code = #{codeName,jdbcType=VARCHAR} or area_name = #{codeName,jdbcType=VARCHAR}
+  </select>  
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from tb_areas
+    where area_code = #{areaCode,jdbcType=VARCHAR}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Area">
+    insert into tb_areas (area_code, area_name, city_code
+      )
+    values (#{areaCode,jdbcType=VARCHAR}, #{areaName,jdbcType=VARCHAR}, #{cityCode,jdbcType=VARCHAR}
+      )
+  </insert>
+ 
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Area">
+    update tb_areas
+    set area_name = #{areaName,jdbcType=VARCHAR},
+      city_code = #{cityCode,jdbcType=VARCHAR}
+    where area_code = #{areaCode,jdbcType=VARCHAR}
+  </update>
+  
+  <select id="selectByCityCode" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_areas
+    where city_code = #{cityCode,jdbcType=VARCHAR}
+  </select>
+  
+</mapper>

@@ -187,10 +187,10 @@ public class HttpUtils {
     /**
      * 发送 POST 请求（HTTP），JSON形式
      * @param apiUrl
-     * @param json json对象
+     * @param json json格式字符串
      * @return
      */
-    public static String doPost(String apiUrl, Object json) {
+    public static String doPost(String apiUrl, String json) {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         String httpStr = null;
         HttpPost httpPost = new HttpPost(apiUrl);
@@ -198,7 +198,7 @@ public class HttpUtils {
 
         try {
             httpPost.setConfig(requestConfig);
-            StringEntity stringEntity = new StringEntity(json.toString(),"UTF-8");//解决中文乱码问题
+            StringEntity stringEntity = new StringEntity(json,"UTF-8");//解决中文乱码问题
             stringEntity.setContentEncoding("UTF-8");
             stringEntity.setContentType("application/json");
             httpPost.setEntity(stringEntity);
@@ -341,11 +341,11 @@ public class HttpUtils {
     /**
      * 发送 SSL POST 请求（HTTPS），JSON形式
      * @param apiUrl API接口URL
-     * @param json JSON对象
+     * @param json JSON格式字符串
      * @return
      * @throws IOException 
      */
-    public static String doPostSSL(String apiUrl, Object json) {
+    public static String doPostSSL(String apiUrl,  String json) {
         CloseableHttpClient httpClient = createSSLConnSocketFactory();
         HttpPost httpPost = new HttpPost(apiUrl);
         CloseableHttpResponse response = null;
@@ -353,7 +353,7 @@ public class HttpUtils {
 
         try {
             httpPost.setConfig(requestConfig);
-            StringEntity stringEntity = new StringEntity(json.toString(),"UTF-8");//解决中文乱码问题
+            StringEntity stringEntity = new StringEntity(json,"UTF-8");//解决中文乱码问题
             stringEntity.setContentEncoding("UTF-8");
             stringEntity.setContentType("application/json");
             httpPost.setEntity(stringEntity);
