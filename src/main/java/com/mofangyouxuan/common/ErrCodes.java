@@ -28,6 +28,6 @@ public class ErrCodes {
 	public static int PARTNER_NO_EXISTS = -104001;		//还没开通合作伙伴
 	public static int PARTNER_PARAM_ERROR = -104002;	//参数有错
 	public static int PARTNER_STATUS_ERROR = -104003;	//参数有错
-	
+	public static int PARTNER_CERT_IMAGE = -104004;	//证书有错
 	
 }

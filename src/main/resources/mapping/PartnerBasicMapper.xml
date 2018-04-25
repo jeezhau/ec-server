@@ -19,6 +19,7 @@
     <result column="phone" jdbcType="VARCHAR" property="phone" />
     <result column="location_x" jdbcType="DECIMAL" property="locationX" />
     <result column="location_y" jdbcType="DECIMAL" property="locationY" />
+    <result column="introduce" jdbcType="VARCHAR" property="introduce" />
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="review_log" jdbcType="VARCHAR" property="reviewLog" />
@@ -27,8 +28,8 @@
   </resultMap>
   <sql id="Base_Column_List">
     id, user_id, country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
-    comp_type, comp_name, licence_no, cert_dir, phone, location_x, location_y, status, update_time, 
-    review_log, review_opr, review_time
+    comp_type, comp_name, licence_no, cert_dir, phone, location_x, location_y, introduce,status, 
+    update_time, review_log, review_opr, review_time
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -55,16 +56,15 @@
       province, city, area, 
       addr, busi_name, legal_pername, 
       legal_peridno, comp_type,comp_name, licence_no, 
-      cert_dir, phone, location_x, 
-      location_y, status, update_time, 
-      review_log, review_opr, review_time
+      cert_dir, phone, location_x, location_y, introduce,
+      status, update_time, review_log, review_opr, review_time
       )
     values (#{id,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{country,jdbcType=VARCHAR}, 
       #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
       #{addr,jdbcType=VARCHAR}, #{busiName,jdbcType=VARCHAR}, #{legalPername,jdbcType=VARCHAR}, 
       #{legalPeridno,jdbcType=VARCHAR}, #{compType,jdbcType=CHAR},#{compName,jdbcType=VARCHAR}, #{licenceNo,jdbcType=VARCHAR}, 
       #{certDir,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, #{locationX,jdbcType=DECIMAL}, 
-      #{locationY,jdbcType=DECIMAL}, #{status,jdbcType=CHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{locationY,jdbcType=DECIMAL},#{introduce,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
       #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP}
       )
   </insert>
@@ -121,6 +121,9 @@
       <if test="locationY != null">
         location_y = #{locationY,jdbcType=DECIMAL},
       </if>
+      <if test="introduce != null">
+        introduce = #{introduce,jdbcType=VARCHAR},
+      </if>     
       <if test="status != null">
         status = #{status,jdbcType=CHAR},
       </if>

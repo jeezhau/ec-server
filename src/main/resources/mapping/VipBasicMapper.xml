@@ -6,12 +6,11 @@
     <result column="scores" jdbcType="INTEGER" property="scores" />
     <result column="balance" jdbcType="DECIMAL" property="balance" />
     <result column="freeze" jdbcType="DECIMAL" property="freeze" />
-    <result column="is_partner" jdbcType="CHAR" property="isPartner" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="status" jdbcType="CHAR" property="status" />
   </resultMap>
   <sql id="Base_Column_List">
-    vip_id, scores, balance, freeze, is_partner, create_time, status
+    vip_id, scores, balance, freeze, create_time, status
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -28,11 +27,9 @@
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.VipBasic">
     insert into tb_vip_basic (vip_id, scores, balance, 
-      freeze, is_partner, create_time, 
-      status)
+      freeze, create_time, status)
     values (#{vipId,jdbcType=INTEGER}, #{scores,jdbcType=INTEGER}, #{balance,jdbcType=DECIMAL}, 
-      #{freeze,jdbcType=DECIMAL}, #{isPartner,jdbcType=CHAR}, #{createTime,jdbcType=TIMESTAMP}, 
-      #{status,jdbcType=CHAR})
+      #{freeze,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR})
   </insert>
  
   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.VipBasic">
@@ -46,9 +43,6 @@
       </if>
       <if test="freeze != null">
         freeze = #{freeze,jdbcType=DECIMAL},
-      </if>
-      <if test="isPartner != null">
-        is_partner = #{isPartner,jdbcType=CHAR},
       </if>
       <if test="createTime != null">
         create_time = #{createTime,jdbcType=TIMESTAMP},

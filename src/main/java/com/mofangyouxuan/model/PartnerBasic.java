@@ -46,12 +46,12 @@ public class PartnerBasic {
     @Size(min=18,max=18,message=" 法人省份证：长度18字符 ！")
     private String legalPeridno;
 
-    @NotNull(message=" 公司类型：不可为空！")
-    @Pattern(regexp="^[12]&",message=" 公司类型：取值为【1-个体户，2-公司】")
-    private String comp_type;
+    @NotNull(message=" 企业类型：不可为空！")
+    @Pattern(regexp="^[12]$",message=" 企业类型：取值为【1-小微商户，2-公司】")
+    private String compType;
     
-    @NotNull(message=" 公司名称：不可为空！")
-    @Size(min=2,max=100,message=" 公司名称：长度范围2-100字符 ！")
+    @NotNull(message=" 企业名称：不可为空！")
+    @Size(min=2,max=100,message=" 企业名称：长度范围2-100字符 ！")
     private String compName;
 
     @NotNull(message=" 营业执照号/身份证号 不可为空！")
@@ -71,6 +71,10 @@ public class PartnerBasic {
     @NotNull(message=" 经营地经度：不可为空！")
     private BigDecimal locationY;
 
+    @NotNull(message=" 经营描述：不可为空！")
+    @Size(min=10,max=600,message=" 经营描述：长度范围10-600字符 ！")
+    private String introduce;
+    
     @Null
     private String status;
 
@@ -164,12 +168,12 @@ public class PartnerBasic {
         this.legalPeridno = legalPeridno == null ? null : legalPeridno.trim();
     }
 
-    public String getComp_type() {
-		return comp_type;
+    public String getCompType() {
+		return compType;
 	}
 
-	public void setComp_type(String comp_type) {
-		this.comp_type = comp_type;
+	public void setCompType(String comp_type) {
+		this.compType = comp_type;
 	}
 
 	public String getCompName() {
@@ -220,7 +224,15 @@ public class PartnerBasic {
         this.locationY = locationY;
     }
 
-    public String getStatus() {
+    public String getIntroduce() {
+		return introduce;
+	}
+
+	public void setIntroduce(String introduce) {
+		this.introduce = introduce;
+	}
+
+	public String getStatus() {
         return status;
     }
 

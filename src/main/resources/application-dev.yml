@@ -7,21 +7,26 @@ server:
   tomcat:
     uri-encoding: UTF-8
 spring:
-    datasource:
-        name: mfyx
-        url: 'jdbc:mysql://47.106.70.72:3306/db_mfyx'
-        username: 'aoksen'
-        password: 'YesOrNoAnd0+1'
+  datasource:
+    name: mfyx
+    url: 'jdbc:mysql://47.106.70.72:3306/db_mfyx'
+    username: 'aoksen'
+    password: 'YesOrNoAnd0+1'
         # 使用druid数据源
-        type: com.alibaba.druid.pool.DruidDataSource
-        driver-class-name: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.jdbc.Driver    
+  servlet: 
+    multipart:
+      max-file-size: 10Mb
+      max-request-size: 10Mb
+        
 mybatis:
   mapper-locations: classpath:/mapping/*.xml
   type-aliases-package: com.mofanyouxuan.model
  
 logging:
   level:
-    com.jeekhan.wx.mapper: DEBUG
+    com.mofangyouxuan: DEBUG
 
   
 ######业务参数############

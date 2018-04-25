@@ -12,8 +12,6 @@ public class VipBasic {
 
     private BigDecimal freeze;
 
-    private String isPartner;
-
     private Date createTime;
 
     private String status;
@@ -48,14 +46,6 @@ public class VipBasic {
 
     public void setFreeze(BigDecimal freeze) {
         this.freeze = freeze;
-    }
-
-    public String getIsPartner() {
-        return isPartner;
-    }
-
-    public void setIsPartner(String isPartner) {
-        this.isPartner = isPartner == null ? null : isPartner.trim();
     }
 
     public Date getCreateTime() {

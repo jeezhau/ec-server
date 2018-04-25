@@ -21,7 +21,7 @@ mybatis:
  
 logging:
   level:
-    com.jeekhan.wx.mapper: DEBUG
+    com.mofangyouxuan: DEBUG
 
   
 ######业务参数############

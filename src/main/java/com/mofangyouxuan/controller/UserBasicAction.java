@@ -223,7 +223,7 @@ public class UserBasicAction {
 		if(openId == null || openId.trim().length()<6) {
 			jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
 			jsonRet.put("errmsg", " OpenId或UnionId或Email长度至少为6个字符！ ");
-			jsonRet.toString();
+			return jsonRet.toString();
 		}
 		try {
 			UserBasic user = this.userBasicService.get(openId);
@@ -231,7 +231,7 @@ public class UserBasicAction {
 			if(user == null || !"0".equals(user.getStatus())){
 				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 				jsonRet.put("errmsg", " 系统中没有该用户！ ");
-				jsonRet.toString();
+				return jsonRet.toString();
 			}
 			return user;
 		}catch(Exception e) {

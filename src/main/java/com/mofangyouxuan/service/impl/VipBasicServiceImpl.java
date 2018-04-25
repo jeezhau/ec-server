@@ -26,7 +26,6 @@ public class VipBasicServiceImpl implements VipBasicService{
 		vipBasic.setCreateTime(new Date());
 		vipBasic.setBalance(new BigDecimal("0"));
 		vipBasic.setFreeze(new BigDecimal("0"));
-		vipBasic.setIsPartner("0"); //未开通合作伙伴
 		vipBasic.setScores(0);
 		vipBasic.setStatus("0");//未开通
 		int cnt = this.vipBasicMapper.insert(vipBasic);
