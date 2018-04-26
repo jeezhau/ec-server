@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.GoodsMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Goods">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
+    <result column="category_id" jdbcType="INTEGER" property="categoryId" />
+    <result column="goods_name" jdbcType="VARCHAR" property="goodsName" />
+    <result column="goods_desc" jdbcType="VARCHAR" property="goodsDesc" />
+    <result column="main_img_path" jdbcType="VARCHAR" property="mainImgPath" />
+    <result column="carousel_img_dir" jdbcType="VARCHAR" property="carouselImgDir" />
+    <result column="saledCnt" jdbcType="INTEGER" property="saledCnt" />
+    <result column="stock" jdbcType="INTEGER" property="stock" />
+    <result column="limited_num" jdbcType="INTEGER" property="limitedNum" />
+    <result column="begin_time" jdbcType="TIMESTAMP" property="beginTime" />
+    <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+    <result column="dispatch_mode" jdbcType="CHAR" property="dispatchMode" />
+    <result column="is_city_wide" jdbcType="CHAR" property="isCityWide" />
+    <result column="dist_limit" jdbcType="INTEGER" property="distLimit" />
+    <result column="prov_limit" jdbcType="VARCHAR" property="provLimit" />
+    <result column="distr_ids" jdbcType="VARCHAR" property="distrIds" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="review_result" jdbcType="CHAR" property="reviewResult" />
+    <result column="review_log" jdbcType="VARCHAR" property="reviewLog" />
+    <result column="review_opr" jdbcType="INTEGER" property="reviewOpr" />
+    <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
+    <result column="status" jdbcType="CHAR" property="status" />
+    <result column="memo" jdbcType="VARCHAR" property="memo" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, partner_id, category_id,goods_name, goods_desc, main_img_dir,carousel_img_dir,saledCnt, stock, limited_num, begin_time, 
+    end_time, dispatch_mode, is_city_wide, dist_limit, prov_limit, distr_ids, update_time, 
+    review_result, review_log, review_opr, review_time, status, memo
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_goods_info
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from tb_goods_info
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Goods" keyProperty="id" useGeneratedKeys="true">
+    insert into tb_goods_info (id, partner_id, category_id,goods_name, 
+      goods_desc, main_img_dir, carousel_Img_Dir,saledCnt, stock, 
+      limited_num, begin_time, end_time, 
+      dispatch_mode, is_city_wide, dist_limit, 
+      prov_limit, distr_ids, update_time, 
+      review_result, review_log, review_opr,review_time, 
+      status, memo)
+    values (#{id,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER},#{categoryId,jdbcType=INTEGER}, #{goodsName,jdbcType=VARCHAR}, 
+      #{goodsDesc,jdbcType=VARCHAR}, #{mainImgDir,jdbcType=VARCHAR}, #{carouselImgDir,jdbcType=VARCHAR}, #{saledCnt,jdbcType=INTEGER}, #{stock,jdbcType=INTEGER}, 
+      #{limitedNum,jdbcType=INTEGER}, #{beginTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
+      #{dispatchMode,jdbcType=CHAR}, #{isCityWide,jdbcType=CHAR}, #{distLimit,jdbcType=INTEGER}, 
+      #{provLimit,jdbcType=VARCHAR}, #{distrIds,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{reviewResult,jdbcType=CHAR}, #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP},
+      #{status,jdbcType=CHAR}, #{memo,jdbcType=VARCHAR})
+  </insert>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Goods">
+    update tb_goods_info
+    <set>
+      <if test="partnerId != null">
+        partner_id = #{partnerId,jdbcType=INTEGER},
+      </if>
+      <if test="categoryId != null">
+        category_id = #{categoryId,jdbcType=INTEGER},
+      </if>
+      <if test="goodsName != null">
+        goods_name = #{goodsName,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsDesc != null">
+        goods_desc = #{goodsDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="mainImgDir != null">
+        main_img_dir = #{mainImgDir,jdbcType=VARCHAR},
+      </if>
+      <if test="carouselImgDir != null">
+        carousel_Img_Dir = #{carouselImgDir,jdbcType=VARCHAR},
+      </if>
+      <if test="saledCnt != null">
+        saled_cnt = #{saledCnt,jdbcType=INTEGER},
+      </if>            
+      <if test="stock != null">
+        stock = #{stock,jdbcType=INTEGER},
+      </if>
+      <if test="limitedNum != null">
+        limited_num = #{limitedNum,jdbcType=INTEGER},
+      </if>
+      <if test="beginTime != null">
+        begin_time = #{beginTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="endTime != null">
+        end_time = #{endTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dispatchMode != null">
+        dispatch_mode = #{dispatchMode,jdbcType=CHAR},
+      </if>
+      <if test="isCityWide != null">
+        is_city_wide = #{isCityWide,jdbcType=CHAR},
+      </if>
+      <if test="distLimit != null">
+        dist_limit = #{distLimit,jdbcType=INTEGER},
+      </if>
+      <if test="provLimit != null">
+        prov_limit = #{provLimit,jdbcType=VARCHAR},
+      </if>
+      <if test="distrIds != null">
+        distr_ids = #{distrIds,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="reviewResult != null">
+        review_result = #{reviewResult,jdbcType=CHAR},
+      </if>
+      <if test="reviewLog != null">
+        review_log = #{reviewLog,jdbcType=VARCHAR},
+      </if>
+      <if test="reviewOpr != null">
+        review_opr = #{reviewOpr,jdbcType=INTEGER},
+      </if>
+      <if test="reviewTime != null">
+        review_time = #{reviewTime,jdbcType=TIMESTAMP},
+      </if>      
+      <if test="status != null">
+        status = #{status,jdbcType=CHAR},
+      </if>
+      <if test="memo != null">
+        memo = #{memo,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <select id="countAll" parameterType="map" resultType="int">
+    select 
+     <include refid="Base_Column_List" />
+    from tb_goods_info
+    <where>
+      <if test="params.id != null">
+        and id = #{id,jdbcType=INTEGER},
+      </if>
+      <if test="params.partnerId != null">
+        and partner_id = #{params.partnerId,jdbcType=INTEGER},
+      </if>
+      <if test="params.categoryId != null">
+        and category_id = #{params.categoryId,jdbcType=INTEGER},
+      </if>      
+      <if test="params.goodsName != null">
+        and goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%'),
+      </if>
+      <if test="params.dispatchMode != null">
+        and dispatch_mode = #{params.dispatchMode,jdbcType=CHAR},
+      </if>
+      <if test="params.isCityWide != null">
+        and is_city_wide = #{params.isCityWide,jdbcType=CHAR},
+      </if>
+      <if test="params.distLimit != null">
+        and dist_limit &lt;= #{params.distLimit,jdbcType=INTEGER},
+      </if>
+      <if test="params.provLimit != null">
+        and LOCATE(#{params.provLimit,jdbcType=VARCHAR},prov_limit)>0,
+      </if>
+      <if test="params.distrIds != null">
+        and LOCATE(concat(',',#{params.distrIds,jdbcType=VARCHAR},','),distr_ids)>0,
+      </if>
+      <if test="params.reviewResult != null">
+        and review_result = #{params.reviewResult,jdbcType=CHAR},
+      </if>
+      <if test="params.status != null">
+        and `status` = #{params.status,jdbcType=CHAR},
+      </if>
+    </where>
+  </select> 
+
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+    select 
+     <include refid="Base_Column_List" />
+    from tb_goods_info
+    <where>
+      <if test="params.id != null">
+        and id = #{id,jdbcType=INTEGER},
+      </if>
+      <if test="params.partnerId != null">
+        and partner_id = #{params.partnerId,jdbcType=INTEGER},
+      </if>
+      <if test="params.categoryId != null">
+        and category_id = #{params.categoryId,jdbcType=INTEGER},
+      </if>       
+      <if test="params.goodsName != null">
+        and goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%'),
+      </if>
+      <if test="params.dispatchMode != null">
+        and dispatch_mode = #{params.dispatchMode,jdbcType=CHAR},
+      </if>
+      <if test="params.isCityWide != null">
+        and is_city_wide = #{params.isCityWide,jdbcType=CHAR},
+      </if>
+      <if test="params.distLimit != null">
+        and dist_limit &lt;= #{params.distLimit,jdbcType=INTEGER},
+      </if>
+      <if test="params.provLimit != null">
+        and LOCATE(#{params.provLimit,jdbcType=VARCHAR},prov_limit)>0,
+      </if>
+      <if test="params.distrIds != null">
+        and LOCATE(concat(',',#{params.distrIds,jdbcType=VARCHAR},','),distr_ids)>0,
+      </if>
+      <if test="params.reviewResult != null">
+        and review_result = #{params.reviewResult,jdbcType=CHAR},
+      </if>
+      <if test="params.status != null">
+        and `status` = #{params.status,jdbcType=CHAR},
+      </if>
+    </where>
+    <if test="sorts != null">
+      ${sorts} 
+    </if>
+    limit #{pageCond.begin},#{pageCond.pageSize}
+  </select>
+  
+</mapper>

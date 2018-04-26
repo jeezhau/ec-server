@@ -122,7 +122,7 @@ public class PartnerBasicAction {
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
 			if(partner == null) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				jsonRet.put("errmsg", "您还没开通合作伙伴功能！");
+				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
 				return jsonRet.toString();
 			}
 			return partner;
