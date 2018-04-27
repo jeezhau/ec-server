@@ -37,4 +37,10 @@ public class ErrCodes {
 	public static int GOODS_PARAM_ERROR = -105003;	//参数格式不正确
 	public static int GOODS_STATUS_ERROR = -105004;	//状态有错
 	
+	//图库管理功能码：106
+	public static int IMAGE_DIR_NO_EXISTS = -106001;		//目录不存在
+	public static int IMAGE_PARAM_ERROR = -106002;	//参数有错
+	public static int IMAGE_FOLDER_FILE_LIMIT = -106003; //单个目录文件数量限制
+	public static int IMAGE_FOLDER_LEVEL_LIMIT = -106004; //目录层级限制
+	public static int IMAGE_ALL_FILE_LIMIT = -106005; //总文件数量限制
 }

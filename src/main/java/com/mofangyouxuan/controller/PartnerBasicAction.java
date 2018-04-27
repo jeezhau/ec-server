@@ -431,7 +431,7 @@ public class PartnerBasicAction {
 	 * @return {errcode:0,errmsg:""}
 	 */
 	@RequestMapping("/cert/upload")
-	public String upload(@RequestParam(value="certType",required=true)String certType,
+	public String uploadCert(@RequestParam(value="certType",required=true)String certType,
 			@RequestParam(value="image")MultipartFile image,
 			@RequestParam(value="currUserId",required=true)Integer currUserId) {
 		
@@ -445,7 +445,7 @@ public class PartnerBasicAction {
 			//文件类型判断
 			String imgType = image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf('.')+1);
 			if(!"jpg".equalsIgnoreCase(imgType) && !"jpeg".equalsIgnoreCase(imgType) && !"png".equalsIgnoreCase(imgType)) {
-				jsonRet.put("errcode", -888);
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "证件图片文件必须是jpg,jpeg,png格式！");
 				return jsonRet.toString();
 			}
@@ -458,7 +458,7 @@ public class PartnerBasicAction {
 				}
 			}
 			if(!flag) {
-				jsonRet.put("errcode", -888);
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "证件类型只可是：" + Arrays.toString(certTypeArr) + "！");
 				return jsonRet.toString();
 			}
@@ -494,7 +494,7 @@ public class PartnerBasicAction {
 		} catch (Exception e) {
 			e.printStackTrace();
 			jsonRet = new JSONObject();
-			jsonRet.put("errcode", -777);
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
 		}
 		return jsonRet.toString();
@@ -510,7 +510,7 @@ public class PartnerBasicAction {
 	 * @throws IOException
 	 */
 	@RequestMapping("/cert/show/{currUserId}/{certType}")
-	public void show(@PathVariable(value="certType",required=true)String certType,
+	public void showCert(@PathVariable(value="certType",required=true)String certType,
 			@PathVariable(value="currUserId",required=true)Integer currUserId,
 			OutputStream out,HttpServletRequest request,HttpServletResponse response) throws IOException {
 		File dir = new File(this.partnerCertDir+"partner_USERID_"+currUserId);
@@ -519,6 +519,7 @@ public class PartnerBasicAction {
 			File file = files[0];
 			BufferedImage image = ImageIO.read(file);
 			response.setContentType("image/*");
+			response.addHeader("filename", file.getName());
 			OutputStream os = response.getOutputStream();  
 			String type = file.getName().substring(file.getName().lastIndexOf('.')+1);
 			ImageIO.write(image, type, os); 
