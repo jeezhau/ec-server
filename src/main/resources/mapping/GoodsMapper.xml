@@ -2,13 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mofangyouxuan.mapper.GoodsMapper">
   <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Goods">
-    <id column="id" jdbcType="INTEGER" property="id" />
+    <id column="goods_id" jdbcType="INTEGER" property="goodsId" />
     <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
     <result column="category_id" jdbcType="INTEGER" property="categoryId" />
     <result column="goods_name" jdbcType="VARCHAR" property="goodsName" />
     <result column="goods_desc" jdbcType="VARCHAR" property="goodsDesc" />
     <result column="main_img_path" jdbcType="VARCHAR" property="mainImgPath" />
-    <result column="carousel_img_dir" jdbcType="VARCHAR" property="carouselImgDir" />
+    <result column="carousel_img_paths" jdbcType="VARCHAR" property="carouselImgPaths" />
     <result column="saledCnt" jdbcType="INTEGER" property="saledCnt" />
     <result column="stock" jdbcType="INTEGER" property="stock" />
     <result column="limited_num" jdbcType="INTEGER" property="limitedNum" />
@@ -18,7 +18,7 @@
     <result column="is_city_wide" jdbcType="CHAR" property="isCityWide" />
     <result column="dist_limit" jdbcType="INTEGER" property="distLimit" />
     <result column="prov_limit" jdbcType="VARCHAR" property="provLimit" />
-    <result column="distr_ids" jdbcType="VARCHAR" property="distrIds" />
+    <result column="postage_ids" jdbcType="VARCHAR" property="postageIds" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="review_result" jdbcType="CHAR" property="reviewResult" />
     <result column="review_log" jdbcType="VARCHAR" property="reviewLog" />
@@ -28,35 +28,35 @@
     <result column="memo" jdbcType="VARCHAR" property="memo" />
   </resultMap>
   <sql id="Base_Column_List">
-    id, partner_id, category_id,goods_name, goods_desc, main_img_dir,carousel_img_dir,saledCnt, stock, limited_num, begin_time, 
-    end_time, dispatch_mode, is_city_wide, dist_limit, prov_limit, distr_ids, update_time, 
+    goods_id, partner_id, category_id,goods_name, goods_desc, main_img_dir,carousel_img_paths,saledCnt, stock, limited_num, begin_time, 
+    end_time, dispatch_mode, is_city_wide, dist_limit, prov_limit, postage_ids, update_time, 
     review_result, review_log, review_opr, review_time, status, memo
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
     from tb_goods_info
-    where id = #{id,jdbcType=INTEGER}
+    where goods_id = #{goodsId,jdbcType=INTEGER}
   </select>
   
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from tb_goods_info
-    where id = #{id,jdbcType=INTEGER}
+    where goods_id = #{goodsId,jdbcType=INTEGER}
   </delete>
   
-  <insert id="insert" parameterType="com.mofangyouxuan.model.Goods" keyProperty="id" useGeneratedKeys="true">
-    insert into tb_goods_info (id, partner_id, category_id,goods_name, 
-      goods_desc, main_img_dir, carousel_Img_Dir,saledCnt, stock, 
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Goods" keyProperty="goodsId" useGeneratedKeys="true">
+    insert into tb_goods_info (goods_id, partner_id, category_id,goods_name, 
+      goods_desc, main_img_dir, carousel_img_paths,saledCnt, stock, 
       limited_num, begin_time, end_time, 
       dispatch_mode, is_city_wide, dist_limit, 
-      prov_limit, distr_ids, update_time, 
+      prov_limit, postage_ids, update_time, 
       review_result, review_log, review_opr,review_time, 
       status, memo)
-    values (#{id,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER},#{categoryId,jdbcType=INTEGER}, #{goodsName,jdbcType=VARCHAR}, 
-      #{goodsDesc,jdbcType=VARCHAR}, #{mainImgDir,jdbcType=VARCHAR}, #{carouselImgDir,jdbcType=VARCHAR}, #{saledCnt,jdbcType=INTEGER}, #{stock,jdbcType=INTEGER}, 
+    values (#{goodsId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER},#{categoryId,jdbcType=INTEGER}, #{goodsName,jdbcType=VARCHAR}, 
+      #{goodsDesc,jdbcType=VARCHAR}, #{mainImgDir,jdbcType=VARCHAR}, #{carouselImgPaths,jdbcType=VARCHAR}, #{saledCnt,jdbcType=INTEGER}, #{stock,jdbcType=INTEGER}, 
       #{limitedNum,jdbcType=INTEGER}, #{beginTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
       #{dispatchMode,jdbcType=CHAR}, #{isCityWide,jdbcType=CHAR}, #{distLimit,jdbcType=INTEGER}, 
-      #{provLimit,jdbcType=VARCHAR}, #{distrIds,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{provLimit,jdbcType=VARCHAR}, #{postageIds,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
       #{reviewResult,jdbcType=CHAR}, #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP},
       #{status,jdbcType=CHAR}, #{memo,jdbcType=VARCHAR})
   </insert>
@@ -79,8 +79,8 @@
       <if test="mainImgDir != null">
         main_img_dir = #{mainImgDir,jdbcType=VARCHAR},
       </if>
-      <if test="carouselImgDir != null">
-        carousel_Img_Dir = #{carouselImgDir,jdbcType=VARCHAR},
+      <if test="carouselImgPaths != null">
+        carousel_img_paths = #{carouselImgPaths,jdbcType=VARCHAR},
       </if>
       <if test="saledCnt != null">
         saled_cnt = #{saledCnt,jdbcType=INTEGER},
@@ -109,8 +109,8 @@
       <if test="provLimit != null">
         prov_limit = #{provLimit,jdbcType=VARCHAR},
       </if>
-      <if test="distrIds != null">
-        distr_ids = #{distrIds,jdbcType=VARCHAR},
+      <if test="postageIds != null">
+        postage_ids = #{postageIds,jdbcType=VARCHAR},
       </if>
       <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
@@ -134,7 +134,7 @@
         memo = #{memo,jdbcType=VARCHAR},
       </if>
     </set>
-    where id = #{id,jdbcType=INTEGER}
+    where goods_id = #{goodsId,jdbcType=INTEGER}
   </update>
 
   <select id="countAll" parameterType="map" resultType="int">
@@ -142,8 +142,8 @@
      <include refid="Base_Column_List" />
     from tb_goods_info
     <where>
-      <if test="params.id != null">
-        and id = #{id,jdbcType=INTEGER},
+      <if test="params.goodsId != null">
+        and goods_id = #{goodsId,jdbcType=INTEGER},
       </if>
       <if test="params.partnerId != null">
         and partner_id = #{params.partnerId,jdbcType=INTEGER},
@@ -166,8 +166,8 @@
       <if test="params.provLimit != null">
         and LOCATE(#{params.provLimit,jdbcType=VARCHAR},prov_limit)>0,
       </if>
-      <if test="params.distrIds != null">
-        and LOCATE(concat(',',#{params.distrIds,jdbcType=VARCHAR},','),distr_ids)>0,
+      <if test="params.postageId != null">
+        and LOCATE(concat(',',#{params.postageId,jdbcType=INGETER},','),postage_ids)>0,
       </if>
       <if test="params.reviewResult != null">
         and review_result = #{params.reviewResult,jdbcType=CHAR},
@@ -183,8 +183,8 @@
      <include refid="Base_Column_List" />
     from tb_goods_info
     <where>
-      <if test="params.id != null">
-        and id = #{id,jdbcType=INTEGER},
+      <if test="params.goodsId != null">
+        and goods_id = #{goodsId,jdbcType=INTEGER},
       </if>
       <if test="params.partnerId != null">
         and partner_id = #{params.partnerId,jdbcType=INTEGER},
@@ -207,8 +207,8 @@
       <if test="params.provLimit != null">
         and LOCATE(#{params.provLimit,jdbcType=VARCHAR},prov_limit)>0,
       </if>
-      <if test="params.distrIds != null">
-        and LOCATE(concat(',',#{params.distrIds,jdbcType=VARCHAR},','),distr_ids)>0,
+      <if test="params.postageId != null">
+        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),postage_ids)>0,
       </if>
       <if test="params.reviewResult != null">
         and review_result = #{params.reviewResult,jdbcType=CHAR},
@@ -221,6 +221,12 @@
       ${sorts} 
     </if>
     limit #{pageCond.begin},#{pageCond.pageSize}
+  </select>
+  
+  <select id="countUsePostageCnt" parameterType="long" resultType="int">
+   select count(1) cnt
+   from tbl_goods_info t
+   where LOCATE(concat(',',#{postageId,jdbcType=INTEGER},','),postage_ids)>0
   </select>
   
 </mapper>

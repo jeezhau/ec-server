@@ -41,7 +41,7 @@ import com.mofangyouxuan.utils.FileFilter;
 
 /**
  * 合作伙伴信息管理
- * 1	、合作伙伴证件照文件路径: /证件照主目录/partern_USERID_[userId]/证件类型.jpg
+ * 1	、合作伙伴证件照文件路径: /证件照主目录/VIPID_[vipId]/证件类型.jpg
  * @author jeekhan
  *
  */
@@ -86,17 +86,17 @@ public class PartnerBasicAction {
 				return jsonRet.toString();
 			}
 			
-			VipBasic vip = this.vipBasicService.get(user.getId());
+			VipBasic vip = this.vipBasicService.get(user.getUserId());
 			if(vip == null || !"1".equals(vip.getStatus()) ) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
 				return jsonRet.toString();
 			}
 			
-			PartnerBasic partner = this.partnerBasicService.getByBindUser(user.getId());
+			PartnerBasic partner = this.partnerBasicService.getByBindUser(user.getUserId());
 			if(partner == null) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				jsonRet.put("errmsg", "您还没开通合作伙伴功能！");
+				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
 				return jsonRet.toString();
 			}
 			return partner;
@@ -148,7 +148,7 @@ public class PartnerBasicAction {
 	public String create(@Valid PartnerBasic basic,BindingResult result) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//用户信息验证结果处理
+			//信息验证结果处理
 			if(result.hasErrors()){
 				StringBuilder sb = new StringBuilder();
 				List<ObjectError> list = result.getAllErrors();
@@ -161,27 +161,21 @@ public class PartnerBasicAction {
 			}
 
 			//数据检查
-			UserBasic user = this.userBasicService.get(basic.getUserId());
-			if(user == null) {
-				jsonRet.put("errmsg", "系统中该用户不存在！");
-				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(user.getId());
+			VipBasic vip = this.vipBasicService.get(basic.getVipId());
 			if(vip == null || !"1".equals(vip.getStatus()) ) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
 				return jsonRet.toString();
 			}
-			PartnerBasic old = this.partnerBasicService.getByBindUser(user.getId());
+			PartnerBasic old = this.partnerBasicService.getByBindUser(vip.getVipId());
 			if( old != null) {	//已有，直接返回成功
 				jsonRet.put("errcode", 0);
-				jsonRet.put("partnerId", old.getId());
+				jsonRet.put("partnerId", old.getPartnerId());
 				jsonRet.put("errmsg", "系统中已有该合作伙伴，如果需要修改信息请使用修改功能！");
 				return jsonRet.toString();
 			}
 			//证件照必填检查
-			File certDir = new File(this.partnerCertDir + "partner_USERID_" + basic.getUserId());
+			File certDir = new File(this.partnerCertDir + "VIPID_" + basic.getVipId());
 			if(!certDir.exists() || !certDir.isDirectory()) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
 				jsonRet.put("errmsg", "您还未上传相关证书照片！");
@@ -210,7 +204,7 @@ public class PartnerBasicAction {
 			basic.setReviewLog("");
 			basic.setReviewOpr(null);
 			basic.setReviewTime(null);
-			basic.setCertDir(this.partnerCertDir + "partner_USERID_" + basic.getUserId()); //初次确立后不可变更
+			basic.setCertDir(this.partnerCertDir + "VIPID_" + basic.getVipId()); //初次确立后不可变更
 			Integer id = this.partnerBasicService.add(basic);
 			if(id == null) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
@@ -242,7 +236,7 @@ public class PartnerBasicAction {
 	public String update(@Valid PartnerBasic basic,BindingResult result) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//用户信息验证结果处理
+			//信息验证结果处理
 			if(result.hasErrors()){
 				StringBuilder sb = new StringBuilder();
 				List<ObjectError> list = result.getAllErrors();
@@ -255,16 +249,16 @@ public class PartnerBasicAction {
 			}
 
 			//数据检查
-			if(basic.getId() == null || basic.getUserId() == null) {
+			if(basic.getPartnerId() == null || basic.getVipId() == null) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "合作伙伴ID和绑定的用户ID均不可为空！");
+				jsonRet.put("errmsg", "合作伙伴ID和绑定的会员ID均不可为空！");
 				return jsonRet.toString();
 			}
-			PartnerBasic old1 = this.partnerBasicService.getByID(basic.getId());
-			PartnerBasic old2 = this.partnerBasicService.getByBindUser(basic.getUserId());
-			if(old1 == null || old2 == null || !old1.getId().equals(old2.getId())) {
+			PartnerBasic old1 = this.partnerBasicService.getByID(basic.getPartnerId());
+			PartnerBasic old2 = this.partnerBasicService.getByBindUser(basic.getVipId());
+			if(old1 == null || old2 == null || !old1.getPartnerId().equals(old2.getPartnerId())) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "用户不存在或合作伙伴ID和绑定的用户ID不匹配！");
+				jsonRet.put("errmsg", "会员不存在或合作伙伴ID和绑定的会员ID不匹配！");
 				return jsonRet.toString();
 			}
 			String oldStatus = old1.getStatus();
@@ -274,7 +268,7 @@ public class PartnerBasicAction {
 				return jsonRet.toString();
 			}
 			//证件照必填检查
-			File certDir = new File(this.partnerCertDir + "partner_USERID_" + basic.getUserId());
+			File certDir = new File(this.partnerCertDir + "VIPID_" + basic.getVipId());
 			if(!certDir.exists() || !certDir.isDirectory()) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
 				jsonRet.put("errmsg", "您还未上传相关证书照片！");
@@ -312,7 +306,7 @@ public class PartnerBasicAction {
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
 				jsonRet.put("errcode", 0);
-				jsonRet.put("partnerId", old1.getId());
+				jsonRet.put("partnerId", old1.getPartnerId());
 				jsonRet.put("errmsg", "ok");
 			}
 		}catch(Exception e) {
@@ -339,9 +333,9 @@ public class PartnerBasicAction {
 		try {
 			PartnerBasic old1 = this.partnerBasicService.getByID(partnerId);
 			PartnerBasic old2 = this.partnerBasicService.getByBindUser(currUserId);
-			if(old1 == null || old2 == null || !old1.getId().equals(old2.getId())) {
+			if(old1 == null || old2 == null || !old1.getPartnerId().equals(old2.getPartnerId())) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "合作伙伴ID和绑定的用户ID不匹配！");
+				jsonRet.put("errmsg", "合作伙伴ID和绑定的会员ID不匹配！");
 				return jsonRet.toString();
 			}
 			String oldStatus = old1.getStatus();
@@ -391,7 +385,7 @@ public class PartnerBasicAction {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			UserBasic user = this.userBasicService.get(currUserId);
-			if(user == null || user.getId()<100 || user.getId()>=1000) {
+			if(user == null || user.getUserId()<100 || user.getUserId()>=1000) {
 				jsonRet.put("errcode", ErrCodes.USER_NOT_REVIEW_ADMIN);
 				jsonRet.put("errmsg", "该用户不是审核管理员！");
 				return jsonRet.toString();
@@ -463,20 +457,14 @@ public class PartnerBasicAction {
 				return jsonRet.toString();
 			}
 			//数据检查
-			UserBasic user = this.userBasicService.get(currUserId);
-			if(user == null) {
-				jsonRet.put("errmsg", "系统中该用户不存在！");
-				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(user.getId());
+			VipBasic vip = this.vipBasicService.get(currUserId);
 			if(vip == null || !"1".equals(vip.getStatus()) ) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
 				return jsonRet.toString();
 			}
 			//照片保存，删除旧的
-			File certDir = new File(this.partnerCertDir,"partner_USERID_" + currUserId);
+			File certDir = new File(this.partnerCertDir,"VIPID_" + currUserId);
 			if(!certDir.exists()) {
 				certDir.mkdirs();
 			}else {
@@ -513,7 +501,7 @@ public class PartnerBasicAction {
 	public void showCert(@PathVariable(value="certType",required=true)String certType,
 			@PathVariable(value="currUserId",required=true)Integer currUserId,
 			OutputStream out,HttpServletRequest request,HttpServletResponse response) throws IOException {
-		File dir = new File(this.partnerCertDir+"partner_USERID_"+currUserId);
+		File dir = new File(this.partnerCertDir+"VIPID_"+currUserId);
 		File[] files = dir.listFiles(new FileFilter(certType));
 		if(dir.exists() && dir.isDirectory() && files != null && files.length>0) {
 			File file = files[0];

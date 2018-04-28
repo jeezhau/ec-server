@@ -2,12 +2,14 @@ package com.mofangyouxuan.model;
 
 import java.util.Date;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 public class Goods {
-    private Long id;
+    private Long goodsId;
 
     @NotNull(message=" 合作伙伴ID：不可为空！ ")
     private Integer partnerId;
@@ -33,9 +35,14 @@ public class Goods {
 
     private Integer saledCnt;
 
+    @NotNull(message=" 商品库存：不可为空！ ")
+    @Max(value = 999999, message = " 商品库存：最大值为 999999 ！") 
+    @Min(value = 0 ,message= " 商品库存：最小值为0！" ) 
     private Integer stock;
 
     @NotNull(message=" 限购数量：不可为空！ ")
+    @Max(value = 999999, message = " 限购数量：最大值为 999999 ！") 
+    @Min(value= 0 ,message= " 限购数量：最小值为0！" )  
     private Integer limitedNum;
 
     private Date beginTime;
@@ -55,7 +62,7 @@ public class Goods {
     private String provLimit;
 
     @NotNull(message=" 运费模版组：不可为空！ ")
-    private String distrIds;
+    private String postageIds;
 
     private Date updateTime;
 
@@ -73,15 +80,15 @@ public class Goods {
 
     private String memo;
 
-    public Long getId() {
-        return id;
-    }
+    public Long getGoodsId() {
+		return goodsId;
+	}
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+	public void setGoodsId(Long goodsId) {
+		this.goodsId = goodsId;
+	}
 
-    public Integer getPartnerId() {
+	public Integer getPartnerId() {
         return partnerId;
     }
 
@@ -201,12 +208,12 @@ public class Goods {
         this.provLimit = provLimit == null ? null : provLimit.trim();
     }
 
-    public String getDistrIds() {
-        return distrIds;
+    public String getPostageIds() {
+        return this.postageIds;
     }
 
-    public void setDistrIds(String distrIds) {
-        this.distrIds = distrIds == null ? null : distrIds.trim();
+    public void setPostageIds(String postageIds) {
+        this.postageIds = postageIds == null ? null : postageIds.trim();
     }
 
     public Date getUpdateTime() {

@@ -44,11 +44,11 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 	 */
 	@Override
 	public Integer add(PartnerBasic basic) {
-		basic.setId(null);
+		basic.setPartnerId(null);
 		basic.setUpdateTime(new Date());
 		int cnt = this.partnerBasicMapper.insert(basic);
 		if(cnt>0) {
-			return basic.getId();
+			return basic.getPartnerId();
 		}
 		return ErrCodes.COMMON_DB_ERROR;
 	}
@@ -75,7 +75,7 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 	@Override
 	public int review(Integer partnerId,Integer oprId,String review,String result) {
 		PartnerBasic basic = new PartnerBasic();
-		basic.setId(partnerId);
+		basic.setPartnerId(partnerId);
 		basic.setReviewOpr(oprId);
 		basic.setReviewLog(review);
 		basic.setReviewTime(new Date());
@@ -93,7 +93,7 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 	@Override
 	public int changeShopStatus(Integer partnerId,String newStatus) {
 		PartnerBasic basic = new PartnerBasic();
-		basic.setId(partnerId);
+		basic.setPartnerId(partnerId);
 		basic.setStatus(newStatus);
 		return this.partnerBasicMapper.updateByPrimaryKey(basic);
 	}

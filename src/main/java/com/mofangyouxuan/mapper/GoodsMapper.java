@@ -10,16 +10,18 @@ import com.mofangyouxuan.model.Goods;
 
 public interface GoodsMapper {
 	
-    int deleteByPrimaryKey(Long id);
+    int deleteByPrimaryKey(Long goodsId);
 
     int insert(Goods record);
 
-    Goods selectByPrimaryKey(Long id);
+    Goods selectByPrimaryKey(Long goodsId);
 
     int updateByPrimaryKey(Goods record);
     
     List<Goods> selectAll(@Param("params")Map<String,Object> params,@Param("sorts")String sorts,@Param("pageCond")PageCond pageCond);
     
     int countAll(Map<String,Object> params);
+    
+    int countUsePostageCnt(Long postageId);
     
 }

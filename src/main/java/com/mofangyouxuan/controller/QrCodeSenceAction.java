@@ -62,14 +62,14 @@ public class QrCodeSenceAction {
 			return jsonRet.toString();
 		}
 		try {
-			int cnt = this.userBasicService.countSpreadUsers(user.getId());
-			QrCodeSence qrcode = this.qrCodeSenceService.get(user.getId());
+			int cnt = this.userBasicService.countSpreadUsers(user.getUserId());
+			QrCodeSence qrcode = this.qrCodeSenceService.get(user.getUserId());
 			if(qrcode == null 
 					|| (qrcode.getCreateTime().getTime() + qrcode.getExpireSeconds()*1000L)<=new Date().getTime()
 					|| (create != null && "1".equals(create.trim()))){
 				//重新申请
 				Map<String,Object> params = new HashMap<String,Object>();
-				params.put("sceneId", user.getId());
+				params.put("sceneId", user.getUserId());
 				String strRet = HttpUtils.doPost(this.wxmpServerUrl + this.qrCodeApplyUrl, params);
 				JSONObject ret = JSONObject.parseObject(strRet);
 				if(ret.containsKey("errcode") && ret.getIntValue("errcode") == 0) {
@@ -77,7 +77,7 @@ public class QrCodeSenceAction {
 					int expire_seconds = ret.getIntValue("expire_seconds");
 					String url = ret.getString("url");
 					if(qrcode != null) {
-						this.qrCodeSenceService.delete(user.getId());
+						this.qrCodeSenceService.delete(user.getUserId());
 					}
 					//申请生成二维码
 					params = new HashMap<String,Object>();
@@ -86,8 +86,8 @@ public class QrCodeSenceAction {
 					ret = JSONObject.parseObject(strRet);
 					if(ret.containsKey("errcode") && ret.getIntValue("errcode") == 0) {
 						qrcode = new QrCodeSence();
-						qrcode.setSenceId(user.getId());
-						qrcode.setUserId(user.getId());
+						qrcode.setSenceId(user.getUserId());
+						qrcode.setUserId(user.getUserId());
 						qrcode.setCreateTime(new Date());
 						qrcode.setExpireSeconds(expire_seconds);
 						qrcode.setTicket(ticket);

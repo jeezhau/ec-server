@@ -139,12 +139,12 @@ public class GoodsAction {
 				jsonRet.put("errmsg", "您当前的合作伙伴状态有误，不可进行商品管理！");
 				return jsonRet.toString();
 			}	
-			if(goods.getId() == null) {
+			if(goods.getGoodsId() == null) {
 				jsonRet.put("errmsg", "商品ID不可为空！");
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-			Goods old = this.goodsService.get(goods.getId());
+			Goods old = this.goodsService.get(goods.getGoodsId());
 			if(old == null) {
 				jsonRet.put("errcode", ErrCodes.GOODS_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该商品信息！");
@@ -162,7 +162,7 @@ public class GoodsAction {
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
 				jsonRet.put("errcode", 0);
-				jsonRet.put("goodsId", goods.getId());
+				jsonRet.put("goodsId", goods.getGoodsId());
 				jsonRet.put("errmsg", "ok");
 			}
 		}catch(Exception e) {
@@ -360,7 +360,7 @@ public class GoodsAction {
 			List<Goods> list = new ArrayList<Goods>();
 			for(Long id:okSet) {
 				Goods g = this.goodsService.get(id);
-				if(g != null && g.getPartnerId().equals(partner.getId())) {
+				if(g != null && g.getPartnerId().equals(partner.getPartnerId())) {
 					list.add(g);
 				}else {
 					errSet.add(id.toString());
@@ -410,7 +410,7 @@ public class GoodsAction {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			UserBasic user = this.userBasicService.get(currUserId);
-			if(user == null || user.getId()<100 || user.getId()>=1000) {
+			if(user == null || user.getUserId()<100 || user.getUserId()>=1000) {
 				jsonRet.put("errcode", ErrCodes.USER_NOT_REVIEW_ADMIN);
 				jsonRet.put("errmsg", "该用户不是审核管理员！");
 				return jsonRet.toString();

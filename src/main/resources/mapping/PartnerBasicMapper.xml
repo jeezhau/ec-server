@@ -2,8 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mofangyouxuan.mapper.PartnerBasicMapper">
   <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.PartnerBasic">
-    <id column="id" jdbcType="INTEGER" property="id" />
-    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <id column="partner_id" jdbcType="INTEGER" property="partnerId" />
+    <result column="vip_id" jdbcType="INTEGER" property="vipId" />
     <result column="country" jdbcType="VARCHAR" property="country" />
     <result column="province" jdbcType="VARCHAR" property="province" />
     <result column="city" jdbcType="VARCHAR" property="city" />
@@ -27,7 +27,7 @@
     <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
   </resultMap>
   <sql id="Base_Column_List">
-    id, user_id, country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
+    partner_id, vip_id, country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
     comp_type, comp_name, licence_no, cert_dir, phone, location_x, location_y, introduce,status, 
     update_time, review_log, review_opr, review_time
   </sql>
@@ -36,30 +36,30 @@
     select 
     <include refid="Base_Column_List" />
     from tb_partner_basic
-    where id = #{id,jdbcType=INTEGER}
+    where partner_id = #{partnerId,jdbcType=INTEGER}
   </select>
  
   <select id="selectByBindUser" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
     from tb_partner_basic
-    where user_id = #{userId,jdbcType=INTEGER}
+    where vip_id = #{vipId,jdbcType=INTEGER}
   </select>
    
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from tb_partner_basic
-    where id = #{id,jdbcType=INTEGER}
+    where partner_id = #{partnerId,jdbcType=INTEGER}
   </delete>
   
-  <insert id="insert" parameterType="com.mofangyouxuan.model.PartnerBasic"  keyProperty="id" useGeneratedKeys="true">
-    insert into tb_partner_basic (id, user_id, country, 
+  <insert id="insert" parameterType="com.mofangyouxuan.model.PartnerBasic"  keyProperty="partnerId" useGeneratedKeys="true">
+    insert into tb_partner_basic (partner_id, vip_id, country, 
       province, city, area, 
       addr, busi_name, legal_pername, 
       legal_peridno, comp_type,comp_name, licence_no, 
       cert_dir, phone, location_x, location_y, introduce,
       status, update_time, review_log, review_opr, review_time
       )
-    values (#{id,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{country,jdbcType=VARCHAR}, 
+    values (#{partnerId,jdbcType=INTEGER}, #{vipId,jdbcType=INTEGER}, #{country,jdbcType=VARCHAR}, 
       #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
       #{addr,jdbcType=VARCHAR}, #{busiName,jdbcType=VARCHAR}, #{legalPername,jdbcType=VARCHAR}, 
       #{legalPeridno,jdbcType=VARCHAR}, #{compType,jdbcType=CHAR},#{compName,jdbcType=VARCHAR}, #{licenceNo,jdbcType=VARCHAR}, 
@@ -73,8 +73,8 @@
   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PartnerBasic">
     update tb_partner_basic
     <set>
-      <if test="userId != null">
-        user_id = #{userId,jdbcType=INTEGER},
+      <if test="vipId != null">
+        vip_id = #{vipId,jdbcType=INTEGER},
       </if>
       <if test="country != null">
         country = #{country,jdbcType=VARCHAR},
@@ -140,7 +140,7 @@
         review_time = #{reviewTime,jdbcType=TIMESTAMP},
       </if>
     </set>
-    where id = #{id,jdbcType=INTEGER}
+    where partner_id = #{partnerId,jdbcType=INTEGER}
   </update>
   
 </mapper>

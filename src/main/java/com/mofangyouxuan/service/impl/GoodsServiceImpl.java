@@ -38,14 +38,14 @@ public class GoodsServiceImpl implements GoodsService{
 	 */
 	@Override
 	public Long add(Goods goods) {
-		goods.setId(null);
+		goods.setGoodsId(null);
 		goods.setUpdateTime(new Date());
 		goods.setReviewLog(null);
 		goods.setReviewOpr(null);
 		goods.setReviewResult("0");
 		int cnt = this.goodsMapper.insert(goods);
 		if(cnt>0) {
-			return goods.getId();
+			return goods.getGoodsId();
 		}
 		return null;
 	}
@@ -71,7 +71,7 @@ public class GoodsServiceImpl implements GoodsService{
 	 * @return 删除记录数
 	 */
 	public int delete(Goods goods) {
-		Long id = goods.getId();
+		Long id = goods.getGoodsId();
 		int cnt = this.goodsMapper.deleteByPrimaryKey(id);
 		return cnt;
 	}
@@ -84,9 +84,9 @@ public class GoodsServiceImpl implements GoodsService{
 	 */
 	@Override
 	public int changeStock(Goods goods,int newCnt) {
-		Long id = goods.getId();
+		Long id = goods.getGoodsId();
 		Goods g = new Goods();
-		g.setId(id);
+		g.setGoodsId(id);
 		g.setStock(newCnt);
 		if(newCnt<=0) {
 			g.setStatus("2"); //下架
@@ -104,9 +104,9 @@ public class GoodsServiceImpl implements GoodsService{
 	 */
 	@Override
 	public int review(Goods goods,Integer oprid,String result,String review) {
-		Long id = goods.getId();
+		Long id = goods.getGoodsId();
 		Goods g = new Goods();
-		g.setId(id);
+		g.setGoodsId(id);
 		g.setReviewLog(review);
 		g.setReviewOpr(oprid);
 		g.setReviewResult(result);
@@ -124,9 +124,9 @@ public class GoodsServiceImpl implements GoodsService{
 	@Override
 	public void changeStatus(List<Goods> list,String newStatus) {
 		for(Goods goods:list) {
-			Long id = goods.getId();
+			Long id = goods.getGoodsId();
 			Goods g = new Goods();
-			g.setId(id);
+			g.setGoodsId(id);
 			g.setStatus(newStatus);
 			g.setUpdateTime(new Date());
 			this.goodsMapper.updateByPrimaryKey(g);

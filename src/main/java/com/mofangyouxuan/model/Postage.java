@@ -3,19 +3,34 @@ package com.mofangyouxuan.model;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class Postage {
-    private Integer id;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
+public class Postage {
+	
+    private Long postageId;
+
+    @NotNull(message=" 合作伙伴ID：不可为空！ ")
     private Integer partnerId;
 
-    private String name;
+    @NotNull(message=" 模版名称：不可为空！ ")
+    @Size(min=2,max=20,message=" 模版名称：长度范围2-20字符！ ")
+    private String postageName;
 
+    @NotNull(message=" 配送范围：不可为空！ ")
+    @Pattern(regexp="^[01]$",message=" 配送范围：取值范围[0-全国，1-同城]")
     private String isCityWide;
 
+    @Min(0)
+    
     private Integer distLimit;
 
     private String provLimit;
 
+    @NotNull(message=" 是否免邮：不可为空！ ")
+    @Pattern(regexp="^[01234]|{23|24|34|234}$",message=" 是否免邮：取值范围[]0-不免邮，1-无条件免邮，2-重量限制，3-金额限制，4-距离限制，23-重量与金额限制，24-重量与距离限制，34-金额与距离，234-重量金额距离限制")
     private String isFree;
 
     private Integer freeWeight;
@@ -28,13 +43,17 @@ public class Postage {
 
     private Integer firstWenght;
 
-    private BigDecimal firstPrice;
+    private BigDecimal firstDPrice;
+
+    private BigDecimal firstWPrice;
 
     private Integer additionWeight;
 
     private Integer additionDist;
 
-    private BigDecimal additionPrice;
+    private BigDecimal additionDPrice;
+
+    private BigDecimal additionWPrice;
 
     private Date updateTime;
 
@@ -42,12 +61,12 @@ public class Postage {
 
     private String status;
 
-    public Integer getId() {
-        return id;
+    public Long getPostageId() {
+        return postageId;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setPostageId(Long postageId) {
+        this.postageId = postageId;
     }
 
     public Integer getPartnerId() {
@@ -58,12 +77,12 @@ public class Postage {
         this.partnerId = partnerId;
     }
 
-    public String getName() {
-        return name;
+    public String getPostageName() {
+        return postageName;
     }
 
-    public void setName(String name) {
-        this.name = name == null ? null : name.trim();
+    public void setPostageName(String postageName) {
+        this.postageName = postageName == null ? null : postageName.trim();
     }
 
     public String getIsCityWide() {
@@ -138,12 +157,20 @@ public class Postage {
         this.firstWenght = firstWenght;
     }
 
-    public BigDecimal getFirstPrice() {
-        return firstPrice;
+    public BigDecimal getFirstDPrice() {
+        return firstDPrice;
     }
 
-    public void setFirstPrice(BigDecimal firstPrice) {
-        this.firstPrice = firstPrice;
+    public void setFirstDPrice(BigDecimal firstDPrice) {
+        this.firstDPrice = firstDPrice;
+    }
+
+    public BigDecimal getFirstWPrice() {
+        return firstWPrice;
+    }
+
+    public void setFirstWPrice(BigDecimal firstWPrice) {
+        this.firstWPrice = firstWPrice;
     }
 
     public Integer getAdditionWeight() {
@@ -162,12 +189,20 @@ public class Postage {
         this.additionDist = additionDist;
     }
 
-    public BigDecimal getAdditionPrice() {
-        return additionPrice;
+    public BigDecimal getAdditionDPrice() {
+        return additionDPrice;
     }
 
-    public void setAdditionPrice(BigDecimal additionPrice) {
-        this.additionPrice = additionPrice;
+    public void setAdditionDPrice(BigDecimal additionDPrice) {
+        this.additionDPrice = additionDPrice;
+    }
+
+    public BigDecimal getAdditionWPrice() {
+        return additionWPrice;
+    }
+
+    public void setAdditionWPrice(BigDecimal additionWPrice) {
+        this.additionWPrice = additionWPrice;
     }
 
     public Date getUpdateTime() {

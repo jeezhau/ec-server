@@ -9,10 +9,10 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 public class PartnerBasic {
-    private Integer id;
+    private Integer partnerId;
 
-    @NotNull(message=" 绑定用户：不可为空！")
-    private Integer userId;
+    @NotNull(message=" 绑定会员：不可为空！")
+    private Integer vipId;
 
     @NotNull(message=" 国家：不可为空！")
     @Size(min=2,max=50,message=" 国家：长度范围2-50字符 ！")
@@ -88,23 +88,23 @@ public class PartnerBasic {
     @Null
     private Date reviewTime;
 
-    public Integer getId() {
-        return id;
-    }
+    public Integer getPartnerId() {
+		return partnerId;
+	}
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+	public void setPartnerId(Integer partnerId) {
+		this.partnerId = partnerId;
+	}
 
-    public Integer getUserId() {
-        return userId;
-    }
+	public Integer getVipId() {
+		return vipId;
+	}
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
+	public void setVipId(Integer vipId) {
+		this.vipId = vipId;
+	}
 
-    public String getCountry() {
+	public String getCountry() {
         return country;
     }
 

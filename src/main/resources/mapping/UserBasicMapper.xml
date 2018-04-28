@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mofangyouxuan.mapper.UserBasicMapper">
   <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.UserBasic">
-    <id column="id" jdbcType="INTEGER" property="id" />
+    <id column="user_id" jdbcType="INTEGER" property="userId" />
     <result column="nickname" jdbcType="VARCHAR" property="nickname" />
     <result column="email" jdbcType="VARCHAR" property="email" />
     <result column="birthday" jdbcType="DATE" property="birthday" />
@@ -25,7 +25,7 @@
     <result column="status" jdbcType="CHAR" property="status" />
   </resultMap>
   <sql id="Base_Column_List">
-    id, nickname, email, birthday, sex, passwd, country, province, city, favourite, profession, 
+    user_id, nickname, email, birthday, sex, passwd, country, province, city, favourite, profession, 
     introduce, headimgurl, phone, regist_type, open_id, union_id, sence_id, regist_time, 
     update_time, status
   </sql>
@@ -34,7 +34,7 @@
     select 
     <include refid="Base_Column_List" />
     from tb_user_basic
-    where id = #{id,jdbcType=INTEGER}
+    where user_id = #{userId,jdbcType=INTEGER}
   </select>
   
   <select id="selectByOpenId" parameterType="java.lang.String" resultMap="BaseResultMap">
@@ -48,18 +48,18 @@
   
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from tb_user_basic
-    where id = #{id,jdbcType=INTEGER}
+    where user_id = #{userId,jdbcType=INTEGER}
   </delete>
   
-  <insert id="insert" parameterType="com.mofangyouxuan.model.UserBasic"  keyProperty="id" useGeneratedKeys="true">
-    insert into tb_user_basic (id, nickname, email, 
+  <insert id="insert" parameterType="com.mofangyouxuan.model.UserBasic"  keyProperty="userId" useGeneratedKeys="true">
+    insert into tb_user_basic (user_id, nickname, email, 
       birthday, sex, passwd, country, 
       province, city, favourite, 
       profession, introduce, headimgurl, 
       phone, regist_type, open_id, 
       union_id, sence_id, regist_time, 
       update_time, status)
-    values (#{id,jdbcType=INTEGER}, #{nickname,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
+    values (#{userId,jdbcType=INTEGER}, #{nickname,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
       #{birthday,jdbcType=DATE}, #{sex,jdbcType=CHAR}, #{passwd,jdbcType=VARCHAR}, #{country,jdbcType=VARCHAR}, 
       #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{favourite,jdbcType=VARCHAR}, 
       #{profession,jdbcType=VARCHAR}, #{introduce,jdbcType=VARCHAR}, #{headimgurl,jdbcType=VARCHAR}, 
@@ -68,11 +68,11 @@
       #{updateTime,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR})
   </insert>
   
-  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.UserBasic"  keyProperty="id" useGeneratedKeys="true">
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.UserBasic"  keyProperty="userId" useGeneratedKeys="true">
     insert into tb_user_basic
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="id != null">
-        id,
+      <if test="userId != null">
+        user_id,
       </if>
       <if test="nickname != null">
         nickname,
@@ -136,8 +136,8 @@
       </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="id != null">
-        #{id,jdbcType=INTEGER},
+      <if test="userId != null">
+        #{user_id,jdbcType=INTEGER},
       </if>
       <if test="nickname != null">
         #{nickname,jdbcType=VARCHAR},
@@ -266,13 +266,13 @@
         status = #{status,jdbcType=CHAR},
       </if>
     </set>
-    where id = #{id,jdbcType=INTEGER}
+    where user_id = #{userId,jdbcType=INTEGER}
   </update>
   
   <select id="countSpreadUsers" parameterType="java.lang.Integer" resultType="int">
     select count(1)
     from tb_user_basic
-    where sence_id = #{id,jdbcType=INTEGER}
+    where sence_id = #{senceId,jdbcType=INTEGER}
   </select>
 
 </mapper>

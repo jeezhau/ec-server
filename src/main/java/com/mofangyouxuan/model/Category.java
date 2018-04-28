@@ -1,26 +1,26 @@
 package com.mofangyouxuan.model;
 
 public class Category {
-    private Integer id;
+    private Integer categoryId;
 
-    private String name;
+    private String categoryName;
 
     private String status;
 
-    public Integer getId() {
-        return id;
+    public Integer getCategoryId() {
+        return categoryId;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setCategoryId(Integer id) {
+        this.categoryId = id;
     }
 
-    public String getName() {
-        return name;
+    public String getCategoryName() {
+        return categoryName;
     }
 
-    public void setName(String name) {
-        this.name = name == null ? null : name.trim();
+    public void setCategoryName(String name) {
+        this.categoryName = name == null ? null : name.trim();
     }
 
     public String getStatus() {

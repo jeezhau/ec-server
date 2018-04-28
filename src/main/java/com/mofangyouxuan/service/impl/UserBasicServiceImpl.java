@@ -26,11 +26,11 @@ public class UserBasicServiceImpl implements UserBasicService{
 	 */
 	@Override
 	public Integer add(UserBasic userBasic) {
-		userBasic.setId(null);
+		userBasic.setUserId(null);
 		userBasic.setRegistTime(new Date());
 		userBasic.setUpdateTime(new Date());
 		this.userBasicMapper.insert(userBasic);
-		Integer id = userBasic.getId();
+		Integer id = userBasic.getUserId();
 		if(id != null) {//初始化会员信息
 			VipBasic vipBasic = new VipBasic();
 			vipBasic.setVipId(id);

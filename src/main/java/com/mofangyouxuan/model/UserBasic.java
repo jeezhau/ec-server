@@ -5,7 +5,6 @@ import java.util.Date;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
@@ -13,76 +12,72 @@ public class UserBasic {
 	
 	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 	
-    private Integer id;
+    private Integer userId;
 
-    @NotNull
-    @Size(min=3,max=20,message=" nickname:length range 6-20！")
+    @NotNull(message=" 昵称： 不可为空！")
+    @Size(min=3,max=20,message=" 昵称:长度范围 6-20字符！")
     private String nickname;
 
-    @Size(max=100,message=" email:length range 6-100! ")
-    @Email(message="email：incorrent format! ")
+    @Size(max=100,message=" 邮箱：长度范围 6-100字符! ")
+    @Email(message=" 邮箱：格式不正确! ")
     private String email;
 
     private Date birthday;
 
-    @Pattern(regexp="^[012]$",message=" sex:value scope[0-secret，1-boy，2-gril]！")
+    @Pattern(regexp="^[012]$",message=" 性别：取值范围[0-保密，1-男，2-女]！")
     private String sex;
 
-    @Size(max=20,message=" passwd:max length 20 character! ")
+    @Size(max=20,message=" 密码： 最长20个字符! ")
     private String passwd;
 
-    @Size(max=100,message=" country:max length 100 character! ")
+    @Size(max=100,message=" 国家：最长 100 字符! ")
     private String country;
     
-    @Size(max=100,message=" province:max length 100 character! ")
+    @Size(max=100,message=" 省份： 最长 100 字符! ")
     private String province;
 
-    @Size(max=100,message=" city:max length 100 character! ")
+    @Size(max=100,message=" 城市：最长 100 字符! ")
     private String city;
 
-    @Size(max=200,message=" favourite:max length 200 character! ")
+    @Size(max=200,message=" 兴趣爱好： 最长 200 字符! ")
     private String favourite;
 
-    @Size(max=100,message=" profession:max length 100 character! ")
+    @Size(max=100,message=" 职业：最长 100 字符! ")
     private String profession;
 
-    @Size(max=600,message=" introduce:max length 600 character! ")
+    @Size(max=600,message=" 个人简介： 最长 600 字符! ")
     private String introduce;
 
     private String headimgurl;
 
-    @Size(max=20,message=" phone:max length 20 character! ")
+    @Size(max=20,message=" 移动电话： 最长 20 字符! ")
     private String phone;
 
-    @NotNull(message=" regist_type：not null! ")
-    @Pattern(regexp="^[12]$",message=" regist_type:value scope[1-official ，2-weichat]！")
+    @NotNull(message=" 注册方式：不可为空! ")
+    @Pattern(regexp="^[12]$",message=" 注册方式：取值范围[1-官方 ，2-微信]！")
     private String registType;
 
-    @Size(max=100,message=" openId:max length 100 character! ")
     private String openId;
 
-    @Size(max=100,message=" unionId:max length 100 character! ")
     private String unionId;
 
     private Integer senceId;
 
     private Date registTime;
 
-    @Null
     private Date updateTime;
 
-    @Null
     private String status;
 
-    public Integer getId() {
-        return id;
-    }
+    public Integer getUserId() {
+		return userId;
+	}
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+	public void setUserId(Integer userId) {
+		this.userId = userId;
+	}
 
-    public String getNickname() {
+	public String getNickname() {
         return nickname;
     }
 

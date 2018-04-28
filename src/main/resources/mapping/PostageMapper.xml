@@ -2,9 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mofangyouxuan.mapper.PostageMapper">
   <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Postage">
-    <id column="id" jdbcType="INTEGER" property="id" />
+    <id column="postage_id" jdbcType="INTEGER" property="postageId" />
     <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
-    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="postage_name" jdbcType="VARCHAR" property="postageName" />
     <result column="is_city_wide" jdbcType="CHAR" property="isCityWide" />
     <result column="dist_limit" jdbcType="INTEGER" property="distLimit" />
     <result column="prov_limit" jdbcType="VARCHAR" property="provLimit" />
@@ -14,230 +14,58 @@
     <result column="free_dist" jdbcType="INTEGER" property="freeDist" />
     <result column="first_dist" jdbcType="INTEGER" property="firstDist" />
     <result column="first_wenght" jdbcType="INTEGER" property="firstWenght" />
-    <result column="first_price" jdbcType="DECIMAL" property="firstPrice" />
+    <result column="first_d_price" jdbcType="DECIMAL" property="firstDPrice" />
+    <result column="first_w_price" jdbcType="DECIMAL" property="firstWPrice" />
     <result column="addition_weight" jdbcType="INTEGER" property="additionWeight" />
     <result column="addition_dist" jdbcType="INTEGER" property="additionDist" />
-    <result column="addition_price" jdbcType="DECIMAL" property="additionPrice" />
+    <result column="addition_d_price" jdbcType="DECIMAL" property="additionDPrice" />
+    <result column="addition_w_price" jdbcType="DECIMAL" property="additionWPrice" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
     <result column="status" jdbcType="CHAR" property="status" />
   </resultMap>
   <sql id="Base_Column_List">
-    id, partner_id, name, is_city_wide, dist_limit, prov_limit, is_free, free_weight, 
-    free_amount, free_dist, first_dist, first_wenght, first_price, addition_weight, addition_dist, 
-    addition_price, update_time, update_opr, status
+    postage_id, partner_id, postage_name, is_city_wide, dist_limit, prov_limit, is_free, 
+    free_weight, free_amount, free_dist, first_dist, first_wenght, first_d_price, first_w_price, 
+    addition_weight, addition_dist, addition_d_price, addition_w_price, update_time, 
+    update_opr, status
   </sql>
-  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
     from tb_postage_tpl
-    where id = #{id,jdbcType=INTEGER}
+    where postage_id = #{postageId,jdbcType=INTEGER}
   </select>
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from tb_postage_tpl
-    where id = #{id,jdbcType=INTEGER}
+    where postage_id = #{postageId,jdbcType=INTEGER}
   </delete>
-  <insert id="insert" parameterType="com.mofangyouxuan.model.Postage">
-    insert into tb_postage_tpl (id, partner_id, name, 
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Postage" keyProperty="postageId" useGeneratedKeys="true">
+    insert into tb_postage_tpl (postage_id, partner_id, postage_name, 
       is_city_wide, dist_limit, prov_limit, 
       is_free, free_weight, free_amount, 
       free_dist, first_dist, first_wenght, 
-      first_price, addition_weight, addition_dist, 
-      addition_price, update_time, update_opr, 
-      status)
-    values (#{id,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, 
+      first_d_price, first_w_price, addition_weight, 
+      addition_dist, addition_d_price, addition_w_price, 
+      update_time, update_opr, status
+      )
+    values (#{postageId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER}, #{postageName,jdbcType=VARCHAR}, 
       #{isCityWide,jdbcType=CHAR}, #{distLimit,jdbcType=INTEGER}, #{provLimit,jdbcType=VARCHAR}, 
       #{isFree,jdbcType=CHAR}, #{freeWeight,jdbcType=INTEGER}, #{freeAmount,jdbcType=DECIMAL}, 
       #{freeDist,jdbcType=INTEGER}, #{firstDist,jdbcType=INTEGER}, #{firstWenght,jdbcType=INTEGER}, 
-      #{firstPrice,jdbcType=DECIMAL}, #{additionWeight,jdbcType=INTEGER}, #{additionDist,jdbcType=INTEGER}, 
-      #{additionPrice,jdbcType=DECIMAL}, #{updateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER}, 
-      #{status,jdbcType=CHAR})
+      #{firstDPrice,jdbcType=DECIMAL}, #{firstWPrice,jdbcType=DECIMAL}, #{additionWeight,jdbcType=INTEGER}, 
+      #{additionDist,jdbcType=INTEGER}, #{additionDPrice,jdbcType=DECIMAL}, #{additionWPrice,jdbcType=DECIMAL}, 
+      #{updateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER}, #{status,jdbcType=CHAR}
+      )
   </insert>
-  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.Postage">
-    insert into tb_postage_tpl
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="id != null">
-        id,
-      </if>
-      <if test="partnerId != null">
-        partner_id,
-      </if>
-      <if test="name != null">
-        name,
-      </if>
-      <if test="isCityWide != null">
-        is_city_wide,
-      </if>
-      <if test="distLimit != null">
-        dist_limit,
-      </if>
-      <if test="provLimit != null">
-        prov_limit,
-      </if>
-      <if test="isFree != null">
-        is_free,
-      </if>
-      <if test="freeWeight != null">
-        free_weight,
-      </if>
-      <if test="freeAmount != null">
-        free_amount,
-      </if>
-      <if test="freeDist != null">
-        free_dist,
-      </if>
-      <if test="firstDist != null">
-        first_dist,
-      </if>
-      <if test="firstWenght != null">
-        first_wenght,
-      </if>
-      <if test="firstPrice != null">
-        first_price,
-      </if>
-      <if test="additionWeight != null">
-        addition_weight,
-      </if>
-      <if test="additionDist != null">
-        addition_dist,
-      </if>
-      <if test="additionPrice != null">
-        addition_price,
-      </if>
-      <if test="updateTime != null">
-        update_time,
-      </if>
-      <if test="updateOpr != null">
-        update_opr,
-      </if>
-      <if test="status != null">
-        status,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="id != null">
-        #{id,jdbcType=INTEGER},
-      </if>
-      <if test="partnerId != null">
-        #{partnerId,jdbcType=INTEGER},
-      </if>
-      <if test="name != null">
-        #{name,jdbcType=VARCHAR},
-      </if>
-      <if test="isCityWide != null">
-        #{isCityWide,jdbcType=CHAR},
-      </if>
-      <if test="distLimit != null">
-        #{distLimit,jdbcType=INTEGER},
-      </if>
-      <if test="provLimit != null">
-        #{provLimit,jdbcType=VARCHAR},
-      </if>
-      <if test="isFree != null">
-        #{isFree,jdbcType=CHAR},
-      </if>
-      <if test="freeWeight != null">
-        #{freeWeight,jdbcType=INTEGER},
-      </if>
-      <if test="freeAmount != null">
-        #{freeAmount,jdbcType=DECIMAL},
-      </if>
-      <if test="freeDist != null">
-        #{freeDist,jdbcType=INTEGER},
-      </if>
-      <if test="firstDist != null">
-        #{firstDist,jdbcType=INTEGER},
-      </if>
-      <if test="firstWenght != null">
-        #{firstWenght,jdbcType=INTEGER},
-      </if>
-      <if test="firstPrice != null">
-        #{firstPrice,jdbcType=DECIMAL},
-      </if>
-      <if test="additionWeight != null">
-        #{additionWeight,jdbcType=INTEGER},
-      </if>
-      <if test="additionDist != null">
-        #{additionDist,jdbcType=INTEGER},
-      </if>
-      <if test="additionPrice != null">
-        #{additionPrice,jdbcType=DECIMAL},
-      </if>
-      <if test="updateTime != null">
-        #{updateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="updateOpr != null">
-        #{updateOpr,jdbcType=INTEGER},
-      </if>
-      <if test="status != null">
-        #{status,jdbcType=CHAR},
-      </if>
-    </trim>
-  </insert>
-  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.Postage">
-    update tb_postage_tpl
-    <set>
-      <if test="partnerId != null">
-        partner_id = #{partnerId,jdbcType=INTEGER},
-      </if>
-      <if test="name != null">
-        name = #{name,jdbcType=VARCHAR},
-      </if>
-      <if test="isCityWide != null">
-        is_city_wide = #{isCityWide,jdbcType=CHAR},
-      </if>
-      <if test="distLimit != null">
-        dist_limit = #{distLimit,jdbcType=INTEGER},
-      </if>
-      <if test="provLimit != null">
-        prov_limit = #{provLimit,jdbcType=VARCHAR},
-      </if>
-      <if test="isFree != null">
-        is_free = #{isFree,jdbcType=CHAR},
-      </if>
-      <if test="freeWeight != null">
-        free_weight = #{freeWeight,jdbcType=INTEGER},
-      </if>
-      <if test="freeAmount != null">
-        free_amount = #{freeAmount,jdbcType=DECIMAL},
-      </if>
-      <if test="freeDist != null">
-        free_dist = #{freeDist,jdbcType=INTEGER},
-      </if>
-      <if test="firstDist != null">
-        first_dist = #{firstDist,jdbcType=INTEGER},
-      </if>
-      <if test="firstWenght != null">
-        first_wenght = #{firstWenght,jdbcType=INTEGER},
-      </if>
-      <if test="firstPrice != null">
-        first_price = #{firstPrice,jdbcType=DECIMAL},
-      </if>
-      <if test="additionWeight != null">
-        addition_weight = #{additionWeight,jdbcType=INTEGER},
-      </if>
-      <if test="additionDist != null">
-        addition_dist = #{additionDist,jdbcType=INTEGER},
-      </if>
-      <if test="additionPrice != null">
-        addition_price = #{additionPrice,jdbcType=DECIMAL},
-      </if>
-      <if test="updateTime != null">
-        update_time = #{updateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="updateOpr != null">
-        update_opr = #{updateOpr,jdbcType=INTEGER},
-      </if>
-      <if test="status != null">
-        status = #{status,jdbcType=CHAR},
-      </if>
-    </set>
-    where id = #{id,jdbcType=INTEGER}
-  </update>
+  
   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Postage">
     update tb_postage_tpl
     set partner_id = #{partnerId,jdbcType=INTEGER},
-      name = #{name,jdbcType=VARCHAR},
+      postage_name = #{postageName,jdbcType=VARCHAR},
       is_city_wide = #{isCityWide,jdbcType=CHAR},
       dist_limit = #{distLimit,jdbcType=INTEGER},
       prov_limit = #{provLimit,jdbcType=VARCHAR},
@@ -247,13 +75,23 @@
       free_dist = #{freeDist,jdbcType=INTEGER},
       first_dist = #{firstDist,jdbcType=INTEGER},
       first_wenght = #{firstWenght,jdbcType=INTEGER},
-      first_price = #{firstPrice,jdbcType=DECIMAL},
+      first_d_price = #{firstDPrice,jdbcType=DECIMAL},
+      first_w_price = #{firstWPrice,jdbcType=DECIMAL},
       addition_weight = #{additionWeight,jdbcType=INTEGER},
       addition_dist = #{additionDist,jdbcType=INTEGER},
-      addition_price = #{additionPrice,jdbcType=DECIMAL},
+      addition_d_price = #{additionDPrice,jdbcType=DECIMAL},
+      addition_w_price = #{additionWPrice,jdbcType=DECIMAL},
       update_time = #{updateTime,jdbcType=TIMESTAMP},
       update_opr = #{updateOpr,jdbcType=INTEGER},
       status = #{status,jdbcType=CHAR}
-    where id = #{id,jdbcType=INTEGER}
+    where postage_id = #{postageId,jdbcType=INTEGER}
   </update>
+  
+  <select id="selectByPartner" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_postage_tpl
+    where partner_id = #{partnerId,jdbcType=INTEGER} and status = '1'
+  </select>  
+  
 </mapper>

@@ -43,4 +43,10 @@ public class ErrCodes {
 	public static int IMAGE_FOLDER_FILE_LIMIT = -106003; //单个目录文件数量限制
 	public static int IMAGE_FOLDER_LEVEL_LIMIT = -106004; //目录层级限制
 	public static int IMAGE_ALL_FILE_LIMIT = -106005; //总文件数量限制
+	
+	//运费模版管理功能码：106
+	public static int POSTAGE_PARAM_ERROR = -107001;	//参数有错
+	public static int POSTAGE_USING_NOW = -107002;	//模版正在使用中
+	public static int POSTAGE_NO_EXISTS = -107003;	//没有该模版
+	public static int POSTAGE_PRIVILEGE_ERROR = -107004;	//无权执行该操作
 }

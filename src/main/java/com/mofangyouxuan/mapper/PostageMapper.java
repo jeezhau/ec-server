@@ -1,23 +1,18 @@
 package com.mofangyouxuan.mapper;
 
 import java.util.List;
-import java.util.Map;
 
-import org.apache.ibatis.annotations.Param;
-
-import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.Postage;
 
 public interface PostageMapper {
-    int deleteByPrimaryKey(Long id);
+    int deleteByPrimaryKey(Long postageId);
 
     int insert(Postage record);
 
-    Postage selectByPrimaryKey(Long id);
+    Postage selectByPrimaryKey(Long postageId);
 
     int updateByPrimaryKey(Postage record);
     
-    List<Postage> selectAll(@Param("params")Map<String,Object> params,@Param("pageCond")PageCond pageCond);
+    List<Postage> selectByPartner(Integer partnerId);
     
-    int countAll(Map<String,Object> params);
 }

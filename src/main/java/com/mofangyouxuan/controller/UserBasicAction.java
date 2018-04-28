@@ -190,7 +190,7 @@ public class UserBasicAction {
 			//数据处理
 			userBasic.setStatus("0"); //用户正常
 			userBasic.setPasswd(old.getPasswd());
-			userBasic.setId(old.getId());
+			userBasic.setUserId(old.getUserId());
 			userBasic.setRegistTime(null);
 			userBasic.setRegistType(old.getRegistType());
 			userBasic.setSenceId(old.getSenceId());
