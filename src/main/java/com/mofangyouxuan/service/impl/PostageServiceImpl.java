@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.mofangyouxuan.common.ErrCodes;
@@ -14,7 +15,8 @@ import com.mofangyouxuan.service.PostageService;
 
 @Service
 public class PostageServiceImpl implements PostageService{
-	
+	@Value("${sys.postage-cnt-limit}")
+	private int cntLimit;
 	@Autowired
 	private GoodsMapper goodsMapper;
 	@Autowired
@@ -28,6 +30,11 @@ public class PostageServiceImpl implements PostageService{
 	public Long add(Postage postage) {
 		if(this.postageMapper.selectByPartnerAndName(postage.getPartnerId(), postage.getPostageName()) != null) {
 			return (long)ErrCodes.POSTAGE_NAME_USED;
+		}
+		//数量检查
+		int n = this.postageMapper.countByPartner(postage.getPartnerId());
+		if(n >= this.cntLimit) {
+			return (long)ErrCodes.POSTAGE_CNT_LIMIT;
 		}
 		postage.setPostageId(null);
 		postage.setUpdateTime(new Date());
@@ -48,6 +55,11 @@ public class PostageServiceImpl implements PostageService{
 		Postage old = this.postageMapper.selectByPartnerAndName(postage.getPartnerId(), postage.getPostageName());
 		if(old != null && !old.getPostageId().equals(postage.getPostageId())) {//已有同名
 			return ErrCodes.POSTAGE_NAME_USED;
+		}
+		//数量检查
+		int n = this.postageMapper.countByPartner(postage.getPartnerId());
+		if(n >= this.cntLimit) {
+			return ErrCodes.POSTAGE_CNT_LIMIT;
 		}
 		postage.setUpdateTime(new Date());
 		postage.setStatus("1");

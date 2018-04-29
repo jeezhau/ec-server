@@ -50,5 +50,5 @@ public class ErrCodes {
 	public static int POSTAGE_NO_EXISTS = -107003;	//没有该模版
 	public static int POSTAGE_PRIVILEGE_ERROR = -107004;	//无权执行该操作
 	public static int POSTAGE_NAME_USED = -107005;	//名称已被使用
-	
+	public static int POSTAGE_CNT_LIMIT = -107006;	//数量限制
 }

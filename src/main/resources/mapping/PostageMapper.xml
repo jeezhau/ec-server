@@ -100,5 +100,12 @@
     from tb_postage_tpl
     where partner_id = #{partnerId,jdbcType=INTEGER} and postage_name =  #{postageName,jdbcType=VARCHAR}
   </select>
+ 
+   <select id="countByPartner" parameterType="java.lang.Integer" resultMap="int">
+    select count(1)
+    from tb_postage_tpl
+    where partner_id = #{partnerId,jdbcType=INTEGER} and status = '1'
+  </select>  
   
 </mapper>
+
