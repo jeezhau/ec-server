@@ -13,7 +13,7 @@
     <result column="free_amount" jdbcType="DECIMAL" property="freeAmount" />
     <result column="free_dist" jdbcType="INTEGER" property="freeDist" />
     <result column="first_dist" jdbcType="INTEGER" property="firstDist" />
-    <result column="first_wenght" jdbcType="INTEGER" property="firstWenght" />
+    <result column="first_weight" jdbcType="INTEGER" property="firstWeight" />
     <result column="first_d_price" jdbcType="DECIMAL" property="firstDPrice" />
     <result column="first_w_price" jdbcType="DECIMAL" property="firstWPrice" />
     <result column="addition_weight" jdbcType="INTEGER" property="additionWeight" />
@@ -26,7 +26,7 @@
   </resultMap>
   <sql id="Base_Column_List">
     postage_id, partner_id, postage_name, is_city_wide, dist_limit, prov_limit, is_free, 
-    free_weight, free_amount, free_dist, first_dist, first_wenght, first_d_price, first_w_price, 
+    free_weight, free_amount, free_dist, first_dist, first_weight, first_d_price, first_w_price, 
     addition_weight, addition_dist, addition_d_price, addition_w_price, update_time, 
     update_opr, status
   </sql>
@@ -47,7 +47,7 @@
     insert into tb_postage_tpl (postage_id, partner_id, postage_name, 
       is_city_wide, dist_limit, prov_limit, 
       is_free, free_weight, free_amount, 
-      free_dist, first_dist, first_wenght, 
+      free_dist, first_dist, first_weight, 
       first_d_price, first_w_price, addition_weight, 
       addition_dist, addition_d_price, addition_w_price, 
       update_time, update_opr, status
@@ -55,7 +55,7 @@
     values (#{postageId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER}, #{postageName,jdbcType=VARCHAR}, 
       #{isCityWide,jdbcType=CHAR}, #{distLimit,jdbcType=INTEGER}, #{provLimit,jdbcType=VARCHAR}, 
       #{isFree,jdbcType=CHAR}, #{freeWeight,jdbcType=INTEGER}, #{freeAmount,jdbcType=DECIMAL}, 
-      #{freeDist,jdbcType=INTEGER}, #{firstDist,jdbcType=INTEGER}, #{firstWenght,jdbcType=INTEGER}, 
+      #{freeDist,jdbcType=INTEGER}, #{firstDist,jdbcType=INTEGER}, #{firstWeight,jdbcType=INTEGER}, 
       #{firstDPrice,jdbcType=DECIMAL}, #{firstWPrice,jdbcType=DECIMAL}, #{additionWeight,jdbcType=INTEGER}, 
       #{additionDist,jdbcType=INTEGER}, #{additionDPrice,jdbcType=DECIMAL}, #{additionWPrice,jdbcType=DECIMAL}, 
       #{updateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER}, #{status,jdbcType=CHAR}
@@ -74,7 +74,7 @@
       free_amount = #{freeAmount,jdbcType=DECIMAL},
       free_dist = #{freeDist,jdbcType=INTEGER},
       first_dist = #{firstDist,jdbcType=INTEGER},
-      first_wenght = #{firstWenght,jdbcType=INTEGER},
+      first_weight = #{firstWeight,jdbcType=INTEGER},
       first_d_price = #{firstDPrice,jdbcType=DECIMAL},
       first_w_price = #{firstWPrice,jdbcType=DECIMAL},
       addition_weight = #{additionWeight,jdbcType=INTEGER},
@@ -93,5 +93,12 @@
     from tb_postage_tpl
     where partner_id = #{partnerId,jdbcType=INTEGER} and status = '1'
   </select>  
+  
+  <select id="selectByPartnerAndName" parameterType="map" resultMap="BaseResultMap">
+     select 
+    <include refid="Base_Column_List" />
+    from tb_postage_tpl
+    where partner_id = #{partnerId,jdbcType=INTEGER} and postage_name =  #{postageName,jdbcType=VARCHAR}
+  </select>
   
 </mapper>

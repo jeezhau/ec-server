@@ -23,16 +23,20 @@ public class PostageServiceImpl implements PostageService{
 	/**
 	 * 新添加运费模版
 	 * @param postage
-	 * @return 新ID或null
+	 * @return 新ID或错误码
 	 */
 	public Long add(Postage postage) {
+		if(this.postageMapper.selectByPartnerAndName(postage.getPartnerId(), postage.getPostageName()) != null) {
+			return (long)ErrCodes.POSTAGE_NAME_USED;
+		}
+		postage.setPostageId(null);
 		postage.setUpdateTime(new Date());
 		postage.setStatus("1");
 		int cnt = this.postageMapper.insert(postage);
 		if(cnt>0) {
 			return postage.getPostageId();
 		}
-		return null;
+		return (long)ErrCodes.COMMON_DB_ERROR;
 	}
 	
 	/**
@@ -41,7 +45,10 @@ public class PostageServiceImpl implements PostageService{
 	 * @return 更新记录数或小于0的错误码
 	 */
 	public int update(Postage postage) {
-		
+		Postage old = this.postageMapper.selectByPartnerAndName(postage.getPartnerId(), postage.getPostageName());
+		if(old != null && !old.getPostageId().equals(postage.getPostageId())) {//已有同名
+			return ErrCodes.POSTAGE_NAME_USED;
+		}
 		postage.setUpdateTime(new Date());
 		postage.setStatus("1");
 		int cnt = this.postageMapper.updateByPrimaryKey(postage);

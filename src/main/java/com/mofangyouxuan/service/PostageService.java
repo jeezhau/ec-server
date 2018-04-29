@@ -9,7 +9,7 @@ public interface PostageService {
 	/**
 	 * 新添加运费模版
 	 * @param postage
-	 * @return 新ID或null
+	 * @return 新ID或错误码
 	 */
 	public Long add(Postage postage);
 	

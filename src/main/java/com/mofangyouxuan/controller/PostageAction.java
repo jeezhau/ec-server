@@ -1,5 +1,6 @@
 package com.mofangyouxuan.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -28,7 +29,7 @@ import com.mofangyouxuan.service.VipBasicService;
  */
 @RestController
 @RequestMapping("/postage")
-public class PostageController {
+public class PostageAction {
 	@Autowired
 	private VipBasicService vipBasicService;
 	@Autowired
@@ -55,6 +56,7 @@ public class PostageController {
 				jsonRet.put("postage", postage);
 			}
 		}catch(Exception e) {
+			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
@@ -80,6 +82,7 @@ public class PostageController {
 				jsonRet.put("postages", postages);
 			}
 		}catch(Exception e) {
+			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
@@ -100,6 +103,7 @@ public class PostageController {
 			jsonRet.put("errmsg", "ok");
 			jsonRet.put("cnt", cnt);
 		}catch(Exception e) {
+			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
@@ -146,17 +150,93 @@ public class PostageController {
 				return jsonRet.toString();
 			}
 			//其他验证
+			String isCityWide = postage.getIsCityWide();
+			String isFree = postage.getIsFree();
+			StringBuilder sb = new StringBuilder();
+			if(!"1".equals(isFree)) {//非无条件免邮
+				Integer firstWeight = postage.getFirstWeight();
+				BigDecimal firstWPrice = postage.getFirstWPrice();
+				Integer additionWeight = postage.getAdditionWeight();
+				BigDecimal additionWPrice = postage.getAdditionWPrice();
+				if(firstWeight == null || 
+						firstWPrice == null ||
+						additionWeight == null ||
+						additionWPrice == null) {
+					sb.append(" 首重、首重价格、续重、续重价格：不可为空！");
+				}
+				if(isFree.contains("2")) {//重量限制免邮
+					Integer freeWeight = postage.getFreeWeight();
+					if(freeWeight == null) {
+						sb.append(" 免邮重量：不可为空，最小值1(kg)！");
+					}
+				}
+				if(isFree.contains("3")) {//金额限制免邮
+					BigDecimal freeAmount = postage.getFreeAmount();
+					if(freeAmount == null) {
+						sb.append(" 免邮金额：不可为空，最小值1(元)！");
+					}
+				}
+				if("0".equals(isCityWide)) {//全国
+					String provLimit = postage.getProvLimit();
+					if(provLimit == null || provLimit.length()<2) {
+						sb.append(" 配送省份： 不可为空！");
+					}
+					if(provLimit.contains("全国")) {
+						postage.setProvLimit("全国");
+					}
+				}else {//同城
+					if(isFree.contains("4")) {//距离限制免邮
+						Integer freeDist = postage.getFreeDist();
+						if(freeDist == null) {
+							sb.append(" 免邮距离：不可为空，最小值1(km)！");
+						}
+					}
+					Integer firstDist = postage.getFirstDist();
+					BigDecimal firstDPrice = postage.getFirstDPrice();
+					Integer additionDist = postage.getAdditionDist();
+					BigDecimal additionDPrice = postage.getAdditionDPrice();
+					if(firstDist == null || 
+							firstDPrice == null ||
+							additionDist == null ||
+							additionDPrice == null) {
+						sb.append(" 首距、首距价格、续距、续距价格：不可为空！");
+					}
+				}
+			}
+			if("0".equals(isCityWide)) {//全国
+				String provLimit = postage.getProvLimit();
+				if(provLimit == null || provLimit.length()<2) {
+					sb.append(" 配送省份： 不可为空！");
+				}
+				if(provLimit.contains("全国")) {
+					postage.setProvLimit("全国");
+				}
+			}else {//同城
+				Integer distLimit = postage.getDistLimit();
+				if(distLimit == null) {
+					sb.append(" 配送距离： 不可为空！");
+				}
+			}
+
+			if(sb.length()>0) {
+				jsonRet.put("errcode", ErrCodes.POSTAGE_PARAM_ERROR);
+				jsonRet.put("errmsg", sb.toString());
+				return jsonRet.toString();
+			}
 			
+			//数据处理
+			postage.setUpdateOpr(currVipId);
 			Long id = this.postageService.add(postage);
-			if(id != null) {
-				jsonRet.put("postageId", 0);
+			if(id  > 0) {
+				jsonRet.put("postageId", id);
 				jsonRet.put("errcode", 0);
 				jsonRet.put("errmsg", "ok");
 			}else {
-				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-				jsonRet.put("errmsg", "数据保存出现错误！");
+				jsonRet.put("errcode", id);
+				jsonRet.put("errmsg", "数据保存出现错误！错误码：" + id);
 			}
 		}catch(Exception e) {
+			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
@@ -174,18 +254,6 @@ public class PostageController {
 			@RequestParam(value="currVipId",required=true)Integer currVipId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//信息验证结果处理
-			if(result.hasErrors()){
-				StringBuilder sb = new StringBuilder();
-				List<ObjectError> list = result.getAllErrors();
-				for(ObjectError e :list){
-					sb.append(e.getDefaultMessage());
-				}
-				jsonRet.put("errmsg", sb.toString());
-				jsonRet.put("errcode", ErrCodes.POSTAGE_PARAM_ERROR);
-				return jsonRet.toString();
-			}
-			
 			
 			VipBasic vip = this.vipBasicService.get(currVipId);
 			if(vip == null || !"1".equals(vip.getStatus()) ) {
@@ -211,7 +279,93 @@ public class PostageController {
 				jsonRet.put("errmsg", "您无权执行该操作！");
 				return jsonRet.toString();
 			}
-			
+			//信息验证结果处理
+			if(result.hasErrors()){
+				StringBuilder sb = new StringBuilder();
+				List<ObjectError> list = result.getAllErrors();
+				for(ObjectError e :list){
+					sb.append(e.getDefaultMessage());
+				}
+				jsonRet.put("errmsg", sb.toString());
+				jsonRet.put("errcode", ErrCodes.POSTAGE_PARAM_ERROR);
+				return jsonRet.toString();
+			}
+			//其他验证
+			String isCityWide = postage.getIsCityWide();
+			String isFree = postage.getIsFree();
+			StringBuilder sb = new StringBuilder();
+			if(!"1".equals(isFree)) {//非无条件免邮
+				Integer firstWeight = postage.getFirstWeight();
+				BigDecimal firstWPrice = postage.getFirstWPrice();
+				Integer additionWeight = postage.getAdditionWeight();
+				BigDecimal additionWPrice = postage.getAdditionWPrice();
+				if(firstWeight == null || 
+						firstWPrice == null ||
+						additionWeight == null ||
+						additionWPrice == null) {
+					sb.append(" 首重、首重价格、续重、续重价格：不可为空！");
+				}
+				if(isFree.contains("2")) {//重量限制免邮
+					Integer freeWeight = postage.getFreeWeight();
+					if(freeWeight == null) {
+						sb.append(" 免邮重量：不可为空，最小值1(kg)！");
+					}
+				}
+				if(isFree.contains("3")) {//金额限制免邮
+					BigDecimal freeAmount = postage.getFreeAmount();
+					if(freeAmount == null) {
+						sb.append(" 免邮金额：不可为空，最小值1(元)！");
+					}
+				}
+				if("0".equals(isCityWide)) {//全国
+					String provLimit = postage.getProvLimit();
+					if(provLimit == null || provLimit.length()<2) {
+						sb.append(" 配送省份： 不可为空！");
+					}
+					if(provLimit.contains("全国")) {
+						postage.setProvLimit("全国");
+					}
+				}else {//同城
+					if(isFree.contains("4")) {//距离限制免邮
+						Integer freeDist = postage.getFreeDist();
+						if(freeDist == null) {
+							sb.append(" 免邮距离：不可为空，最小值1(km)！");
+						}
+					}
+					Integer firstDist = postage.getFirstDist();
+					BigDecimal firstDPrice = postage.getFirstDPrice();
+					Integer additionDist = postage.getAdditionDist();
+					BigDecimal additionDPrice = postage.getAdditionDPrice();
+					if(firstDist == null || 
+							firstDPrice == null ||
+							additionDist == null ||
+							additionDPrice == null) {
+						sb.append(" 首距、首距价格、续距、续距价格：不可为空！");
+					}
+				}
+			}
+			if("0".equals(isCityWide)) {//全国
+				String provLimit = postage.getProvLimit();
+				if(provLimit == null || provLimit.length()<2) {
+					sb.append(" 配送省份： 不可为空！");
+				}
+				if(provLimit.contains("全国")) {
+					postage.setProvLimit("全国");
+				}
+			}else {//同城
+				Integer distLimit = postage.getDistLimit();
+				if(distLimit == null) {
+					sb.append(" 配送距离： 不可为空！");
+				}
+			}
+
+			if(sb.length()>0) {
+				jsonRet.put("errcode", ErrCodes.POSTAGE_PARAM_ERROR);
+				jsonRet.put("errmsg", sb.toString());
+				return jsonRet.toString();
+			}
+			//数据处理
+			postage.setUpdateOpr(currVipId);
 			int cnt = this.postageService.update(postage);
 			if(cnt > 0) {
 				jsonRet.put("postageId", 0);
@@ -222,6 +376,7 @@ public class PostageController {
 				jsonRet.put("errmsg", "数据保存出现错误！");
 			}
 		}catch(Exception e) {
+			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
@@ -272,6 +427,7 @@ public class PostageController {
 				jsonRet.put("errmsg", "删除数据出现错误，错误码：" + cnt + "！");
 			}
 		}catch(Exception e) {
+			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}

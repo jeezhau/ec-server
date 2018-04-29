@@ -225,7 +225,7 @@
   
   <select id="countUsePostageCnt" parameterType="long" resultType="int">
    select count(1) cnt
-   from tbl_goods_info t
+   from tb_goods_info
    where LOCATE(concat(',',#{postageId,jdbcType=INTEGER},','),postage_ids)>0
   </select>
   
