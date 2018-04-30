@@ -2,8 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mofangyouxuan.mapper.CategoryMapper">
   <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Category">
-    <id column="id" jdbcType="INTEGER" property="id" />
-    <result column="name" jdbcType="VARCHAR" property="name" />
+    <id column="category_id" jdbcType="INTEGER" property="categoryId" />
+    <result column="category_name" jdbcType="VARCHAR" property="categoryName" />
     <result column="status" jdbcType="CHAR" property="status" />
   </resultMap>
   <sql id="Base_Column_List">
@@ -23,7 +23,7 @@
   </delete>
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.Category">
-    insert into tb_goods_category (category_id, name, status
+    insert into tb_goods_category (category_id, category_name, status
       )
     values (#{categoryId,jdbcType=INTEGER}, #{categoryName,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}
       )

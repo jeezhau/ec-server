@@ -181,13 +181,7 @@ public class PostageAction {
 					}
 				}
 				if("0".equals(isCityWide)) {//全国
-					String provLimit = postage.getProvLimit();
-					if(provLimit == null || provLimit.length()<2) {
-						sb.append(" 配送省份： 不可为空！");
-					}
-					if(provLimit.contains("全国")) {
-						postage.setProvLimit("全国");
-					}
+					;
 				}else {//同城
 					if(isFree.contains("4")) {//距离限制免邮
 						Integer freeDist = postage.getFreeDist();

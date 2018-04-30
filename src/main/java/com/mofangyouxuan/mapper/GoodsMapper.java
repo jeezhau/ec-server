@@ -20,7 +20,7 @@ public interface GoodsMapper {
     
     List<Goods> selectAll(@Param("params")Map<String,Object> params,@Param("sorts")String sorts,@Param("pageCond")PageCond pageCond);
     
-    int countAll(Map<String,Object> params);
+    int countAll(@Param("params")Map<String,Object> params);
     
     int countUsePostageCnt(Long postageId);
     

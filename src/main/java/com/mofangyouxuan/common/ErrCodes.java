@@ -36,6 +36,8 @@ public class ErrCodes {
 	public static int GOODS_NO_GOODS = -105002;	//没有商品信息
 	public static int GOODS_PARAM_ERROR = -105003;	//参数格式不正确
 	public static int GOODS_STATUS_ERROR = -105004;	//状态有错
+	public static int GOODS_PRIVILEGE_ERROR = -105005;	//无权执行该操作
+	public static int GOODS_CNT_LIMIT = -105006;	//数量限制
 	
 	//图库管理功能码：106
 	public static int IMAGE_DIR_NO_EXISTS = -106001;		//目录不存在

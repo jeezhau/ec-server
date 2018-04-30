@@ -1,7 +1,9 @@
 package com.mofangyouxuan.controller;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,8 +14,11 @@ import java.util.TreeSet;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,13 +32,16 @@ import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.UserBasic;
+import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.UserBasicService;
+import com.mofangyouxuan.service.VipBasicService;
 
 /**
  * 商品管理
- * 商品图片：使用合作伙伴的图片库的相对路径：partner_ID/xxx.jpg
+ * 1、每个合作伙伴有商品数量限制；
+ * 2、新添加的商品需要经过审核之后才可显示销售；
  * @author jeekhan
  *
  */
@@ -44,9 +52,18 @@ public class GoodsAction {
 	@Autowired
 	private GoodsService goodsService;
 	@Autowired
+	private VipBasicService vipBasicService;
+	@Autowired
 	private PartnerBasicService  partnerBasicService;
 	@Autowired
 	private UserBasicService userBasicService;
+	
+	
+	@InitBinder
+	protected void initBinder(WebDataBinder binder) {
+	    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	    binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat, true));
+	}
 	
 	/**
 	 * 添加商品
@@ -55,9 +72,27 @@ public class GoodsAction {
 	 * @return {errcode:0,errmsg:'ok',goodsId:111}
 	 */
 	@RequestMapping("/add")
-	public Object addGoods(@Valid Goods goods,BindingResult result) {
+	public Object addGoods(@Valid Goods goods,BindingResult result,
+			@RequestParam(value="currVipId",required=true)Integer currVipId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
+			VipBasic vip = this.vipBasicService.get(currVipId);
+			if(vip == null || !"1".equals(vip.getStatus()) ) {
+				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+				return jsonRet.toString();
+			}
+			PartnerBasic partner = this.partnerBasicService.getByBindUser(currVipId);
+			if(partner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
+				return jsonRet.toString();
+			}
+			if(!goods.getPartnerId().equals(partner.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权执行该操作！");
+				return jsonRet.toString();
+			}
 			//信息验证结果处理
 			if(result.hasErrors()){
 				StringBuilder sb = new StringBuilder();
@@ -71,27 +106,20 @@ public class GoodsAction {
 			}
 			
 			//数据检查
-			PartnerBasic partner = this.partnerBasicService.getByID(goods.getPartnerId());
-			if(partner == null) {
-				jsonRet.put("errmsg", "系统中该合作伙伴不存在！");
-				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				return jsonRet.toString();
-			}
 			if(!"0".equals(partner.getStatus()) && !"S".equals(partner.getStatus())  && !"C".equals(partner.getStatus()) && !"R".equals(partner.getStatus())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				jsonRet.put("errmsg", "您当前的合作伙伴状态有误，不可进行商品管理！");
 				return jsonRet.toString();
-			}	
-			
+			}
+			goods.setSaledCnt(0);
 			goods.setReviewResult("0"); //待审核
 			goods.setReviewLog("");
 			goods.setReviewOpr(null);
 			goods.setReviewTime(null);
-			
 			Long id = this.goodsService.add(goods);
-			if(id == null) {
+			if(id < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-				jsonRet.put("errmsg", "数据保存至数据库失败！");
+				jsonRet.put("errmsg", "数据保存至数据库失败！，错误码：" + id);
 			}else {
 				jsonRet.put("errcode", 0);
 				jsonRet.put("goodsId", id);
@@ -112,9 +140,27 @@ public class GoodsAction {
 	 * @return {errcode:0,errmsg:'ok',goodsId:111}
 	 */
 	@RequestMapping("/update")
-	public Object updateGoods(@Valid Goods goods,BindingResult result) {
+	public Object updateGoods(@Valid Goods goods,BindingResult result,
+			@RequestParam(value="currVipId",required=true)Integer currVipId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
+			VipBasic vip = this.vipBasicService.get(currVipId);
+			if(vip == null || !"1".equals(vip.getStatus()) ) {
+				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+				return jsonRet.toString();
+			}
+			PartnerBasic partner = this.partnerBasicService.getByBindUser(currVipId);
+			if(partner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
+				return jsonRet.toString();
+			}
+			if(!goods.getPartnerId().equals(partner.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权执行该操作！");
+				return jsonRet.toString();
+			}
 			//信息验证结果处理
 			if(result.hasErrors()){
 				StringBuilder sb = new StringBuilder();
@@ -128,19 +174,13 @@ public class GoodsAction {
 			}
 			
 			//数据检查
-			PartnerBasic partner = this.partnerBasicService.getByID(goods.getPartnerId());
-			if(partner == null) {
-				jsonRet.put("errmsg", "系统中该合作伙伴不存在！");
-				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				return jsonRet.toString();
-			}
 			if(!"0".equals(partner.getStatus()) && !"S".equals(partner.getStatus())  && !"C".equals(partner.getStatus()) && !"R".equals(partner.getStatus())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				jsonRet.put("errmsg", "您当前的合作伙伴状态有误，不可进行商品管理！");
 				return jsonRet.toString();
-			}	
+			}
 			if(goods.getGoodsId() == null) {
-				jsonRet.put("errmsg", "商品ID不可为空！");
+				jsonRet.put("errmsg", "商品ID：不可为空！");
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				return jsonRet.toString();
 			}
@@ -150,7 +190,7 @@ public class GoodsAction {
 				jsonRet.put("errmsg", "系统中没有该商品信息！");
 				return jsonRet.toString();
 			}
-			
+			goods.setSaledCnt(old.getSaledCnt());
 			goods.setReviewResult("0"); //待审核
 			goods.setReviewLog("");
 			goods.setReviewOpr(null);
@@ -159,7 +199,7 @@ public class GoodsAction {
 			int id = this.goodsService.update(goods);
 			if(id <1 ) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-				jsonRet.put("errmsg", "数据保存至数据库失败！");
+				jsonRet.put("errmsg", "数据保存至数据库失败！，错误码：" + id);
 			}else {
 				jsonRet.put("errcode", 0);
 				jsonRet.put("goodsId", goods.getGoodsId());
@@ -177,7 +217,7 @@ public class GoodsAction {
 	/**
 	 * 根据ID获取商品信息
 	 * @param goodsId
-	 * @return {"errcode":-1,"errmsg":"错误信息"} 或 {商品所有字段}
+	 * @return {"errcode":-1,"errmsg":"错误信息",goods:{...}} 
 	 */
 	@RequestMapping("/get/{goodsId}")
 	public Object getByID(@PathVariable("goodsId")Long goodsId) {
@@ -288,7 +328,7 @@ public class GoodsAction {
 				}
 			}
 			PageCond pageCond = null;
-			if(jsonPageCond == null) {
+			if(jsonPageCond == null || jsonPageCond.length()<1) {
 				pageCond = new PageCond(0,100);
 			}else {
 				pageCond = JSONObject.toJavaObject(JSONObject.parseObject(jsonPageCond), PageCond.class);
@@ -335,7 +375,7 @@ public class GoodsAction {
 	 * @throws JSONException 
 	 */
 	@RequestMapping("/changeStatus")
-	public String changeOwnStatus(@RequestParam(value="goodsIds",required=true)String goodsIds,
+	public String changeStatus(@RequestParam(value="goodsIds",required=true)String goodsIds,
 			@RequestParam(value="partnerId",required=true)Integer partnerId,
 			@RequestParam(value="newStatus",required=true)String newStatus) {
 		JSONObject jsonRet = new JSONObject();
@@ -448,7 +488,7 @@ public class GoodsAction {
 	 * @param partnerId
 	 * @param goodsId
 	 * @param newCnt
-	 * @return
+	 * @return {errcode:0,errmsg:'ok'}
 	 */
 	@RequestMapping("/changeStock")
 	public String changeStock(@RequestParam(value="partnerId",required=true)Integer partnerId,

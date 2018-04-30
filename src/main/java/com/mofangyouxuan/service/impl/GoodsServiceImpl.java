@@ -1,12 +1,15 @@
 package com.mofangyouxuan.service.impl;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.mapper.GoodsMapper;
 import com.mofangyouxuan.model.Category;
@@ -16,6 +19,8 @@ import com.mofangyouxuan.service.GoodsService;
 @Service
 public class GoodsServiceImpl implements GoodsService{
 	
+	@Value("${sys.goods-cnt-limit}")
+	private int goodsCntLimit;
 	@Autowired
 	private GoodsMapper goodsMapper;
 	@Autowired
@@ -34,10 +39,16 @@ public class GoodsServiceImpl implements GoodsService{
 	/**
 	 * 添加商品信息
 	 * @param goods
-	 * @return 新ID或null
+	 * @return 新ID或错误码
 	 */
 	@Override
 	public Long add(Goods goods) {
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("partnerId", goods.getPartnerId());
+		int n = this.goodsMapper.countAll(params);
+		if(n>=this.goodsCntLimit) {
+			return (long)ErrCodes.GOODS_CNT_LIMIT;
+		}
 		goods.setGoodsId(null);
 		goods.setUpdateTime(new Date());
 		goods.setReviewLog(null);
@@ -47,7 +58,7 @@ public class GoodsServiceImpl implements GoodsService{
 		if(cnt>0) {
 			return goods.getGoodsId();
 		}
-		return null;
+		return (long)ErrCodes.COMMON_DB_ERROR;
 	}
 	
 	/**
@@ -57,6 +68,12 @@ public class GoodsServiceImpl implements GoodsService{
 	 */
 	@Override
 	public int update(Goods goods) {
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("partnerId", goods.getPartnerId());
+		int n = this.goodsMapper.countAll(params);
+		if(n>=this.goodsCntLimit) {
+			return ErrCodes.GOODS_CNT_LIMIT;
+		}
 		goods.setUpdateTime(new Date());
 		goods.setReviewLog(null);
 		goods.setReviewOpr(null);

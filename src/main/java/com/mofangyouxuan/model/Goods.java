@@ -61,7 +61,8 @@ public class Goods {
 
     private String provLimit;
 
-    @NotNull(message=" 运费模版组：不可为空！ ")
+    @NotNull(message=" 运费模版组ID：不可为空！ ")
+    @Size(min=1,max=100,message=" 运费模版组ID：长度范围1-100字符！ ")
     private String postageIds;
 
     private Date updateTime;

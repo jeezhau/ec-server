@@ -48,6 +48,7 @@ sys:
   image-folder-file-limit: 100   #每个文件夹下最多可有100个文件（普通文件和目录）
   
   postage-cnt-limit: 20 #每个合作伙伴可添加的运费模版数量限制
+  goods-cnt-limit: 30 #每个合作伙伴可添加的商品数量限制
 
 
   

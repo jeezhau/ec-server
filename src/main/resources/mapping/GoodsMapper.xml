@@ -9,7 +9,7 @@
     <result column="goods_desc" jdbcType="VARCHAR" property="goodsDesc" />
     <result column="main_img_path" jdbcType="VARCHAR" property="mainImgPath" />
     <result column="carousel_img_paths" jdbcType="VARCHAR" property="carouselImgPaths" />
-    <result column="saledCnt" jdbcType="INTEGER" property="saledCnt" />
+    <result column="saled_cnt" jdbcType="INTEGER" property="saledCnt" />
     <result column="stock" jdbcType="INTEGER" property="stock" />
     <result column="limited_num" jdbcType="INTEGER" property="limitedNum" />
     <result column="begin_time" jdbcType="TIMESTAMP" property="beginTime" />
@@ -28,7 +28,7 @@
     <result column="memo" jdbcType="VARCHAR" property="memo" />
   </resultMap>
   <sql id="Base_Column_List">
-    goods_id, partner_id, category_id,goods_name, goods_desc, main_img_dir,carousel_img_paths,saledCnt, stock, limited_num, begin_time, 
+    goods_id, partner_id, category_id,goods_name, goods_desc, main_img_path,carousel_img_paths,saled_cnt, stock, limited_num, begin_time, 
     end_time, dispatch_mode, is_city_wide, dist_limit, prov_limit, postage_ids, update_time, 
     review_result, review_log, review_opr, review_time, status, memo
   </sql>
@@ -46,14 +46,14 @@
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.Goods" keyProperty="goodsId" useGeneratedKeys="true">
     insert into tb_goods_info (goods_id, partner_id, category_id,goods_name, 
-      goods_desc, main_img_dir, carousel_img_paths,saledCnt, stock, 
+      goods_desc, main_img_path, carousel_img_paths,saled_cnt, stock, 
       limited_num, begin_time, end_time, 
       dispatch_mode, is_city_wide, dist_limit, 
       prov_limit, postage_ids, update_time, 
       review_result, review_log, review_opr,review_time, 
       status, memo)
     values (#{goodsId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER},#{categoryId,jdbcType=INTEGER}, #{goodsName,jdbcType=VARCHAR}, 
-      #{goodsDesc,jdbcType=VARCHAR}, #{mainImgDir,jdbcType=VARCHAR}, #{carouselImgPaths,jdbcType=VARCHAR}, #{saledCnt,jdbcType=INTEGER}, #{stock,jdbcType=INTEGER}, 
+      #{goodsDesc,jdbcType=VARCHAR}, #{mainImgPath,jdbcType=VARCHAR}, #{carouselImgPaths,jdbcType=VARCHAR}, #{saledCnt,jdbcType=INTEGER}, #{stock,jdbcType=INTEGER}, 
       #{limitedNum,jdbcType=INTEGER}, #{beginTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
       #{dispatchMode,jdbcType=CHAR}, #{isCityWide,jdbcType=CHAR}, #{distLimit,jdbcType=INTEGER}, 
       #{provLimit,jdbcType=VARCHAR}, #{postageIds,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
@@ -76,8 +76,8 @@
       <if test="goodsDesc != null">
         goods_desc = #{goodsDesc,jdbcType=VARCHAR},
       </if>
-      <if test="mainImgDir != null">
-        main_img_dir = #{mainImgDir,jdbcType=VARCHAR},
+      <if test="mainImgPath != null">
+        main_img_path = #{mainImgPath,jdbcType=VARCHAR},
       </if>
       <if test="carouselImgPaths != null">
         carousel_img_paths = #{carouselImgPaths,jdbcType=VARCHAR},
@@ -138,42 +138,41 @@
   </update>
 
   <select id="countAll" parameterType="map" resultType="int">
-    select 
-     <include refid="Base_Column_List" />
+    select count(1)
     from tb_goods_info
     <where>
       <if test="params.goodsId != null">
-        and goods_id = #{goodsId,jdbcType=INTEGER},
+        and goods_id = #{goodsId,jdbcType=INTEGER}
       </if>
       <if test="params.partnerId != null">
-        and partner_id = #{params.partnerId,jdbcType=INTEGER},
+        and partner_id = #{params.partnerId,jdbcType=INTEGER}
       </if>
       <if test="params.categoryId != null">
-        and category_id = #{params.categoryId,jdbcType=INTEGER},
+        and category_id = #{params.categoryId,jdbcType=INTEGER}
       </if>      
       <if test="params.goodsName != null">
-        and goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%'),
+        and goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%')
       </if>
       <if test="params.dispatchMode != null">
-        and dispatch_mode = #{params.dispatchMode,jdbcType=CHAR},
+        and dispatch_mode = #{params.dispatchMode,jdbcType=CHAR}
       </if>
       <if test="params.isCityWide != null">
-        and is_city_wide = #{params.isCityWide,jdbcType=CHAR},
+        and is_city_wide = #{params.isCityWide,jdbcType=CHAR}
       </if>
       <if test="params.distLimit != null">
-        and dist_limit &lt;= #{params.distLimit,jdbcType=INTEGER},
+        and dist_limit &lt;= #{params.distLimit,jdbcType=INTEGER}
       </if>
       <if test="params.provLimit != null">
-        and LOCATE(#{params.provLimit,jdbcType=VARCHAR},prov_limit)>0,
+        and LOCATE(#{params.provLimit,jdbcType=VARCHAR},prov_limit)>0
       </if>
       <if test="params.postageId != null">
-        and LOCATE(concat(',',#{params.postageId,jdbcType=INGETER},','),postage_ids)>0,
+        and LOCATE(concat(',',#{params.postageId,jdbcType=INGETER},','),postage_ids)>0
       </if>
       <if test="params.reviewResult != null">
-        and review_result = #{params.reviewResult,jdbcType=CHAR},
+        and review_result = #{params.reviewResult,jdbcType=CHAR}
       </if>
       <if test="params.status != null">
-        and `status` = #{params.status,jdbcType=CHAR},
+        and `status` = #{params.status,jdbcType=CHAR}
       </if>
     </where>
   </select> 
@@ -184,37 +183,37 @@
     from tb_goods_info
     <where>
       <if test="params.goodsId != null">
-        and goods_id = #{goodsId,jdbcType=INTEGER},
+        and goods_id = #{goodsId,jdbcType=INTEGER}
       </if>
       <if test="params.partnerId != null">
-        and partner_id = #{params.partnerId,jdbcType=INTEGER},
+        and partner_id = #{params.partnerId,jdbcType=INTEGER}
       </if>
       <if test="params.categoryId != null">
-        and category_id = #{params.categoryId,jdbcType=INTEGER},
+        and category_id = #{params.categoryId,jdbcType=INTEGER}
       </if>       
       <if test="params.goodsName != null">
-        and goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%'),
+        and goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%')
       </if>
       <if test="params.dispatchMode != null">
-        and dispatch_mode = #{params.dispatchMode,jdbcType=CHAR},
+        and dispatch_mode = #{params.dispatchMode,jdbcType=CHAR}
       </if>
       <if test="params.isCityWide != null">
-        and is_city_wide = #{params.isCityWide,jdbcType=CHAR},
+        and is_city_wide = #{params.isCityWide,jdbcType=CHAR}
       </if>
       <if test="params.distLimit != null">
-        and dist_limit &lt;= #{params.distLimit,jdbcType=INTEGER},
+        and dist_limit &lt;= #{params.distLimit,jdbcType=INTEGER}
       </if>
       <if test="params.provLimit != null">
-        and LOCATE(#{params.provLimit,jdbcType=VARCHAR},prov_limit)>0,
+        and LOCATE(#{params.provLimit,jdbcType=VARCHAR},prov_limit)>0
       </if>
       <if test="params.postageId != null">
-        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),postage_ids)>0,
+        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),postage_ids)>0
       </if>
       <if test="params.reviewResult != null">
-        and review_result = #{params.reviewResult,jdbcType=CHAR},
+        and review_result = #{params.reviewResult,jdbcType=CHAR}
       </if>
       <if test="params.status != null">
-        and `status` = #{params.status,jdbcType=CHAR},
+        and `status` = #{params.status,jdbcType=CHAR}
       </if>
     </where>
     <if test="sorts != null">
