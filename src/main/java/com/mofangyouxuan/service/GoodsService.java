@@ -1,5 +1,6 @@
 package com.mofangyouxuan.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -43,12 +44,12 @@ public interface GoodsService {
 	public int delete(Goods goods);
 	
 	/**
-	 * 变更商品库存
+	 * 变更商品规格与库存
 	 * @param goods
 	 * @param newCnt 新的库存数量
 	 * @return
 	 */
-	public int changeStock(Goods goods,int newCnt);
+	public int changeSpec(Goods goods,String specDetail,Integer stockSum,BigDecimal priceLowest);
 	
 	/**
 	 * 记录商品审批结果

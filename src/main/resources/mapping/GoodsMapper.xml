@@ -9,8 +9,12 @@
     <result column="goods_desc" jdbcType="VARCHAR" property="goodsDesc" />
     <result column="main_img_path" jdbcType="VARCHAR" property="mainImgPath" />
     <result column="carousel_img_paths" jdbcType="VARCHAR" property="carouselImgPaths" />
+    <result column="place" jdbcType="VARCHAR" property="place" />
+    <result column="vender" jdbcType="VARCHAR" property="vender" />
     <result column="saled_cnt" jdbcType="INTEGER" property="saledCnt" />
-    <result column="stock" jdbcType="INTEGER" property="stock" />
+    <result column="stock_sum" jdbcType="INTEGER" property="stockSum" />
+    <result column="price_lowest" jdbcType="DECIMAL" property="priceLowest" />
+    <result column="spec_detail" jdbcType="VARCHAR" property="specDetail" />
     <result column="limited_num" jdbcType="INTEGER" property="limitedNum" />
     <result column="begin_time" jdbcType="TIMESTAMP" property="beginTime" />
     <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
@@ -26,16 +30,43 @@
     <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="memo" jdbcType="VARCHAR" property="memo" />
+    	<association property="partner" column="partner_id" javaType="com.mofangyouxuan.model.PartnerBasic" >
+	    <id column="partner_id" jdbcType="INTEGER" property="partnerId" />
+	    <result column="vip_id" jdbcType="INTEGER" property="vipId" />
+	    <result column="country" jdbcType="VARCHAR" property="country" />
+	    <result column="province" jdbcType="VARCHAR" property="province" />
+	    <result column="city" jdbcType="VARCHAR" property="city" />
+	    <result column="area" jdbcType="VARCHAR" property="area" />
+	    <result column="addr" jdbcType="VARCHAR" property="addr" />
+	    <result column="busi_name" jdbcType="VARCHAR" property="busiName" />
+	    <result column="legal_pername" jdbcType="VARCHAR" property="legalPername" />
+	    <result column="legal_peridno" jdbcType="VARCHAR" property="legalPeridno" />
+	    <result column="comp_name" jdbcType="VARCHAR" property="compName" />
+	    <result column="comp_type" jdbcType="CHAR" property="compType" />
+	    <result column="licence_no" jdbcType="VARCHAR" property="licenceNo" />
+	    <result column="cert_dir" jdbcType="VARCHAR" property="certDir" />
+	    <result column="phone" jdbcType="VARCHAR" property="phone" />
+	    <result column="location_x" jdbcType="DECIMAL" property="locationX" />
+	    <result column="location_y" jdbcType="DECIMAL" property="locationY" />
+	    <result column="introduce" jdbcType="VARCHAR" property="introduce" />
+	    <result column="partner_status" jdbcType="CHAR" property="status" />
+	    <result column="distance" jdbcType="INTEGER" property="distance"/>
+	</association>
   </resultMap>
   <sql id="Base_Column_List">
-    goods_id, partner_id, category_id,goods_name, goods_desc, main_img_path,carousel_img_paths,saled_cnt, stock, limited_num, begin_time, 
-    end_time, dispatch_mode, is_city_wide, dist_limit, prov_limit, postage_ids, update_time, 
-    review_result, review_log, review_opr, review_time, status, memo
+    g.goods_id, g.partner_id, g.category_id,g.goods_name, g.goods_desc, g.main_img_path,g.carousel_img_paths,g.place,g.vender,
+    g.saled_cnt, g.stock_sum, g.price_lowest, g.spec_detail,g.limited_num, g.begin_time,  g.end_time, 
+    g.dispatch_mode, g.is_city_wide, g.dist_limit, g.prov_limit, g.postage_ids, g.update_time, 
+    g.review_result, g.review_log, g.review_opr, g.review_time, g.status, g.memo,
+    
+    p.vip_id, p.country, p.province, p.city, p.area, p.addr, p.busi_name, p.legal_pername, p.legal_peridno, 
+    p.comp_type, p.comp_name, p.licence_no, p.cert_dir, p.phone, p.location_x, p.location_y, p.introduce,p.partner_status,distance
+
   </sql>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
-    <include refid="Base_Column_List" />
-    from tb_goods_info
+    <include refid="Base_Column_List" />, '0' as distance 
+    from tb_goods_info g join tb_partner_basic p on g.partner_id = p.partner_id
     where goods_id = #{goodsId,jdbcType=INTEGER}
   </select>
   
@@ -46,15 +77,17 @@
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.Goods" keyProperty="goodsId" useGeneratedKeys="true">
     insert into tb_goods_info (goods_id, partner_id, category_id,goods_name, 
-      goods_desc, main_img_path, carousel_img_paths,saled_cnt, stock, 
+      goods_desc, main_img_path, carousel_img_paths,place,vender,saled_cnt, stock_sum,price_lowest,spec_detail, 
       limited_num, begin_time, end_time, 
       dispatch_mode, is_city_wide, dist_limit, 
       prov_limit, postage_ids, update_time, 
       review_result, review_log, review_opr,review_time, 
       status, memo)
     values (#{goodsId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER},#{categoryId,jdbcType=INTEGER}, #{goodsName,jdbcType=VARCHAR}, 
-      #{goodsDesc,jdbcType=VARCHAR}, #{mainImgPath,jdbcType=VARCHAR}, #{carouselImgPaths,jdbcType=VARCHAR}, #{saledCnt,jdbcType=INTEGER}, #{stock,jdbcType=INTEGER}, 
-      #{limitedNum,jdbcType=INTEGER}, #{beginTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
+      #{goodsDesc,jdbcType=VARCHAR}, #{mainImgPath,jdbcType=VARCHAR}, #{carouselImgPaths,jdbcType=VARCHAR}, 
+      #{place,jdbcType=VARCHAR},#{vender,jdbcType=VARCHAR},
+      #{saledCnt,jdbcType=INTEGER}, #{stockSum,jdbcType=INTEGER}, 
+      #{priceLowest,jdbcType=DECIMAL},#{specDetail,jdbcType=VARCHAR},#{limitedNum,jdbcType=INTEGER}, #{beginTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
       #{dispatchMode,jdbcType=CHAR}, #{isCityWide,jdbcType=CHAR}, #{distLimit,jdbcType=INTEGER}, 
       #{provLimit,jdbcType=VARCHAR}, #{postageIds,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
       #{reviewResult,jdbcType=CHAR}, #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP},
@@ -82,12 +115,24 @@
       <if test="carouselImgPaths != null">
         carousel_img_paths = #{carouselImgPaths,jdbcType=VARCHAR},
       </if>
+      <if test="place != null">
+        place = #{place,jdbcType=VARCHAR},
+      </if>
+      <if test="vender != null">
+        vender = #{vender,jdbcType=VARCHAR},
+      </if>            
       <if test="saledCnt != null">
         saled_cnt = #{saledCnt,jdbcType=INTEGER},
       </if>            
-      <if test="stock != null">
-        stock = #{stock,jdbcType=INTEGER},
+      <if test="stockSum != null">
+        stock_sum = #{stockSum,jdbcType=INTEGER},
       </if>
+      <if test="priceLowest != null">
+        price_lowest = #{priceLowest,jdbcType=DECIMAL},
+      </if>
+      <if test="specDetail != null">
+        spec_detail = #{specDetail,jdbcType=VARCHAR},
+      </if>            
       <if test="limitedNum != null">
         limited_num = #{limitedNum,jdbcType=INTEGER},
       </if>
@@ -139,7 +184,7 @@
 
   <select id="countAll" parameterType="map" resultType="int">
     select count(1)
-    from tb_goods_info
+    from tb_goods_info g join tb_partner_basic p on g.partner_id = p.partner_id
     <where>
       <if test="params.goodsId != null">
         and goods_id = #{goodsId,jdbcType=INTEGER}
@@ -180,7 +225,19 @@
   <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
     select 
      <include refid="Base_Column_List" />
-    from tb_goods_info
+     <if test="params.isCityWide != null and params.isCityWide == '1'">
+       <if test="params.currUserLocX != null and params.currUserLocY != null ">
+        ,ROUND(sqrt(pow((#{params.currUserLocX,jdbcType=DECIMAL}-p.location_x),2) + pow((#{params.currUserLocY,jdbcType=DECIMAL}-p.location_y),2))*6367000.0)  distance
+       </if>
+       <if test="params.currUserLocX == null and params.currUserLocY == null ">
+        '' distance
+       </if>
+     </if>
+     <if test="params.isCityWide == null and params.isCityWide != '1'">
+       '' as distance
+     </if>
+     
+    from tb_goods_info g join tb_partner_basic p on g.partner_id = p.partner_id
     <where>
       <if test="params.goodsId != null">
         and goods_id = #{goodsId,jdbcType=INTEGER}

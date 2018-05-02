@@ -1,5 +1,6 @@
 package com.mofangyouxuan.controller;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,12 +25,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
+import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
@@ -104,7 +107,89 @@ public class GoodsAction {
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-			
+			//规格检查
+			List<GoodsSpec> specList = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
+			if(specList == null || specList.size()<1 || specList.size()>30) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+				jsonRet.put("errmsg", "规格信息记录数量为1-30条！");
+				return jsonRet.toString();
+			}
+			StringBuilder sb = new StringBuilder();
+			BigDecimal priceLowest = new BigDecimal(99999999.99);
+			Integer stockSum = 0;
+			for(GoodsSpec spec:specList) {
+				if(spec == null) {
+					sb.append("记录不可为空！");
+				}else {
+					if(spec.getName() == null || spec.getName().length()==0 || spec.getName().length()>20){
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】规格名称不合规，须为1-20字符！");
+					}
+					if(spec.getVal() == null || spec.getVal()<1 || spec.getVal()>999999) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】数量值不合规，须为1-999999的整数值！");
+					}
+					if(spec.getUnit() == null || spec.getUnit().length()<1 || spec.getUnit().length()>5) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】单位不合规，长度须为1-5字符！");
+					}
+					if(spec.getPrice() == null || spec.getPrice().doubleValue()<0 || spec.getPrice().doubleValue()>99999999.99) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】单价不合规，须为0-99999999.99的数值！");
+					}else {
+						if(priceLowest.compareTo(spec.getPrice()) > 0) {
+							priceLowest = spec.getPrice();
+						}
+					}
+					if(spec.getStock() == null || spec.getStock()<0 || spec.getStock()>999999) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】库存不合规，须为0-999999的整数值！");
+					}else {
+						stockSum += spec.getStock();
+					}
+				}
+			}
+			if(sb.length()>0) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+				jsonRet.put("errmsg", "规格信息不合规：" + sb.toString());
+				return jsonRet.toString();
+			}
+			for(int i=0;i<specList.size();i++) {
+				for(int j=i+1;j<specList.size();j++) {
+					if(specList.get(i).getName().equals(specList.get(j).getName())) {
+						jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+						jsonRet.put("errmsg", "规格信息中不可出现同规格名称的记录！");
+						return jsonRet.toString();
+					}
+				}
+			}
+			goods.setPriceLowest(priceLowest);
+			goods.setStockSum(stockSum);
+			//其他验证
+			String isCityWide = goods.getIsCityWide();
+			Integer limitCnt = goods.getLimitedNum();
+			sb = new StringBuilder();
+			if("0".equals(isCityWide)) {//全国
+				String provLimit = goods.getProvLimit();
+				if(provLimit == null || provLimit.length()<2) {
+					sb.append(" 销售省份： 不可为空！");
+				}
+				if(provLimit.contains("全国")) {
+					goods.setProvLimit("全国");
+				}
+			}else {//同城
+				Integer distLimit = goods.getDistLimit();
+				if(distLimit == null) {
+					sb.append(" 销售距离范围： 不可为空！");
+				}
+			}
+			if(limitCnt > 0) {
+				String begin = goods.getBeginTime();
+				String end = goods.getEndTime();
+				if(begin == null| end == null) {
+					sb.append("限购开始时间、限购结束时间：不可为空！");
+				}
+			}
+			if(sb.length()>0) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+				jsonRet.put("errmsg", sb.toString());
+				return jsonRet.toString();
+			}
 			//数据检查
 			if(!"0".equals(partner.getStatus()) && !"S".equals(partner.getStatus())  && !"C".equals(partner.getStatus()) && !"R".equals(partner.getStatus())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
@@ -112,7 +197,7 @@ public class GoodsAction {
 				return jsonRet.toString();
 			}
 			goods.setSaledCnt(0);
-			goods.setReviewResult("0"); //待审核
+			goods.setReviewResult("1"); 
 			goods.setReviewLog("");
 			goods.setReviewOpr(null);
 			goods.setReviewTime(null);
@@ -172,6 +257,89 @@ public class GoodsAction {
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				return jsonRet.toString();
 			}
+			//规格检查
+			List<GoodsSpec> specList = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
+			if(specList == null || specList.size()<1 || specList.size()>30) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+				jsonRet.put("errmsg", "规格信息记录数量为1-30条！");
+				return jsonRet.toString();
+			}
+			StringBuilder sb = new StringBuilder();
+			BigDecimal priceLowest = new BigDecimal(99999999.99);
+			Integer stockSum = 0;
+			for(GoodsSpec spec:specList) {
+				if(spec == null) {
+					sb.append("记录不可为空！");
+				}else {
+					if(spec.getName() == null || spec.getName().length()==0 || spec.getName().length()>20){
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】规格名称不合规，须为1-20字符！");
+					}
+					if(spec.getVal() == null || spec.getVal()<1 || spec.getVal()>999999) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】数量值不合规，须为1-999999的整数值！");
+					}
+					if(spec.getUnit() == null || spec.getUnit().length()<1 || spec.getUnit().length()>5) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】单位不合规，长度须为1-5字符！");
+					}
+					if(spec.getPrice() == null || spec.getPrice().doubleValue()<0 || spec.getPrice().doubleValue()>99999999.99) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】单价不合规，须为0-99999999.99的数值！");
+					}else {
+						if(priceLowest.compareTo(spec.getPrice()) > 0) {
+							priceLowest = spec.getPrice();
+						}
+					}
+					if(spec.getStock() == null || spec.getStock()<0 || spec.getStock()>999999) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】库存不合规，须为0-999999的整数值！");
+					}else {
+						stockSum += spec.getStock();
+					}
+				}
+			}
+			if(sb.length()>0) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+				jsonRet.put("errmsg", "规格信息不合规：" + sb.toString());
+				return jsonRet.toString();
+			}
+			for(int i=0;i<specList.size();i++) {
+				for(int j=i+1;j<specList.size();j++) {
+					if(specList.get(i).getName().equals(specList.get(j).getName())) {
+						jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+						jsonRet.put("errmsg", "规格信息中不可出现同规格名称的记录！");
+						return jsonRet.toString();
+					}
+				}
+			}
+			goods.setPriceLowest(priceLowest);
+			goods.setStockSum(stockSum);
+			//其他验证
+			String isCityWide = goods.getIsCityWide();
+			Integer limitCnt = goods.getLimitedNum();
+			sb = new StringBuilder();
+			if("0".equals(isCityWide)) {//全国
+				String provLimit = goods.getProvLimit();
+				if(provLimit == null || provLimit.length()<2) {
+					sb.append(" 销售省份： 不可为空！");
+				}
+				if(provLimit.contains("全国")) {
+					goods.setProvLimit("全国");
+				}
+			}else {//同城
+				Integer distLimit = goods.getDistLimit();
+				if(distLimit == null) {
+					sb.append(" 销售距离范围： 不可为空！");
+				}
+			}
+			if(limitCnt > 0) {
+				String begin = goods.getBeginTime();
+				String end = goods.getEndTime();
+				if(begin == null| end == null) {
+					sb.append("限购开始时间、限购结束时间：不可为空！");
+				}
+			}
+			if(sb.length()>0) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+				jsonRet.put("errmsg", sb.toString());
+				return jsonRet.toString();
+			}
 			
 			//数据检查
 			if(!"0".equals(partner.getStatus()) && !"S".equals(partner.getStatus())  && !"C".equals(partner.getStatus()) && !"R".equals(partner.getStatus())) {
@@ -179,6 +347,7 @@ public class GoodsAction {
 				jsonRet.put("errmsg", "您当前的合作伙伴状态有误，不可进行商品管理！");
 				return jsonRet.toString();
 			}
+			
 			if(goods.getGoodsId() == null) {
 				jsonRet.put("errmsg", "商品ID：不可为空！");
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
@@ -191,7 +360,7 @@ public class GoodsAction {
 				return jsonRet.toString();
 			}
 			goods.setSaledCnt(old.getSaledCnt());
-			goods.setReviewResult("0"); //待审核
+			goods.setReviewResult("1"); 
 			goods.setReviewLog("");
 			goods.setReviewOpr(null);
 			goods.setReviewTime(null);
@@ -243,7 +412,7 @@ public class GoodsAction {
 	
 	/**
 	 * 获取所有商品
-	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,isCityWide,distrIds}
+	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,isCityWide,postageId,currUserLocX,currUserLocY}
 	 * @param jsonSortParams  排序条件 {time:"N#0/1",dist:"N#0",sale:"N"#0/1}；time 表示按更新上架时间排序，N为排序位置，0为升序，1为降序；dist表示按距离排序，仅对有同城条件使用;sale 为按销量
 	 * @param pageCond 分页条件 
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
@@ -271,8 +440,7 @@ public class GoodsAction {
 					params.put("partnerId", jsonSearch.getInteger("partnerId"));
 				}
 				if(jsonSearch.containsKey("keywords")) {//使用关键字查询
-					params.put("goodsName", jsonSearch.getString("goodsName"));
-					params.put("categoryName", jsonSearch.getString("categoryName"));
+					params.put("goodsName", jsonSearch.getString("keywords"));
 				}
 				if(jsonSearch.containsKey("categoryId")) {
 					params.put("categoryId", jsonSearch.getString("categoryId"));
@@ -281,14 +449,18 @@ public class GoodsAction {
 					params.put("dispatchMode", jsonSearch.getString("dispatchMode"));
 				}
 				if(jsonSearch.containsKey("isCityWide")) {
-					if(jsonSearch.getBooleanValue("isCityWide")) {
+					if(jsonSearch.getBooleanValue("isCityWide")) {//
 						params.put("isCityWide", "1");
+						if(jsonSearch.containsKey("currUserLocX") && jsonSearch.containsKey("currUserLocY")) {
+							params.put("currUserLocX", jsonSearch.getBigDecimal("currUserLocX"));
+							params.put("currUserLocY", jsonSearch.getBigDecimal("currUserLocY"));
+						}
 					}else {
 						params.put("isCityWide", "0");
 					}
 				}
-				if(jsonSearch.containsKey("distrIds")) {
-					params.put("distrIds", jsonSearch.getString("distrIds"));
+				if(jsonSearch.containsKey("postageId")) {
+					params.put("postageId", jsonSearch.getString("postageId"));
 				}
 			}
 			String strSorts = null;
@@ -313,7 +485,7 @@ public class GoodsAction {
 					String value = jsonSort.getString("sale");
 					if(value != null && value.length()>0) {
 						String[] arr = value.split("#");
-						sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " sale asc " : " sale desc " );
+						sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " saled_cnt asc " : " saled_cnt desc " );
 					}
 				}
 				
@@ -484,16 +656,16 @@ public class GoodsAction {
 	
 	
 	/**
-	 * 修改商品库存
+	 * 修改商品规格与库存
 	 * @param partnerId
 	 * @param goodsId
-	 * @param newCnt
+	 * @param specDetail
 	 * @return {errcode:0,errmsg:'ok'}
 	 */
-	@RequestMapping("/changeStock")
-	public String changeStock(@RequestParam(value="partnerId",required=true)Integer partnerId,
+	@RequestMapping("/changeSpec")
+	public String changeSpec(@RequestParam(value="partnerId",required=true)Integer partnerId,
 			@RequestParam(value="goodsId",required=true)Long goodsId,
-			@RequestParam(value="newCnt",required=true)Integer newCnt) {
+			@RequestParam(value="specDetail",required=true)String specDetail) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
@@ -508,7 +680,57 @@ public class GoodsAction {
 				jsonRet.put("errmsg", "系统中没有该商品信息！");
 				return jsonRet.toString();
 			}
-			int cnt = this.goodsService.changeStock(goods, newCnt);
+			List<GoodsSpec> specList = JSONArray.parseArray(specDetail, GoodsSpec.class);
+			if(specList == null || specList.size()<1 || specList.size()>30) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+				jsonRet.put("errmsg", "规格信息记录数量为1-30条！");
+				return jsonRet.toString();
+			}
+			StringBuilder sb = new StringBuilder();
+			BigDecimal priceLowest = new BigDecimal(99999999.99);
+			Integer stockSum = 0;
+			for(GoodsSpec spec:specList) {
+				if(spec == null) {
+					sb.append("记录不可为空！");
+				}else {
+					if(spec.getName() == null || spec.getName().length()==0 || spec.getName().length()>20){
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】规格名称不合规，须为1-20字符！");
+					}
+					if(spec.getVal() == null || spec.getVal()<1 || spec.getVal()>999999) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】数量值不合规，须为1-999999的整数值！");
+					}
+					if(spec.getUnit() == null || spec.getUnit().length()<1 || spec.getUnit().length()>5) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】单位不合规，长度须为1-5字符！");
+					}
+					if(spec.getPrice() == null || spec.getPrice().doubleValue()<0 || spec.getPrice().doubleValue()>99999999.99) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】单价不合规，须为0-99999999.99的数值！");
+					}else {
+						if(priceLowest.compareTo(spec.getPrice()) > 0) {
+							priceLowest = spec.getPrice();
+						}
+					}
+					if(spec.getStock() == null || spec.getStock()<0 || spec.getStock()>999999) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】库存不合规，须为0-999999的整数值！");
+					}else {
+						stockSum += spec.getStock();
+					}
+				}
+			}
+			if(sb.length()>0) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+				jsonRet.put("errmsg", "规格信息不合规：" + sb.toString());
+				return jsonRet.toString();
+			}
+			for(int i=0;i<specList.size();i++) {
+				for(int j=i+1;j<specList.size();j++) {
+					if(specList.get(i).getName().equals(specList.get(j).getName())) {
+						jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+						jsonRet.put("errmsg", "规格信息中不可出现同规格名称的记录！");
+						return jsonRet.toString();
+					}
+				}
+			}
+			int cnt = this.goodsService.changeSpec(goods, specDetail, stockSum, priceLowest);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");

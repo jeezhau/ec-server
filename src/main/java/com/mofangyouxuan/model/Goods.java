@@ -1,5 +1,7 @@
 package com.mofangyouxuan.model;
 
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.validation.constraints.Max;
@@ -9,6 +11,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 public class Goods {
+	//@NotNull(message=" 商品ID：不可为空！")
     private Long goodsId;
 
     @NotNull(message=" 合作伙伴ID：不可为空！ ")
@@ -32,13 +35,27 @@ public class Goods {
     @NotNull(message=" 商品轮播图路径组：不可为空！ ")
     @Size(min=3,max=2550,message=" 商品轮播图路径组：长度范围3-2550字符！ ")
     private String carouselImgPaths;
+    
+    @NotNull(message=" 商品产地：不可为空！ ")
+    @Size(min=2,max=100,message=" 商品产地：长度范围2-100字符！ ")
+    private String place;
+    
+    @NotNull(message=" 商品生产者：不可为空！ ")
+    @Size(min=2,max=100,message=" 商品生产者：长度范围2-100字符！ ")
+    private String vender;
+    
 
     private Integer saledCnt;
 
-    @NotNull(message=" 商品库存：不可为空！ ")
+    @NotNull(message=" 规格明细：不可为空！ ")
+    @Size(min=3,max=2550,message=" 规格明细：长度范围3-2550字符！ ")
+    private String specDetail;
+    
+    private BigDecimal priceLowest;
+    
     @Max(value = 999999, message = " 商品库存：最大值为 999999 ！") 
     @Min(value = 0 ,message= " 商品库存：最小值为0！" ) 
-    private Integer stock;
+    private Integer stockSum;
 
     @NotNull(message=" 限购数量：不可为空！ ")
     @Max(value = 999999, message = " 限购数量：最大值为 999999 ！") 
@@ -57,8 +74,11 @@ public class Goods {
     @Pattern(regexp="^[01]$",message=" 是否同城销售：取值为【0-全国，1-同城】！ ")
     private String isCityWide;
 
+    @Min(value=0,message=" 同城销售距离：最小值为0！")
+    @Max(value=999,message=" 同城销售距离：最大值999！ ")
     private Integer distLimit;
 
+    @Size(max=2550,message=" 销售省份：最长2550字符！ ")
     private String provLimit;
 
     @NotNull(message=" 运费模版组ID：不可为空！ ")
@@ -80,6 +100,8 @@ public class Goods {
     private String status;
 
     private String memo;
+    
+    private PartnerBasic partner;
 
     public Long getGoodsId() {
 		return goodsId;
@@ -137,7 +159,24 @@ public class Goods {
         this.carouselImgPaths = carouselImgPaths == null ? null : carouselImgPaths.trim();
     }
 
-    public Integer getSaledCnt() {
+    
+    public String getPlace() {
+		return place;
+	}
+
+	public void setPlace(String place) {
+		this.place = place == null ? null : place.trim();
+	}
+
+	public String getVender() {
+		return vender;
+	}
+
+	public void setVender(String vender) {
+		this.vender = vender == null ? null : vender.trim();
+	}
+
+	public Integer getSaledCnt() {
         return saledCnt;
     }
 
@@ -145,15 +184,31 @@ public class Goods {
         this.saledCnt = saledCnt;
     }
 
-    public Integer getStock() {
-        return stock;
-    }
+    public String getSpecDetail() {
+		return specDetail;
+	}
 
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
+	public void setSpecDetail(String specDetail) {
+		this.specDetail = specDetail;
+	}
 
-    public Integer getLimitedNum() {
+	public BigDecimal getPriceLowest() {
+		return priceLowest;
+	}
+
+	public void setPriceLowest(BigDecimal priceLowest) {
+		this.priceLowest = priceLowest;
+	}
+
+	public Integer getStockSum() {
+		return stockSum;
+	}
+
+	public void setStockSum(Integer stockSum) {
+		this.stockSum = stockSum;
+	}
+
+	public Integer getLimitedNum() {
         return limitedNum;
     }
 
@@ -161,16 +216,22 @@ public class Goods {
         this.limitedNum = limitedNum;
     }
 
-    public Date getBeginTime() {
-        return beginTime;
+    public String getBeginTime() {
+		if(this.beginTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd").format(beginTime);
     }
 
     public void setBeginTime(Date beginTime) {
         this.beginTime = beginTime;
     }
 
-    public Date getEndTime() {
-        return endTime;
+    public String getEndTime() {
+		if(this.endTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd").format(endTime);
     }
 
     public void setEndTime(Date endTime) {
@@ -217,8 +278,11 @@ public class Goods {
         this.postageIds = postageIds == null ? null : postageIds.trim();
     }
 
-    public Date getUpdateTime() {
-        return updateTime;
+    public String getUpdateTime() {
+		if(this.updateTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(updateTime);
     }
 
     public void setUpdateTime(Date updateTime) {
@@ -249,8 +313,11 @@ public class Goods {
         this.reviewOpr = reviewOpr;
     }
 
-    public Date getReviewTime() {
-        return reviewTime;
+    public String getReviewTime() {
+    		if(this.reviewTime == null) {
+    			return null;
+    		}
+        return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(reviewTime);
     }
 
     public void setReviewTime(Date reviewTime) {
@@ -272,4 +339,13 @@ public class Goods {
     public void setMemo(String memo) {
         this.memo = memo == null ? null : memo.trim();
     }
+
+	public PartnerBasic getPartner() {
+		return partner;
+	}
+
+	public void setPartner(PartnerBasic partner) {
+		this.partner = partner;
+	}
+    
 }

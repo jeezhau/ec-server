@@ -72,34 +72,30 @@ public class PartnerBasicAction {
 	 * 根据合作伙伴绑定的用户获取合作伙伴信息
 	 * @param userId	绑定用户的ID
 	 * 
-	 * @return {errcode:0,errmsg:"ok"} 或 {合作伙伴的所有字段}
+	 * @return {errcode:0,errmsg:"ok",partner:{...}}
 	 * @throws JSONException 
 	 */
-	@RequestMapping("/get/byuser/{userId}")
-	public Object getPartnerByUser(@PathVariable(value="userId",required=true)Integer userId){
+	@RequestMapping("/get/byvip/{vipId}")
+	public Object getPartnerByVip(@PathVariable(value="vipId",required=true)Integer vipId){
 		JSONObject jsonRet = new JSONObject();
 		try {
-			UserBasic user = this.userBasicService.get(userId);
-			if(user == null) {
-				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该用户！");
-				return jsonRet.toString();
-			}
-			
-			VipBasic vip = this.vipBasicService.get(user.getUserId());
+			VipBasic vip = this.vipBasicService.get(vipId);
 			if(vip == null || !"1".equals(vip.getStatus()) ) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
 				return jsonRet.toString();
 			}
 			
-			PartnerBasic partner = this.partnerBasicService.getByBindUser(user.getUserId());
+			PartnerBasic partner = this.partnerBasicService.getByBindUser(vipId);
 			if(partner == null) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
 				return jsonRet.toString();
 			}
-			return partner;
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+			jsonRet.put("partner", partner);
+			return jsonRet;
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
@@ -112,7 +108,7 @@ public class PartnerBasicAction {
 	 * 根据合作伙伴绑定的用户获取合作伙伴信息
 	 * @param 合作伙伴ID
 	 * 
-	 * @return {errcode:0,errmsg:"ok"} 或 {合作伙伴的所有字段}
+	 * @return {errcode:0,errmsg:"ok",partner:{...}}
 	 * @throws JSONException 
 	 */
 	@RequestMapping("/get/byid/{partnerId}")
@@ -125,7 +121,10 @@ public class PartnerBasicAction {
 				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
 				return jsonRet.toString();
 			}
-			return partner;
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+			jsonRet.put("partner", partner);
+			return jsonRet;
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);

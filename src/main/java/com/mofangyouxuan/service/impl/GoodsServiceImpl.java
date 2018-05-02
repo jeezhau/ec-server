@@ -1,5 +1,6 @@
 package com.mofangyouxuan.service.impl;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +54,7 @@ public class GoodsServiceImpl implements GoodsService{
 		goods.setUpdateTime(new Date());
 		goods.setReviewLog(null);
 		goods.setReviewOpr(null);
-		goods.setReviewResult("0");
+		goods.setReviewResult("1");
 		int cnt = this.goodsMapper.insert(goods);
 		if(cnt>0) {
 			return goods.getGoodsId();
@@ -77,7 +78,7 @@ public class GoodsServiceImpl implements GoodsService{
 		goods.setUpdateTime(new Date());
 		goods.setReviewLog(null);
 		goods.setReviewOpr(null);
-		goods.setReviewResult("0");
+		goods.setReviewResult("1");
 		int cnt = this.goodsMapper.updateByPrimaryKey(goods);
 		return cnt;
 	}
@@ -94,18 +95,22 @@ public class GoodsServiceImpl implements GoodsService{
 	}
 	
 	/**
-	 * 变更商品库存
+	 * 变更商品规格与库存
 	 * @param goods
-	 * @param changeCount 可为正负
+	 * @param specDetail 规格明细
+	 * @param stockSum
+	 * @param priceLowest
 	 * @return 更新记录数
 	 */
 	@Override
-	public int changeStock(Goods goods,int newCnt) {
+	public int changeSpec(Goods goods,String specDetail,Integer stockSum,BigDecimal priceLowest){
 		Long id = goods.getGoodsId();
 		Goods g = new Goods();
 		g.setGoodsId(id);
-		g.setStock(newCnt);
-		if(newCnt<=0) {
+		g.setSpecDetail(specDetail);
+		g.setStockSum(stockSum);
+		g.setPriceLowest(priceLowest);
+		if(stockSum<=0) {
 			g.setStatus("2"); //下架
 		}
 		int cnt = this.goodsMapper.updateByPrimaryKey(g);
