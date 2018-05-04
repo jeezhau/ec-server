@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.ReceiverMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Receiver">
+    <id column="recv_id" jdbcType="INTEGER" property="recvId" />
+    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="country" jdbcType="VARCHAR" property="country" />
+    <result column="province" jdbcType="VARCHAR" property="province" />
+    <result column="city" jdbcType="VARCHAR" property="city" />
+    <result column="area" jdbcType="VARCHAR" property="area" />
+    <result column="addr" jdbcType="VARCHAR" property="addr" />
+    <result column="location_x" jdbcType="VARCHAR" property="locationX" />
+    <result column="location_y" jdbcType="VARCHAR" property="locationY" />
+    <result column="receiver" jdbcType="VARCHAR" property="receiver" />
+    <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="is_default" jdbcType="CHAR" property="isDefault" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    recv_id, user_id, country, province, city, area, addr, location_x, location_y, receiver, 
+    phone, is_default
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_receiver_info
+    where recv_id = #{recvId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from tb_receiver_info
+    where recv_id = #{recvId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Receiver" keyProperty="recvId" useGeneratedKeys="true">
+    insert into tb_receiver_info (recv_id, user_id, country, 
+      province, city, area, 
+      addr, location_x, location_y, 
+      receiver, phone, is_default
+      )
+    values (#{recvId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{country,jdbcType=VARCHAR}, 
+      #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
+      #{addr,jdbcType=VARCHAR}, #{locationX,jdbcType=VARCHAR}, #{locationY,jdbcType=VARCHAR}, 
+      #{receiver,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, #{isDefault,jdbcType=CHAR}
+      )
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.Receiver" keyProperty="recvId" useGeneratedKeys="true">
+    insert into tb_receiver_info
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="recvId != null">
+        recv_id,
+      </if>
+      <if test="userId != null">
+        user_id,
+      </if>
+      <if test="country != null">
+        country,
+      </if>
+      <if test="province != null">
+        province,
+      </if>
+      <if test="city != null">
+        city,
+      </if>
+      <if test="area != null">
+        area,
+      </if>
+      <if test="addr != null">
+        addr,
+      </if>
+      <if test="locationX != null">
+        location_x,
+      </if>
+      <if test="locationY != null">
+        location_y,
+      </if>
+      <if test="receiver != null">
+        receiver,
+      </if>
+      <if test="phone != null">
+        phone,
+      </if>
+      <if test="isDefault != null">
+        is_default,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="recvId != null">
+        #{recvId,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null">
+        #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="country != null">
+        #{country,jdbcType=VARCHAR},
+      </if>
+      <if test="province != null">
+        #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null">
+        #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="area != null">
+        #{area,jdbcType=VARCHAR},
+      </if>
+      <if test="addr != null">
+        #{addr,jdbcType=VARCHAR},
+      </if>
+      <if test="locationX != null">
+        #{locationX,jdbcType=VARCHAR},
+      </if>
+      <if test="locationY != null">
+        #{locationY,jdbcType=VARCHAR},
+      </if>
+      <if test="receiver != null">
+        #{receiver,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="isDefault != null">
+        #{isDefault,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.Receiver">
+    update tb_receiver_info
+    <set>
+      <if test="userId != null">
+        user_id = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="country != null">
+        country = #{country,jdbcType=VARCHAR},
+      </if>
+      <if test="province != null">
+        province = #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="city != null">
+        city = #{city,jdbcType=VARCHAR},
+      </if>
+      <if test="area != null">
+        area = #{area,jdbcType=VARCHAR},
+      </if>
+      <if test="addr != null">
+        addr = #{addr,jdbcType=VARCHAR},
+      </if>
+      <if test="locationX != null">
+        location_x = #{locationX,jdbcType=VARCHAR},
+      </if>
+      <if test="locationY != null">
+        location_y = #{locationY,jdbcType=VARCHAR},
+      </if>
+      <if test="receiver != null">
+        receiver = #{receiver,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="isDefault != null">
+        is_default = #{isDefault,jdbcType=CHAR},
+      </if>
+    </set>
+    where recv_id = #{recvId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Receiver">
+    update tb_receiver_info
+    set user_id = #{userId,jdbcType=INTEGER},
+      country = #{country,jdbcType=VARCHAR},
+      province = #{province,jdbcType=VARCHAR},
+      city = #{city,jdbcType=VARCHAR},
+      area = #{area,jdbcType=VARCHAR},
+      addr = #{addr,jdbcType=VARCHAR},
+      location_x = #{locationX,jdbcType=VARCHAR},
+      location_y = #{locationY,jdbcType=VARCHAR},
+      receiver = #{receiver,jdbcType=VARCHAR},
+      phone = #{phone,jdbcType=VARCHAR},
+      is_default = #{isDefault,jdbcType=CHAR}
+    where recv_id = #{recvId,jdbcType=INTEGER}
+  </update>
+
+  <update id="setDefault" parameterType="long">
+    update tb_receiver_info
+    set is_default = '1'
+    where recv_id = #{recvId,jdbcType=INTEGER}
+  </update> 
+   
+  <update id="unDefault" parameterType="int">
+    update tb_receiver_info
+    set is_default = '0'
+    where user_id = #{userId,jdbcType=INTEGER}
+  </update>  
+  
+  <select id="selectDefault" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_receiver_info
+    where user_id = #{recvId,jdbcType=INTEGER} and is_default = '1'
+  </select>
+ 
+   <select id="selectAllByUser" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_receiver_info
+    where user_id = #{recvId,jdbcType=INTEGER}
+  </select>
+   
+  <select id="countAllByUser" parameterType="java.lang.Integer" resultType="int">
+    select count(1)
+    from tb_receiver_info
+    where user_id = #{recvId,jdbcType=INTEGER}
+  </select>
+</mapper>
