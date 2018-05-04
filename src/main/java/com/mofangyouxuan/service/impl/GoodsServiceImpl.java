@@ -29,12 +29,16 @@ public class GoodsServiceImpl implements GoodsService{
 	
 	/**
 	 * 根据ID获取指定商品信息
+	 * @param hasPartner 是否包含合作伙伴信息
 	 * @param id
 	 * @return
 	 */
 	@Override
-	public Goods get(Long id){
-		return this.goodsMapper.selectByPrimaryKey(id);
+	public Goods get(boolean hasPartner,Long id){
+		if(hasPartner) {
+			return this.goodsMapper.selectByPrimaryKeyWithPartner(id);
+		}
+		return this.goodsMapper.selectByPrimaryKeyNoPartner(id);
 	}
 	
 	/**
@@ -157,14 +161,18 @@ public class GoodsServiceImpl implements GoodsService{
 	
 	/**
 	 * 根据指定查询和排序条件分页获取商品信息
+	 * @param hasPartner 是否包含合作伙伴信息
 	 * @param params
 	 * @param sorts
 	 * @param pageCond
 	 * @return
 	 */
 	@Override
-	public List<Goods> getAll(Map<String,Object> params,String sorts,PageCond pageCond){
-		return this.goodsMapper.selectAll(params, sorts, pageCond);
+	public List<Goods> getAll(boolean hasPartner,Map<String,Object> params,String sorts,PageCond pageCond){
+		if(hasPartner) {
+			return this.goodsMapper.selectAllWithPartner(params, sorts, pageCond);
+		}
+		return this.goodsMapper.selectAllNoPartner(params, sorts, pageCond);
 	}
 
 	/**

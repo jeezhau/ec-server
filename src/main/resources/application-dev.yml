@@ -50,5 +50,5 @@ sys:
   postage-cnt-limit: 20 #每个合作伙伴可添加的运费模版数量限制
   goods-cnt-limit: 30 #每个合作伙伴可添加的商品数量限制
 
-
+  receiver-cnt-limit: 5 #每个用户可添加的收货人信息数量限制
   

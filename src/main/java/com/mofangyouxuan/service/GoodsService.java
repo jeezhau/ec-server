@@ -17,10 +17,11 @@ public interface GoodsService {
 	
 	/**
 	 * 根据ID获取指定商品信息
+	 * @param hasPartner 是否包含合作伙伴信息
 	 * @param id
 	 * @return
 	 */
-	public Goods get(Long id);
+	public Goods get(boolean hasPartner,Long id);
 	
 	/**
 	 * 添加商品信息
@@ -71,12 +72,13 @@ public interface GoodsService {
 	
 	/**
 	 * 根据指定查询和排序条件分页获取商品信息
+	 * @param hasPartner 是否包含合作伙伴信息
 	 * @param params
 	 * @param sorts
 	 * @param pageCond
 	 * @return
 	 */
-	public List<Goods> getAll(Map<String,Object> params,String sorts,PageCond pageCond);
+	public List<Goods> getAll(boolean hasPartner,Map<String,Object> params,String sorts,PageCond pageCond);
 
 	/**
 	 * 根据指定查询获取商品信息数量

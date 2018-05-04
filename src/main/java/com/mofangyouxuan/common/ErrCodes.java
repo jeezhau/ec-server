@@ -46,11 +46,18 @@ public class ErrCodes {
 	public static int IMAGE_FOLDER_LEVEL_LIMIT = -106004; //目录层级限制
 	public static int IMAGE_ALL_FILE_LIMIT = -106005; //总文件数量限制
 	
-	//运费模版管理功能码：106
+	//运费模版管理功能码：107
 	public static int POSTAGE_PARAM_ERROR = -107001;	//参数有错
 	public static int POSTAGE_USING_NOW = -107002;	//模版正在使用中
 	public static int POSTAGE_NO_EXISTS = -107003;	//没有该模版
 	public static int POSTAGE_PRIVILEGE_ERROR = -107004;	//无权执行该操作
 	public static int POSTAGE_NAME_USED = -107005;	//名称已被使用
 	public static int POSTAGE_CNT_LIMIT = -107006;	//数量限制
+	
+	//收货人管理功能码：108
+	public static int RECEIVER_PARAM_ERROR = -108001;	//参数有错
+	public static int RECEIVER_NO_EXISTS = -108002;	//没有该记录
+	public static int RECEIVER_PRIVILEGE_ERROR = -108003;	//无权执行该操作
+	public static int RECEIVER_CNT_LIMIT = -108004;	//数量限制
+	
 }

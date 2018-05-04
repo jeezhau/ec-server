@@ -14,14 +14,19 @@ public interface GoodsMapper {
 
     int insert(Goods record);
 
-    Goods selectByPrimaryKey(Long goodsId);
+    Goods selectByPrimaryKeyWithPartner(Long goodsId);
+    
+    Goods selectByPrimaryKeyNoPartner(Long goodsId);
 
     int updateByPrimaryKey(Goods record);
     
-    List<Goods> selectAll(@Param("params")Map<String,Object> params,@Param("sorts")String sorts,@Param("pageCond")PageCond pageCond);
-    
+    List<Goods> selectAllNoPartner(@Param("params")Map<String,Object> params,@Param("sorts")String sorts,@Param("pageCond")PageCond pageCond);
+    List<Goods> selectAllWithPartner(@Param("params")Map<String,Object> params,@Param("sorts")String sorts,@Param("pageCond")PageCond pageCond);
+        
     int countAll(@Param("params")Map<String,Object> params);
     
     int countUsePostageCnt(Long postageId);
+    
+
     
 }

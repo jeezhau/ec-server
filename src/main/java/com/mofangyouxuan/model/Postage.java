@@ -21,6 +21,10 @@ public class Postage {
     @Size(min=2,max=20,message=" 模版名称：长度范围2-20字符！ ")
     private String postageName;
 
+    @NotNull(message=" 配送方式：不可为空！ ")
+    @Pattern(regexp="^(1)?(2)?(3)?(4)?$",message=" 配送方式：取值为【1-官方统一配送、2-商家自行配送、3-快递配送、4-客户自取】的顺序组合！ ")
+    private String dispatchMode;
+    
     @NotNull(message=" 配送范围：不可为空！ ")
     @Pattern(regexp="^[01]$",message=" 配送范围：取值范围[0-全国，1-同城]！")
     private String isCityWide;
@@ -110,6 +114,14 @@ public class Postage {
         this.postageName = postageName == null ? null : postageName.trim();
     }
 
+    public String getDispatchMode() {
+        return dispatchMode;
+    }
+
+    public void setDispatchMode(String dispatchMode) {
+        this.dispatchMode = dispatchMode == null ? null : dispatchMode.trim();
+    }
+    
     public String getIsCityWide() {
         return isCityWide;
     }

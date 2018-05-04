@@ -101,7 +101,7 @@ public class UserBasicAction {
 				}
 			}
 			//数据处理
-			userBasic.setStatus("0"); //用户正常
+			userBasic.setStatus("1"); //用户正常
 			Integer id = this.userBasicService.add(userBasic);
 			if(id == null) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
@@ -177,7 +177,7 @@ public class UserBasicAction {
 			UserBasic old = null;
 			if(unique != null && unique.length()>0) {
 				old = this.userBasicService.get(unique);
-				if( old == null || !"0".equals(old.getStatus())) {//不存在或不正常
+				if( old == null || !"1".equals(old.getStatus())) {//不存在或不正常
 					jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 					jsonRet.put("errmsg", "系统中没有该用户或已注销！如果是注销用户则请先激活！");
 					return jsonRet.toString();
@@ -188,7 +188,7 @@ public class UserBasicAction {
 				return jsonRet.toString();
 			}
 			//数据处理
-			userBasic.setStatus("0"); //用户正常
+			userBasic.setStatus("1"); //用户正常
 			userBasic.setPasswd(old.getPasswd());
 			userBasic.setUserId(old.getUserId());
 			userBasic.setRegistTime(null);
@@ -228,7 +228,7 @@ public class UserBasicAction {
 		try {
 			UserBasic user = this.userBasicService.get(openId);
 			
-			if(user == null || !"0".equals(user.getStatus())){
+			if(user == null || !"1".equals(user.getStatus())){
 				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 				jsonRet.put("errmsg", " 系统中没有该用户！ ");
 				return jsonRet.toString();

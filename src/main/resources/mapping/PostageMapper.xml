@@ -5,6 +5,7 @@
     <id column="postage_id" jdbcType="INTEGER" property="postageId" />
     <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
     <result column="postage_name" jdbcType="VARCHAR" property="postageName" />
+    <result column="dispatch_mode" jdbcType="CHAR" property="dispatchMode" />
     <result column="is_city_wide" jdbcType="CHAR" property="isCityWide" />
     <result column="dist_limit" jdbcType="INTEGER" property="distLimit" />
     <result column="prov_limit" jdbcType="VARCHAR" property="provLimit" />
@@ -25,7 +26,7 @@
     <result column="status" jdbcType="CHAR" property="status" />
   </resultMap>
   <sql id="Base_Column_List">
-    postage_id, partner_id, postage_name, is_city_wide, dist_limit, prov_limit, is_free, 
+    postage_id, partner_id, postage_name,dispatch_mode, is_city_wide, dist_limit, prov_limit, is_free, 
     free_weight, free_amount, free_dist, first_dist, first_weight, first_d_price, first_w_price, 
     addition_weight, addition_dist, addition_d_price, addition_w_price, update_time, 
     update_opr, status
@@ -44,7 +45,7 @@
   </delete>
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.Postage" keyProperty="postageId" useGeneratedKeys="true">
-    insert into tb_postage_tpl (postage_id, partner_id, postage_name, 
+    insert into tb_postage_tpl (postage_id, partner_id, postage_name,dispatch_mode, 
       is_city_wide, dist_limit, prov_limit, 
       is_free, free_weight, free_amount, 
       free_dist, first_dist, first_weight, 
@@ -53,7 +54,7 @@
       update_time, update_opr, status
       )
     values (#{postageId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER}, #{postageName,jdbcType=VARCHAR}, 
-      #{isCityWide,jdbcType=CHAR}, #{distLimit,jdbcType=INTEGER}, #{provLimit,jdbcType=VARCHAR}, 
+      #{dispatchMode,jdbcType=VARCHAR},#{isCityWide,jdbcType=CHAR}, #{distLimit,jdbcType=INTEGER}, #{provLimit,jdbcType=VARCHAR}, 
       #{isFree,jdbcType=CHAR}, #{freeWeight,jdbcType=INTEGER}, #{freeAmount,jdbcType=DECIMAL}, 
       #{freeDist,jdbcType=INTEGER}, #{firstDist,jdbcType=INTEGER}, #{firstWeight,jdbcType=INTEGER}, 
       #{firstDPrice,jdbcType=DECIMAL}, #{firstWPrice,jdbcType=DECIMAL}, #{additionWeight,jdbcType=INTEGER}, 
@@ -66,6 +67,7 @@
     update tb_postage_tpl
     set partner_id = #{partnerId,jdbcType=INTEGER},
       postage_name = #{postageName,jdbcType=VARCHAR},
+      dispatch_mode = #{dispatchMode,jdbcType=VARCHAR},
       is_city_wide = #{isCityWide,jdbcType=CHAR},
       dist_limit = #{distLimit,jdbcType=INTEGER},
       prov_limit = #{provLimit,jdbcType=VARCHAR},

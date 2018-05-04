@@ -161,23 +161,8 @@ public class GoodsAction {
 			goods.setPriceLowest(priceLowest);
 			goods.setStockSum(stockSum);
 			//其他验证
-			String isCityWide = goods.getIsCityWide();
 			Integer limitCnt = goods.getLimitedNum();
 			sb = new StringBuilder();
-			if("0".equals(isCityWide)) {//全国
-				String provLimit = goods.getProvLimit();
-				if(provLimit == null || provLimit.length()<2) {
-					sb.append(" 销售省份： 不可为空！");
-				}
-				if(provLimit.contains("全国")) {
-					goods.setProvLimit("全国");
-				}
-			}else {//同城
-				Integer distLimit = goods.getDistLimit();
-				if(distLimit == null) {
-					sb.append(" 销售距离范围： 不可为空！");
-				}
-			}
 			if(limitCnt > 0) {
 				String begin = goods.getBeginTime();
 				String end = goods.getEndTime();
@@ -311,23 +296,8 @@ public class GoodsAction {
 			goods.setPriceLowest(priceLowest);
 			goods.setStockSum(stockSum);
 			//其他验证
-			String isCityWide = goods.getIsCityWide();
 			Integer limitCnt = goods.getLimitedNum();
 			sb = new StringBuilder();
-			if("0".equals(isCityWide)) {//全国
-				String provLimit = goods.getProvLimit();
-				if(provLimit == null || provLimit.length()<2) {
-					sb.append(" 销售省份： 不可为空！");
-				}
-				if(provLimit.contains("全国")) {
-					goods.setProvLimit("全国");
-				}
-			}else {//同城
-				Integer distLimit = goods.getDistLimit();
-				if(distLimit == null) {
-					sb.append(" 销售距离范围： 不可为空！");
-				}
-			}
 			if(limitCnt > 0) {
 				String begin = goods.getBeginTime();
 				String end = goods.getEndTime();
@@ -353,7 +323,7 @@ public class GoodsAction {
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-			Goods old = this.goodsService.get(goods.getGoodsId());
+			Goods old = this.goodsService.get(false,goods.getGoodsId());
 			if(old == null) {
 				jsonRet.put("errcode", ErrCodes.GOODS_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该商品信息！");
@@ -385,14 +355,21 @@ public class GoodsAction {
 	
 	/**
 	 * 根据ID获取商品信息
+	 * @param hasPartner 是否包含合作伙伴信息
 	 * @param goodsId
 	 * @return {"errcode":-1,"errmsg":"错误信息",goods:{...}} 
 	 */
-	@RequestMapping("/get/{goodsId}")
-	public Object getByID(@PathVariable("goodsId")Long goodsId) {
+	@RequestMapping("/get/{goodsId}/{hasPartner}")
+	public Object getByID(@PathVariable("goodsId")Long goodsId,@PathVariable("hasPartner")String hasPartner) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			Goods goods = this.goodsService.get(goodsId);
+			Goods goods = null;
+			if(hasPartner != null && "1".equals(hasPartner)) {
+				goods = this.goodsService.get(true,goodsId);
+			}else {
+				goods = this.goodsService.get(false,goodsId);
+			}
+			
 			if(goods == null) {
 				jsonRet.put("errcode", ErrCodes.GOODS_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该商品信息！");
@@ -411,129 +388,27 @@ public class GoodsAction {
 	}
 	
 	/**
-	 * 获取所有商品
+	 * 获取所有商品：不包含合作伙伴信息
 	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,isCityWide,postageId,currUserLocX,currUserLocY}
 	 * @param jsonSortParams  排序条件 {time:"N#0/1",dist:"N#0",sale:"N"#0/1}；time 表示按更新上架时间排序，N为排序位置，0为升序，1为降序；dist表示按距离排序，仅对有同城条件使用;sale 为按销量
 	 * @param pageCond 分页条件 
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
 	 */
-	@RequestMapping("/getall")
-	public Object getAll(String jsonSearchParams,String jsonSortParams,String jsonPageCond) {
-		JSONObject jsonRet = new JSONObject();
-		try {
-			Map<String,Object> params = new HashMap<String,Object>();
-			params.put("reviewResult", "1");	//默认审核通过
-			params.put("status", "1");	//默认已上架
-			if(jsonSearchParams != null && jsonSearchParams.length()>0) {
-				JSONObject jsonSearch = JSONObject.parseObject(jsonSearchParams);
-				if(jsonSearch.containsKey("isSelf") && jsonSearch.getBooleanValue("isSelf")) {//合作伙伴自己
-					params.put("reviewResult", null);
-					params.put("status", null);
-				}
-				if(jsonSearch.containsKey("reviewResult")) {
-					params.put("reviewResult", jsonSearch.getString("reviewResult"));
-				}
-				if(jsonSearch.containsKey("status")) {
-					params.put("status", jsonSearch.getString("status"));
-				}
-				if(jsonSearch.containsKey("partnerId")) {
-					params.put("partnerId", jsonSearch.getInteger("partnerId"));
-				}
-				if(jsonSearch.containsKey("keywords")) {//使用关键字查询
-					params.put("goodsName", jsonSearch.getString("keywords"));
-				}
-				if(jsonSearch.containsKey("categoryId")) {
-					params.put("categoryId", jsonSearch.getString("categoryId"));
-				}
-				if(jsonSearch.containsKey("dispatchMode")) {
-					params.put("dispatchMode", jsonSearch.getString("dispatchMode"));
-				}
-				if(jsonSearch.containsKey("isCityWide")) {
-					if(jsonSearch.getBooleanValue("isCityWide")) {//
-						params.put("isCityWide", "1");
-						if(jsonSearch.containsKey("currUserLocX") && jsonSearch.containsKey("currUserLocY")) {
-							params.put("currUserLocX", jsonSearch.getBigDecimal("currUserLocX"));
-							params.put("currUserLocY", jsonSearch.getBigDecimal("currUserLocY"));
-						}
-					}else {
-						params.put("isCityWide", "0");
-					}
-				}
-				if(jsonSearch.containsKey("postageId")) {
-					params.put("postageId", jsonSearch.getString("postageId"));
-				}
-			}
-			String strSorts = null;
-			if(jsonSortParams != null && jsonSortParams.length()>0) {
-				JSONObject jsonSort = JSONObject.parseObject(jsonSortParams);
-				Map<Integer,String> sortMap = new HashMap<Integer,String>();
-				if(jsonSort.containsKey("time")) {
-					String value = jsonSort.getString("time");
-					if(value != null && value.length()>0) {
-						String[] arr = value.split("#");
-						sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " update_time asc " : " update_time desc " );
-					}
-				}
-				if(jsonSort.containsKey("dist")) {
-					String value = jsonSort.getString("dist");
-					if(value != null && value.length()>0) {
-						String[] arr = value.split("#");
-						sortMap.put(new Integer(arr[0]), " distance asc " );
-					}
-				}
-				if(jsonSort.containsKey("sale")) {
-					String value = jsonSort.getString("sale");
-					if(value != null && value.length()>0) {
-						String[] arr = value.split("#");
-						sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " saled_cnt asc " : " saled_cnt desc " );
-					}
-				}
-				
-				Set<Integer> set = new TreeSet<Integer>(sortMap.keySet());
-				StringBuilder sb = new StringBuilder();
-				for(Integer key:set) {
-					sb.append(",");
-					sb.append(sortMap.get(key));
-				}
-				if(sb.length()>0) {
-					strSorts = " order by " + sb.substring(1);
-				}
-			}
-			PageCond pageCond = null;
-			if(jsonPageCond == null || jsonPageCond.length()<1) {
-				pageCond = new PageCond(0,100);
-			}else {
-				pageCond = JSONObject.toJavaObject(JSONObject.parseObject(jsonPageCond), PageCond.class);
-				if(pageCond == null) {
-					pageCond = new PageCond(0,100);
-				}
-				if( pageCond.getBegin()<=0) {
-					pageCond.setBegin(0);
-				}
-				if(pageCond.getPageSize()<2) {
-					pageCond.setPageSize(100);
-				}
-			}
-			int cnt = this.goodsService.countAll(params);
-			pageCond.setCount(cnt);
-			jsonRet.put("pageCond", pageCond);
-			jsonRet.put("errcode", ErrCodes.GOODS_NO_GOODS);
-			jsonRet.put("errmsg", "没有获取到商品信息！");
-			if(cnt>0) {
-				List<Goods> list = this.goodsService.getAll(params, strSorts, pageCond);
-				if(list != null && list.size()>0) {
-					jsonRet.put("datas", list);
-					jsonRet.put("errcode", 0);
-					jsonRet.put("errmsg", "ok");
-				}
-			}
-			return jsonRet.toString();
-		}catch(Exception e) {
-			e.printStackTrace();
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
-			return jsonRet.toString();
-		}
+	@RequestMapping("/getallnopartner")
+	public Object getAllNoPartner(String jsonSearchParams,String jsonSortParams,String jsonPageCond) {
+		return this.searchGoods(false, jsonSearchParams, jsonSortParams, jsonPageCond);
+	}
+
+	/**
+	 * 获取所有商品：包含合作伙伴信息
+	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,isCityWide,postageId,currUserLocX,currUserLocY}
+	 * @param jsonSortParams  排序条件 {time:"N#0/1",dist:"N#0",sale:"N"#0/1}；time 表示按更新上架时间排序，N为排序位置，0为升序，1为降序；dist表示按距离排序，仅对有同城条件使用;sale 为按销量
+	 * @param pageCond 分页条件 
+	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
+	 */
+	@RequestMapping("/getallwithpartner")
+	public Object getAllWithPartner(String jsonSearchParams,String jsonSortParams,String jsonPageCond) {
+		return this.searchGoods(true, jsonSearchParams, jsonSortParams, jsonPageCond);
 	}
 	
 	
@@ -571,7 +446,7 @@ public class GoodsAction {
 			}
 			List<Goods> list = new ArrayList<Goods>();
 			for(Long id:okSet) {
-				Goods g = this.goodsService.get(id);
+				Goods g = this.goodsService.get(false,id);
 				if(g != null && g.getPartnerId().equals(partner.getPartnerId())) {
 					list.add(g);
 				}else {
@@ -627,7 +502,7 @@ public class GoodsAction {
 				jsonRet.put("errmsg", "该用户不是审核管理员！");
 				return jsonRet.toString();
 			}
-			Goods old = this.goodsService.get(goodsId);
+			Goods old = this.goodsService.get(false,goodsId);
 			if(old == null || !"0".equals(old.getReviewResult())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
 				jsonRet.put("errmsg", "该商品不存在或状态不正确！");
@@ -674,7 +549,7 @@ public class GoodsAction {
 				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
 				return jsonRet.toString();
 			}
-			Goods goods = this.goodsService.get(goodsId);
+			Goods goods = this.goodsService.get(false,goodsId);
 			if(goods == null) {
 				jsonRet.put("errcode", ErrCodes.GOODS_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该商品信息！");
@@ -768,4 +643,127 @@ public class GoodsAction {
 		return jsonRet.toString();
 	}
 	
+	private Object searchGoods(boolean hasPartner,String jsonSearchParams,String jsonSortParams,String jsonPageCond) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			Map<String,Object> params = new HashMap<String,Object>();
+			params.put("reviewResult", "1");	//默认审核通过
+			params.put("status", "1");	//默认已上架
+			if(jsonSearchParams != null && jsonSearchParams.length()>0) {
+				JSONObject jsonSearch = JSONObject.parseObject(jsonSearchParams);
+				if(jsonSearch.containsKey("isSelf") && jsonSearch.getBooleanValue("isSelf")) {//合作伙伴自己
+					params.put("reviewResult", null);
+					params.put("status", null);
+				}
+				if(jsonSearch.containsKey("reviewResult")) {
+					params.put("reviewResult", jsonSearch.getString("reviewResult"));
+				}
+				if(jsonSearch.containsKey("status")) {
+					params.put("status", jsonSearch.getString("status"));
+				}
+				if(jsonSearch.containsKey("partnerId")) {
+					params.put("partnerId", jsonSearch.getInteger("partnerId"));
+				}
+				if(jsonSearch.containsKey("keywords")) {//使用关键字查询
+					params.put("goodsName", jsonSearch.getString("keywords"));
+				}
+				if(jsonSearch.containsKey("categoryId")) {
+					params.put("categoryId", jsonSearch.getString("categoryId"));
+				}
+				if(jsonSearch.containsKey("dispatchMode")) {
+					params.put("dispatchMode", jsonSearch.getString("dispatchMode"));
+				}
+				if(jsonSearch.containsKey("city")) {
+					params.put("city", jsonSearch.getString("city"));
+				}
+				if(jsonSearch.containsKey("area")) {
+					params.put("area", jsonSearch.getString("area"));
+				}
+				if(jsonSearch.containsKey("isCityWide")) {
+					if(jsonSearch.getBooleanValue("isCityWide")) {//
+						params.put("isCityWide", "1");
+						if(jsonSearch.containsKey("currUserLocX") && jsonSearch.containsKey("currUserLocY")) {
+							params.put("currUserLocX", jsonSearch.getBigDecimal("currUserLocX"));
+							params.put("currUserLocY", jsonSearch.getBigDecimal("currUserLocY"));
+						}
+					}else {
+						params.put("isCityWide", "0");
+					}
+				}
+				if(jsonSearch.containsKey("postageId")) {
+					params.put("postageId", jsonSearch.getString("postageId"));
+				}
+			}
+			String strSorts = null;
+			if(jsonSortParams != null && jsonSortParams.length()>0) {
+				JSONObject jsonSort = JSONObject.parseObject(jsonSortParams);
+				Map<Integer,String> sortMap = new HashMap<Integer,String>();
+				if(jsonSort.containsKey("time")) {
+					String value = jsonSort.getString("time");
+					if(value != null && value.length()>0) {
+						String[] arr = value.split("#");
+						sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " update_time asc " : " update_time desc " );
+					}
+				}
+				if(jsonSort.containsKey("dist")) {
+					String value = jsonSort.getString("dist");
+					if(value != null && value.length()>0) {
+						String[] arr = value.split("#");
+						sortMap.put(new Integer(arr[0]), " distance asc " );
+					}
+				}
+				if(jsonSort.containsKey("sale")) {
+					String value = jsonSort.getString("sale");
+					if(value != null && value.length()>0) {
+						String[] arr = value.split("#");
+						sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " saled_cnt asc " : " saled_cnt desc " );
+					}
+				}
+				
+				Set<Integer> set = new TreeSet<Integer>(sortMap.keySet());
+				StringBuilder sb = new StringBuilder();
+				for(Integer key:set) {
+					sb.append(",");
+					sb.append(sortMap.get(key));
+				}
+				if(sb.length()>0) {
+					strSorts = " order by " + sb.substring(1);
+				}
+			}
+			PageCond pageCond = null;
+			if(jsonPageCond == null || jsonPageCond.length()<1) {
+				pageCond = new PageCond(0,100);
+			}else {
+				pageCond = JSONObject.toJavaObject(JSONObject.parseObject(jsonPageCond), PageCond.class);
+				if(pageCond == null) {
+					pageCond = new PageCond(0,100);
+				}
+				if( pageCond.getBegin()<=0) {
+					pageCond.setBegin(0);
+				}
+				if(pageCond.getPageSize()<2) {
+					pageCond.setPageSize(100);
+				}
+			}
+			int cnt = this.goodsService.countAll(params);
+			pageCond.setCount(cnt);
+			jsonRet.put("pageCond", pageCond);
+			jsonRet.put("errcode", ErrCodes.GOODS_NO_GOODS);
+			jsonRet.put("errmsg", "没有获取到商品信息！");
+			if(cnt>0) {
+				List<Goods> list = this.goodsService.getAll(hasPartner,params, strSorts, pageCond);
+				if(list != null && list.size()>0) {
+					jsonRet.put("datas", list);
+					jsonRet.put("errcode", 0);
+					jsonRet.put("errmsg", "ok");
+				}
+			}
+			return jsonRet.toString();
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+			return jsonRet.toString();
+		}
+	}
 }

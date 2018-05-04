@@ -43,7 +43,6 @@ public class Goods {
     @NotNull(message=" 商品生产者：不可为空！ ")
     @Size(min=2,max=100,message=" 商品生产者：长度范围2-100字符！ ")
     private String vender;
-    
 
     private Integer saledCnt;
 
@@ -65,21 +64,6 @@ public class Goods {
     private Date beginTime;
 
     private Date endTime;
-
-    @NotNull(message=" 配送方式：不可为空！ ")
-    @Pattern(regexp="^[1234]$",message=" 配送方式：取值为【1-官方统一配送、2-商家自行配送、3-快递配送、4-客户自取】！ ")
-    private String dispatchMode;
-
-    @NotNull(message=" 是否同城销售：不可为空！ ")
-    @Pattern(regexp="^[01]$",message=" 是否同城销售：取值为【0-全国，1-同城】！ ")
-    private String isCityWide;
-
-    @Min(value=0,message=" 同城销售距离：最小值为0！")
-    @Max(value=999,message=" 同城销售距离：最大值999！ ")
-    private Integer distLimit;
-
-    @Size(max=2550,message=" 销售省份：最长2550字符！ ")
-    private String provLimit;
 
     @NotNull(message=" 运费模版组ID：不可为空！ ")
     @Size(min=1,max=100,message=" 运费模版组ID：长度范围1-100字符！ ")
@@ -236,38 +220,6 @@ public class Goods {
 
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
-    }
-
-    public String getDispatchMode() {
-        return dispatchMode;
-    }
-
-    public void setDispatchMode(String dispatchMode) {
-        this.dispatchMode = dispatchMode == null ? null : dispatchMode.trim();
-    }
-
-    public String getIsCityWide() {
-        return isCityWide;
-    }
-
-    public void setIsCityWide(String isCityWide) {
-        this.isCityWide = isCityWide == null ? null : isCityWide.trim();
-    }
-
-    public Integer getDistLimit() {
-        return distLimit;
-    }
-
-    public void setDistLimit(Integer distLimit) {
-        this.distLimit = distLimit;
-    }
-
-    public String getProvLimit() {
-        return provLimit;
-    }
-
-    public void setProvLimit(String provLimit) {
-        this.provLimit = provLimit == null ? null : provLimit.trim();
     }
 
     public String getPostageIds() {
