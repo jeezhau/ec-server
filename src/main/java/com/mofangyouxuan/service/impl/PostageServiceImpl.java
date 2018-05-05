@@ -108,4 +108,13 @@ public class PostageServiceImpl implements PostageService{
 	public int getUsingCnt(Long postageId) {
 		return this.goodsMapper.countUsePostageCnt(postageId);
 	}
+	
+	/**
+	 * 根据ID列表获取
+	 * @param idsList
+	 * @return
+	 */
+	public List<Postage> getByIdList(String idList){
+		return this.postageMapper.selectByIdList(idList);
+	}
 }

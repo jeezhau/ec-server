@@ -668,28 +668,22 @@ public class GoodsAction {
 					params.put("goodsName", jsonSearch.getString("keywords"));
 				}
 				if(jsonSearch.containsKey("categoryId")) {
-					params.put("categoryId", jsonSearch.getString("categoryId"));
+					params.put("categoryId", jsonSearch.getInteger("categoryId"));
 				}
 				if(jsonSearch.containsKey("dispatchMode")) {
 					params.put("dispatchMode", jsonSearch.getString("dispatchMode"));
 				}
 				if(jsonSearch.containsKey("city")) {
 					params.put("city", jsonSearch.getString("city"));
+					if(jsonSearch.containsKey("currUserLocX") && jsonSearch.containsKey("currUserLocY")) {
+						params.put("currUserLocX", jsonSearch.getBigDecimal("currUserLocX"));
+						params.put("currUserLocY", jsonSearch.getBigDecimal("currUserLocY"));
+					}
 				}
 				if(jsonSearch.containsKey("area")) {
 					params.put("area", jsonSearch.getString("area"));
 				}
-				if(jsonSearch.containsKey("isCityWide")) {
-					if(jsonSearch.getBooleanValue("isCityWide")) {//
-						params.put("isCityWide", "1");
-						if(jsonSearch.containsKey("currUserLocX") && jsonSearch.containsKey("currUserLocY")) {
-							params.put("currUserLocX", jsonSearch.getBigDecimal("currUserLocX"));
-							params.put("currUserLocY", jsonSearch.getBigDecimal("currUserLocY"));
-						}
-					}else {
-						params.put("isCityWide", "0");
-					}
-				}
+				
 				if(jsonSearch.containsKey("postageId")) {
 					params.put("postageId", jsonSearch.getString("postageId"));
 				}

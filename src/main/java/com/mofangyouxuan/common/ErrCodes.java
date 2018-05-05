@@ -11,6 +11,7 @@ public class ErrCodes {
 	//通用功能码：100
 	public static int COMMON_EXCEPTION = -100001; //出现系统异常
 	public static int COMMON_DB_ERROR = -100002;	//数据库处理失败
+	public static int COMMON_PARAM_ERROR = -100003;	//参数格式不正确
 	
 	//用户管理功能码：101
 	public static int USER_PARAM_ERROR = -101001;	//参数格式不正确
@@ -60,4 +61,18 @@ public class ErrCodes {
 	public static int RECEIVER_PRIVILEGE_ERROR = -108003;	//无权执行该操作
 	public static int RECEIVER_CNT_LIMIT = -108004;	//数量限制
 	
+	//订单管理功能码：109
+	public static int ORDER_PARAM_ERROR = -109001;	//参数有错
+	public static int ORDER_NO_EXISTS = -109002;	//没有该记录
+	public static int ORDER_PRIVILEGE_ERROR = -109003;	//无权执行该操作
+	public static int ORDER_FOR_PAY_CNT_ALL_LIMIT = -109004;	//待付款订单限制
+	public static int ORDER_FOR_PAY_CNT_GOODS_LIMIT = -109005;	//待付款订单限制
+	public static int ORDER_SEARCH_PARAM = -109006;	//查询条件有误
+	public static int ORDER_BUY_LIMIT = -109007;		//限购
+	public static int ORDER_STOCK_OVER = -109008;		//购买超过库存
+	public static int ORDER_NO_POSTAGE = -109009;		//不支持配送
+	
+	
 }
+
+

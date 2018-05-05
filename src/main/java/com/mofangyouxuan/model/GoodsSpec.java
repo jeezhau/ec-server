@@ -15,9 +15,14 @@ public class GoodsSpec {
 	
 	private String unit;
 	
+	private Integer grossWeight; //带包装重量
+	
 	private BigDecimal price;
 	
-	private Integer stock;
+	private Integer stock; //库存
+
+	private Integer buyNum; //购买数量
+	
 
 	public String getName() {
 		return name;
@@ -59,5 +64,20 @@ public class GoodsSpec {
 		this.stock = stock;
 	}
 
-	
+	public Integer getGrossWeight() {
+		return grossWeight;
+	}
+
+	public void setGrossWeight(Integer grossWeight) {
+		this.grossWeight = grossWeight;
+	}
+
+	public Integer getBuyNum() {
+		return buyNum;
+	}
+
+	public void setBuyNum(Integer buyNum) {
+		this.buyNum = buyNum;
+	}
+
 }

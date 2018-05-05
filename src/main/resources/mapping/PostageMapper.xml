@@ -109,5 +109,12 @@
     where partner_id = #{partnerId,jdbcType=INTEGER} and status = '1'
   </select>  
   
+  <select id="selectByIdList" parameterType="string" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_postage_tpl
+    where postate_id in concat('(',#{idList,jdbcType=VARCHAR},')')
+  </select>
+  
 </mapper>
 

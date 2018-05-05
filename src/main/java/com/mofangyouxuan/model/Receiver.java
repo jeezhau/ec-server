@@ -1,5 +1,7 @@
 package com.mofangyouxuan.model;
 
+import java.math.BigDecimal;
+
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -34,9 +36,9 @@ public class Receiver {
 	@Size(min=2,max=255,message=" 详细地址：长度为2-255字符！")
     private String addr;
 
-    private String locationX;
+    private BigDecimal locationX;
 
-    private String locationY;
+    private BigDecimal locationY;
 
 	@NotNull(message=" 收货人：不可为空！")
 	@Size(min=2,max=50,message=" 收货人：长度为2-50字符！")
@@ -106,20 +108,20 @@ public class Receiver {
         this.addr = addr == null ? null : addr.trim();
     }
 
-    public String getLocationX() {
+    public BigDecimal getLocationX() {
         return locationX;
     }
 
-    public void setLocationX(String locationX) {
-        this.locationX = locationX == null ? null : locationX.trim();
+    public void setLocationX(BigDecimal locationX) {
+        this.locationX = locationX ;
     }
 
-    public String getLocationY() {
+    public BigDecimal getLocationY() {
         return locationY;
     }
 
-    public void setLocationY(String locationY) {
-        this.locationY = locationY == null ? null : locationY.trim();
+    public void setLocationY(BigDecimal locationY) {
+        this.locationY = locationY ;
     }
 
     public String getReceiver() {

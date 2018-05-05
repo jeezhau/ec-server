@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.OrderMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Order">
+    <id column="order_id" jdbcType="INTEGER" property="orderId" />
+    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="goods_id" jdbcType="INTEGER" property="goodsId" />
+    <result column="goods_spec" jdbcType="VARCHAR" property="goodsSpec" />
+    <result column="carrage" jdbcType="DECIMAL" property="carrage" />
+    <result column="amount" jdbcType="DECIMAL" property="amount" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+    <result column="status" jdbcType="CHAR" property="status" />
+    <result column="dispatch_mode" jdbcType="CHAR" property="dispatchMode" />
+    <result column="postage_id" jdbcType="INTEGER" property="postageId" />
+    <result column="recv_name" jdbcType="VARCHAR" property="recvName" />
+    <result column="recv_phone" jdbcType="VARCHAR" property="recvPhone" />
+    <result column="recv_country" jdbcType="VARCHAR" property="recvCountry" />
+    <result column="recv_province" jdbcType="VARCHAR" property="recvProvince" />
+    <result column="recv_city" jdbcType="VARCHAR" property="recvCity" />
+    <result column="recv_area" jdbcType="VARCHAR" property="recvArea" />
+    <result column="recv_addr" jdbcType="VARCHAR" property="recvAddr" />
+    <result column="logistics_comp" jdbcType="VARCHAR" property="logisticsComp" />
+    <result column="logistics_no" jdbcType="VARCHAR" property="logisticsNo" />
+    <result column="send_time" jdbcType="TIMESTAMP" property="sendTime" />
+    <result column="sign_user" jdbcType="VARCHAR" property="signUser" />
+    <result column="sign_time" jdbcType="TIMESTAMP" property="signTime" />
+    <result column="score_logistics" jdbcType="INTEGER" property="scoreLogistics" />
+    <result column="score_goods" jdbcType="INTEGER" property="scoreGoods" />
+    <result column="score_merchant" jdbcType="INTEGER" property="scoreMerchant" />
+    <result column="appraise_status" jdbcType="CHAR" property="appraiseStatus" />
+    <result column="appraise_time" jdbcType="TIMESTAMP" property="appraiseTime" />
+    <result column="aftersales_apply_time" jdbcType="TIMESTAMP" property="aftersalesApplyTime" />
+    <result column="aftersales_deal_time" jdbcType="TIMESTAMP" property="aftersalesDealTime" />
+    <result column="appraise_info" jdbcType="LONGVARCHAR" property="appraiseInfo" />
+    <result column="aftersales_reason" jdbcType="LONGVARCHAR" property="aftersalesReason" />
+    <result column="aftersales_result" jdbcType="LONGVARCHAR" property="aftersalesResult" />
+  </resultMap>
+  
+  <sql id="Base_Column_List">
+    order_id, user_id, goods_id, goods_spec, carrage, amount, create_time, remark, status, 
+    dispatch_mode, postage_id, recv_name, recv_phone, recv_country, recv_province, recv_city, 
+    recv_area, recv_addr, logistics_comp, logistics_no, send_time, sign_user, sign_time, 
+    score_logistics, score_goods, score_merchant, appraise_status, appraise_time, aftersales_apply_time, 
+    aftersales_deal_time,
+    appraise_info, aftersales_reason, aftersales_result
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.math.BigInteger" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from tb_order_info
+    where order_id = #{orderId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.math.BigInteger">
+    delete from tb_order_info
+    where order_id = #{orderId,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Order" keyProperty="orderId" useGeneratedKeys="true">
+    insert into tb_order_info (order_id, user_id, goods_id, 
+      goods_spec, carrage, amount, 
+      create_time, remark, status, 
+      dispatch_mode, postage_id, recv_name, 
+      recv_phone, recv_country, recv_province, 
+      recv_city, recv_area, recv_addr, 
+      logistics_comp, logistics_no, send_time, 
+      sign_user, sign_time, score_logistics, 
+      score_goods, score_merchant, appraise_status, 
+      appraise_time, aftersales_apply_time, 
+      aftersales_deal_time, appraise_info, 
+      aftersales_reason, aftersales_result
+      )
+    values (#{orderId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{goodsId,jdbcType=INTEGER}, 
+      #{goodsSpec,jdbcType=VARCHAR}, #{carrage,jdbcType=DECIMAL}, #{amount,jdbcType=DECIMAL}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{remark,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, 
+      #{dispatchMode,jdbcType=CHAR}, #{postageId,jdbcType=INTEGER}, #{recvName,jdbcType=VARCHAR}, 
+      #{recvPhone,jdbcType=VARCHAR}, #{recvCountry,jdbcType=VARCHAR}, #{recvProvince,jdbcType=VARCHAR}, 
+      #{recvCity,jdbcType=VARCHAR}, #{recvArea,jdbcType=VARCHAR}, #{recvAddr,jdbcType=VARCHAR}, 
+      #{logisticsComp,jdbcType=VARCHAR}, #{logisticsNo,jdbcType=VARCHAR}, #{sendTime,jdbcType=TIMESTAMP}, 
+      #{signUser,jdbcType=VARCHAR}, #{signTime,jdbcType=TIMESTAMP}, #{scoreLogistics,jdbcType=INTEGER}, 
+      #{scoreGoods,jdbcType=INTEGER}, #{scoreMerchant,jdbcType=INTEGER}, #{appraiseStatus,jdbcType=CHAR}, 
+      #{appraiseTime,jdbcType=TIMESTAMP}, #{aftersalesApplyTime,jdbcType=TIMESTAMP}, 
+      #{aftersalesDealTime,jdbcType=TIMESTAMP}, #{appraiseInfo,jdbcType=LONGVARCHAR}, 
+      #{aftersalesReason,jdbcType=LONGVARCHAR}, #{aftersalesResult,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.Order">
+    update tb_order_info
+    <set>
+      <if test="userId != null">
+        user_id = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="goodsId != null">
+        goods_id = #{goodsId,jdbcType=INTEGER},
+      </if>
+      <if test="goodsSpec != null">
+        goods_spec = #{goodsSpec,jdbcType=VARCHAR},
+      </if>
+      <if test="carrage != null">
+        carrage = #{carrage,jdbcType=DECIMAL},
+      </if>
+      <if test="amount != null">
+        amount = #{amount,jdbcType=DECIMAL},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="remark != null">
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=CHAR},
+      </if>
+      <if test="dispatchMode != null">
+        dispatch_mode = #{dispatchMode,jdbcType=CHAR},
+      </if>
+      <if test="postageId != null">
+        postage_id = #{postageId,jdbcType=INTEGER},
+      </if>
+      <if test="recvName != null">
+        recv_name = #{recvName,jdbcType=VARCHAR},
+      </if>
+      <if test="recvPhone != null">
+        recv_phone = #{recvPhone,jdbcType=VARCHAR},
+      </if>
+      <if test="recvCountry != null">
+        recv_country = #{recvCountry,jdbcType=VARCHAR},
+      </if>
+      <if test="recvProvince != null">
+        recv_province = #{recvProvince,jdbcType=VARCHAR},
+      </if>
+      <if test="recvCity != null">
+        recv_city = #{recvCity,jdbcType=VARCHAR},
+      </if>
+      <if test="recvArea != null">
+        recv_area = #{recvArea,jdbcType=VARCHAR},
+      </if>
+      <if test="recvAddr != null">
+        recv_addr = #{recvAddr,jdbcType=VARCHAR},
+      </if>
+      <if test="logisticsComp != null">
+        logistics_comp = #{logisticsComp,jdbcType=VARCHAR},
+      </if>
+      <if test="logisticsNo != null">
+        logistics_no = #{logisticsNo,jdbcType=VARCHAR},
+      </if>
+      <if test="sendTime != null">
+        send_time = #{sendTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="signUser != null">
+        sign_user = #{signUser,jdbcType=VARCHAR},
+      </if>
+      <if test="signTime != null">
+        sign_time = #{signTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="scoreLogistics != null">
+        score_logistics = #{scoreLogistics,jdbcType=INTEGER},
+      </if>
+      <if test="scoreGoods != null">
+        score_goods = #{scoreGoods,jdbcType=INTEGER},
+      </if>
+      <if test="scoreMerchant != null">
+        score_merchant = #{scoreMerchant,jdbcType=INTEGER},
+      </if>
+      <if test="appraiseStatus != null">
+        appraise_status = #{appraiseStatus,jdbcType=CHAR},
+      </if>
+      <if test="appraiseTime != null">
+        appraise_time = #{appraiseTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="aftersalesApplyTime != null">
+        aftersales_apply_time = #{aftersalesApplyTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="aftersalesDealTime != null">
+        aftersales_deal_time = #{aftersalesDealTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="appraiseInfo != null">
+        appraise_info = #{appraiseInfo,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="aftersalesReason != null">
+        aftersales_reason = #{aftersalesReason,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="aftersalesResult != null">
+        aftersales_result = #{aftersalesResult,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where order_id = #{orderId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Order">
+    update tb_order_info
+    set user_id = #{userId,jdbcType=INTEGER},
+      goods_id = #{goodsId,jdbcType=INTEGER},
+      goods_spec = #{goodsSpec,jdbcType=VARCHAR},
+      carrage = #{carrage,jdbcType=DECIMAL},
+      amount = #{amount,jdbcType=DECIMAL},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      remark = #{remark,jdbcType=VARCHAR},
+      status = #{status,jdbcType=CHAR},
+      dispatch_mode = #{dispatchMode,jdbcType=CHAR},
+      postage_id = #{postageId,jdbcType=INTEGER},
+      recv_name = #{recvName,jdbcType=VARCHAR},
+      recv_phone = #{recvPhone,jdbcType=VARCHAR},
+      recv_country = #{recvCountry,jdbcType=VARCHAR},
+      recv_province = #{recvProvince,jdbcType=VARCHAR},
+      recv_city = #{recvCity,jdbcType=VARCHAR},
+      recv_area = #{recvArea,jdbcType=VARCHAR},
+      recv_addr = #{recvAddr,jdbcType=VARCHAR},
+      logistics_comp = #{logisticsComp,jdbcType=VARCHAR},
+      logistics_no = #{logisticsNo,jdbcType=VARCHAR},
+      send_time = #{sendTime,jdbcType=TIMESTAMP},
+      sign_user = #{signUser,jdbcType=VARCHAR},
+      sign_time = #{signTime,jdbcType=TIMESTAMP},
+      score_logistics = #{scoreLogistics,jdbcType=INTEGER},
+      score_goods = #{scoreGoods,jdbcType=INTEGER},
+      score_merchant = #{scoreMerchant,jdbcType=INTEGER},
+      appraise_status = #{appraiseStatus,jdbcType=CHAR},
+      appraise_time = #{appraiseTime,jdbcType=TIMESTAMP},
+      aftersales_apply_time = #{aftersalesApplyTime,jdbcType=TIMESTAMP},
+      aftersales_deal_time = #{aftersalesDealTime,jdbcType=TIMESTAMP},
+      appraise_info = #{appraiseInfo,jdbcType=LONGVARCHAR},
+      aftersales_reason = #{aftersalesReason,jdbcType=LONGVARCHAR},
+      aftersales_result = #{aftersalesResult,jdbcType=LONGVARCHAR}
+    where order_id = #{orderId,jdbcType=INTEGER}
+  </update>
+  
+  
+  
+</mapper>
+

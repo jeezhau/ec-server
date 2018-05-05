@@ -49,4 +49,11 @@ public interface PostageService {
 	 */
 	public int getUsingCnt(Long postageId);
 	
+	/**
+	 * 根据ID列表获取
+	 * @param idsList
+	 * @return
+	 */
+	public List<Postage> getByIdList(String idList);
+	
 }

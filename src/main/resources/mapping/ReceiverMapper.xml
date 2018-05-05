@@ -9,8 +9,8 @@
     <result column="city" jdbcType="VARCHAR" property="city" />
     <result column="area" jdbcType="VARCHAR" property="area" />
     <result column="addr" jdbcType="VARCHAR" property="addr" />
-    <result column="location_x" jdbcType="VARCHAR" property="locationX" />
-    <result column="location_y" jdbcType="VARCHAR" property="locationY" />
+    <result column="location_x" jdbcType="DECIMAL" property="locationX" />
+    <result column="location_y" jdbcType="DECIMAL" property="locationY" />
     <result column="receiver" jdbcType="VARCHAR" property="receiver" />
     <result column="phone" jdbcType="VARCHAR" property="phone" />
     <result column="is_default" jdbcType="CHAR" property="isDefault" />
@@ -37,7 +37,7 @@
       )
     values (#{recvId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{country,jdbcType=VARCHAR}, 
       #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
-      #{addr,jdbcType=VARCHAR}, #{locationX,jdbcType=VARCHAR}, #{locationY,jdbcType=VARCHAR}, 
+      #{addr,jdbcType=VARCHAR}, #{locationX,jdbcType=DECIMAL}, #{locationY,jdbcType=DECIMAL}, 
       #{receiver,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, #{isDefault,jdbcType=CHAR}
       )
   </insert>
@@ -105,10 +105,10 @@
         #{addr,jdbcType=VARCHAR},
       </if>
       <if test="locationX != null">
-        #{locationX,jdbcType=VARCHAR},
+        #{locationX,jdbcType=DECIMAL},
       </if>
       <if test="locationY != null">
-        #{locationY,jdbcType=VARCHAR},
+        #{locationY,jdbcType=DECIMAL},
       </if>
       <if test="receiver != null">
         #{receiver,jdbcType=VARCHAR},
@@ -143,10 +143,10 @@
         addr = #{addr,jdbcType=VARCHAR},
       </if>
       <if test="locationX != null">
-        location_x = #{locationX,jdbcType=VARCHAR},
+        location_x = #{locationX,jdbcType=DECIMAL},
       </if>
       <if test="locationY != null">
-        location_y = #{locationY,jdbcType=VARCHAR},
+        location_y = #{locationY,jdbcType=DECIMAL},
       </if>
       <if test="receiver != null">
         receiver = #{receiver,jdbcType=VARCHAR},
@@ -169,8 +169,8 @@
       city = #{city,jdbcType=VARCHAR},
       area = #{area,jdbcType=VARCHAR},
       addr = #{addr,jdbcType=VARCHAR},
-      location_x = #{locationX,jdbcType=VARCHAR},
-      location_y = #{locationY,jdbcType=VARCHAR},
+      location_x = #{locationX,jdbcType=DECIMAL},
+      location_y = #{locationY,jdbcType=DECIMAL},
       receiver = #{receiver,jdbcType=VARCHAR},
       phone = #{phone,jdbcType=VARCHAR},
       is_default = #{isDefault,jdbcType=CHAR}

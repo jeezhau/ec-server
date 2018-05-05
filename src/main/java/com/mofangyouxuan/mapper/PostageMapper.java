@@ -21,4 +21,6 @@ public interface PostageMapper {
     Postage selectByPartnerAndName(@Param("partnerId")Integer partnerId,@Param("postageName")String postageName);
     
     int countByPartner(Integer partnerId);
+    
+    List<Postage> selectByIdList(String idList);
 }
