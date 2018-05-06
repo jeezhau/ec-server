@@ -137,6 +137,9 @@ public class GoodsAction {
 							priceLowest = spec.getPrice();
 						}
 					}
+					if(spec.getGrossWeight() == null || spec.getGrossWeight()<1 || spec.getGrossWeight()>99999999) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】带包装重不合规，须为1-99999999的数值！");
+					}
 					if(spec.getStock() == null || spec.getStock()<0 || spec.getStock()>999999) {
 						sb.append("记录【" + JSONObject.toJSONString(spec) + "】库存不合规，须为0-999999的整数值！");
 					}else {
@@ -271,6 +274,9 @@ public class GoodsAction {
 						if(priceLowest.compareTo(spec.getPrice()) > 0) {
 							priceLowest = spec.getPrice();
 						}
+					}
+					if(spec.getGrossWeight() == null || spec.getGrossWeight()<1 || spec.getGrossWeight()>99999999) {
+						sb.append("记录【" + JSONObject.toJSONString(spec) + "】带包装重不合规，须为1-99999999的数值！");
 					}
 					if(spec.getStock() == null || spec.getStock()<0 || spec.getStock()>999999) {
 						sb.append("记录【" + JSONObject.toJSONString(spec) + "】库存不合规，须为0-999999的整数值！");

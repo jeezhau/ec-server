@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
@@ -17,6 +18,7 @@ import com.mofangyouxuan.mapper.OrderMapper;
 import com.mofangyouxuan.model.Order;
 import com.mofangyouxuan.service.OrderService;
 
+@Service
 public class OrderServiceImpl implements OrderService{
 	
 	@Autowired
@@ -93,61 +95,62 @@ public class OrderServiceImpl implements OrderService{
 	 * @return
 	 */
 	public List<Order> getAll(JSONObject jsonParams,JSONObject jsonSorts,PageCond pageCond){
-		
 		String sorts = null;
-		Map<Integer,String> sortMap = new HashMap<Integer,String>();
-		if(jsonSorts.containsKey("createTime")) {
-			String value = jsonSorts.getString("createTime");
-			if(value != null && value.length()>0) {
-				String[] arr = value.split("#");
-				sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " create_time asc " : " create_time desc " );
+		if(jsonSorts != null) {
+			Map<Integer,String> sortMap = new HashMap<Integer,String>();
+			if(jsonSorts.containsKey("createTime")) {
+				String value = jsonSorts.getString("createTime");
+				if(value != null && value.length()>0) {
+					String[] arr = value.split("#");
+					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " create_time asc " : " create_time desc " );
+				}
 			}
-		}
-		if(jsonSorts.containsKey("sendTime")) {
-			String value = jsonSorts.getString("sendTime");
-			if(value != null && value.length()>0) {
-				String[] arr = value.split("#");
-				sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " send_time asc " : " send_time desc " );
+			if(jsonSorts.containsKey("sendTime")) {
+				String value = jsonSorts.getString("sendTime");
+				if(value != null && value.length()>0) {
+					String[] arr = value.split("#");
+					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " send_time asc " : " send_time desc " );
+				}
+			}				
+			if(jsonSorts.containsKey("signTime")) {
+				String value = jsonSorts.getString("signTime");
+				if(value != null && value.length()>0) {
+					String[] arr = value.split("#");
+					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " sign_time asc " : " sign_time desc " );
+				}
 			}
-		}				
-		if(jsonSorts.containsKey("signTime")) {
-			String value = jsonSorts.getString("signTime");
-			if(value != null && value.length()>0) {
-				String[] arr = value.split("#");
-				sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " sign_time asc " : " sign_time desc " );
+			if(jsonSorts.containsKey("appraiseTime")) {
+				String value = jsonSorts.getString("appraiseTime");
+				if(value != null && value.length()>0) {
+					String[] arr = value.split("#");
+					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " appraise_time asc " : " appraise_time desc " );
+				}
 			}
-		}
-		if(jsonSorts.containsKey("appraiseTime")) {
-			String value = jsonSorts.getString("appraiseTime");
-			if(value != null && value.length()>0) {
-				String[] arr = value.split("#");
-				sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " appraise_time asc " : " appraise_time desc " );
+			if(jsonSorts.containsKey("aftersalesApplyTime")) {
+				String value = jsonSorts.getString("aftersalesApplyTime");
+				if(value != null && value.length()>0) {
+					String[] arr = value.split("#");
+					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " aftersales_apply_time asc " : " aftersales_apply_time desc " );
+				}
 			}
-		}
-		if(jsonSorts.containsKey("aftersalesApplyTime")) {
-			String value = jsonSorts.getString("aftersalesApplyTime");
-			if(value != null && value.length()>0) {
-				String[] arr = value.split("#");
-				sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " aftersales_apply_time asc " : " aftersales_apply_time desc " );
+			if(jsonSorts.containsKey("aftersalesDealTime")) {
+				String value = jsonSorts.getString("aftersalesDealTime");
+				if(value != null && value.length()>0) {
+					String[] arr = value.split("#");
+					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " aftersales_deal_time asc " : " aftersales_deal_time desc " );
+				}
 			}
-		}
-		if(jsonSorts.containsKey("aftersalesDealTime")) {
-			String value = jsonSorts.getString("aftersalesDealTime");
-			if(value != null && value.length()>0) {
-				String[] arr = value.split("#");
-				sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " aftersales_deal_time asc " : " aftersales_deal_time desc " );
+			Set<Integer> set = new TreeSet<Integer>(sortMap.keySet());
+			StringBuilder sb = new StringBuilder();
+			for(Integer key:set) {
+				sb.append(",");
+				sb.append(sortMap.get(key));
 			}
-		}
-		Set<Integer> set = new TreeSet<Integer>(sortMap.keySet());
-		StringBuilder sb = new StringBuilder();
-		for(Integer key:set) {
-			sb.append(",");
-			sb.append(sortMap.get(key));
-		}
-		if(sb.length()>0) {
-			sorts = " order by " + sb.substring(1);
-		}else {
-			sorts = " order by order_id desc ";
+			if(sb.length()>0) {
+				sorts = " order by " + sb.substring(1);
+			}else {
+				sorts = " order by order_id desc ";
+			}
 		}
 		
 		Map<String,Object> params = getParamsMap(jsonParams);
@@ -164,6 +167,7 @@ public class OrderServiceImpl implements OrderService{
 		return this.orderMapper.countAll(params);
 	}
 	
+	
 	/**
 	 * 解析查询条件
 	 * @param jsonParams
@@ -174,52 +178,63 @@ public class OrderServiceImpl implements OrderService{
 		params.put("status", "41,56");	//默认评价完成
 		
 		if(jsonParams.containsKey("userId")) { //下单用户
-			params.put("user_id", jsonParams.getInteger("userId"));
+			params.put("userId", jsonParams.getInteger("userId"));
 		}
 		if(jsonParams.containsKey("goodsId")) {
-			params.put("goods_id", jsonParams.getLong("goodsId"));
+			params.put("goodsId", jsonParams.getLong("goodsId"));
 		}
 		if(jsonParams.containsKey("status")) {//多个状态使用逗号分隔
 			params.put("status", jsonParams.getString("status"));
 		}
 		if(jsonParams.containsKey("partnerId")) {//查询指定合作伙伴
-			params.put("partner_id", jsonParams.getInteger("partnerId"));
+			params.put("partnerId", jsonParams.getInteger("partnerId"));
 		}
 		if(jsonParams.containsKey("keywords")) {//使用关键字查询
-			params.put("goods_name", jsonParams.getString("keywords"));
-			params.put("order_id", jsonParams.getString("keywords"));
+			params.put("goodsName", jsonParams.getString("keywords"));
+			params.put("orderId", jsonParams.getString("keywords"));
 		}
 		if(jsonParams.containsKey("categoryId")) { //商品分类ID
-			params.put("category_id", jsonParams.getInteger("categoryId"));
+			params.put("categoryId", jsonParams.getInteger("categoryId"));
 		}
 		if(jsonParams.containsKey("dispatchMode")) { //派送模式
-			params.put("dispatch_mode", jsonParams.getString("dispatchMode"));
+			params.put("dispatchMode", jsonParams.getString("dispatchMode"));
 		}
 		if(jsonParams.containsKey("postageId")) { //运费模板ID
-			params.put("postage_id", jsonParams.getInteger("postageId"));
+			params.put("postageId", jsonParams.getInteger("postageId"));
 		}
 		if(jsonParams.containsKey("appraiseStatus")) { //评价内容状态
-			params.put("appraise_status", jsonParams.getString("appraiseStatus"));
+			params.put("appraiseStatus", jsonParams.getString("appraiseStatus"));
 		}
 		
 		if(jsonParams.containsKey("beginCreateTime")) { //订单创建开始时间
-			params.put("create_time", jsonParams.getString("beginCreateTime"));
+			params.put("beginCreateTime", jsonParams.getString("beginCreateTime"));
 		}
 		if(jsonParams.containsKey("endCreateTime")) { //订单创建结束时间
-			params.put("create_time", jsonParams.getString("endCreateTime"));
+			params.put("endCreateTime", jsonParams.getString("endCreateTime"));
 		}
 		if(jsonParams.containsKey("beginSendTime")) { //订单发货开始时间
-			params.put("send_time", jsonParams.getString("beginSendTime"));
+			params.put("beginSendTime", jsonParams.getString("beginSendTime"));
 		}
 		if(jsonParams.containsKey("endSendTime")) { //订单发货结束时间
-			params.put("send_time", jsonParams.getString("endSendTime"));
+			params.put("endSendTime", jsonParams.getString("endSendTime"));
 		}
 		if(jsonParams.containsKey("beginSignTime")) { //订单签收开始时间
-			params.put("sign_time", jsonParams.getString("beginSignTime"));
+			params.put("beginSignTime", jsonParams.getString("beginSignTime"));
 		}
 		if(jsonParams.containsKey("endSignTime")) { //订单签收结束时间
-			params.put("sign_time", jsonParams.getString("endSignTime"));
+			params.put("endSignTime", jsonParams.getString("endSignTime"));
 		}
 		return params;
+	}
+	
+	/**
+	 * 分状态统计订单数量
+	 * @param partnerId
+	 * @param goodsId
+	 * @param userId
+	 * @return
+	 */
+	public  List<Map<String,Integer>> countPartibyStatus(Integer partnerId,Long goodsId,Integer userId){
+		return this.orderMapper.countPartibyStatus(partnerId, goodsId, userId);
 	}
 }

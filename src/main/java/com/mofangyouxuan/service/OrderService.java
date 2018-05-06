@@ -2,6 +2,7 @@ package com.mofangyouxuan.service;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.PageCond;
@@ -57,6 +58,15 @@ public interface OrderService {
 	 * @return
 	 */
 	public List<Order> getAll(JSONObject jsonParams,JSONObject jsonSorts,PageCond pageCond);
+	
+	/**
+	 * 分状态统计订单数量
+	 * @param partnerId
+	 * @param goodsId
+	 * @param userId
+	 * @return
+	 */
+	public  List<Map<String,Integer>> countPartibyStatus(Integer partnerId,Long goodsId,Integer userId);
 	
 }
 

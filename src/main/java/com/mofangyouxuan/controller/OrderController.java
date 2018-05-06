@@ -2,9 +2,12 @@ package com.mofangyouxuan.controller;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.Valid;
 
@@ -40,6 +43,7 @@ import com.mofangyouxuan.service.UserBasicService;
  * 2、没付款之前订单可主动取消或修改；
  * 3、买家在付款后未发货之前可联系卖家取消并同时主动取消；
  * 4、卖家在未发货前可联系买家取消并同时主动取消；
+ * 5、买家付款之后更新库存；取消完成恢复库存；
  * @author jeekhan
  *
  */
@@ -98,7 +102,7 @@ public class OrderController {
 			}
 			//商品、配送信息检查
 			Goods goods = this.goodsService.get(true, order.getGoodsId());
-			if(goods == null || !"1".equals(goods.getStatus()) || "1".equals(goods.getReviewResult())) {
+			if(goods == null || !"1".equals(goods.getStatus()) || !"1".equals(goods.getReviewResult())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
 				jsonRet.put("errmsg", "您的购买商品当前不支持下单购买！");
 				return jsonRet.toString();
@@ -114,6 +118,32 @@ public class OrderController {
 				jsonRet.put("errcode", ErrCodes.POSTAGE_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该运费模板信息！");
 				return jsonRet.toString();
+			}else {
+				//同城配送
+				if("1".equals(postage.getIsCityWide())) {
+					Integer postage_distLimit = postage.getDistLimit(); //同城配送距离限制
+					if(postage_distLimit == null) {
+						postage_distLimit = 0;
+					}
+					Integer distance = this.getDistance(goods.getPartner(), receiver);
+					//可配送检查
+					if(!(distance != null && (0 == postage_distLimit || postage_distLimit <= distance))) {//可送
+						jsonRet.put("errcode", ErrCodes.ORDER_ERROR_POSTAGE);
+						jsonRet.put("errmsg", "该配送模式不支持该收件地区配送！");
+						return jsonRet.toString();
+					}
+				}else {//全国配送
+					String postage_provLimit = postage.getProvLimit(); //全国配送省份限制
+					if(postage_provLimit == null) {
+						postage_provLimit = "全国";
+					}
+					//省份检查
+					if(!("全国".equals(postage_provLimit.trim()) || postage_provLimit.contains(receiver.getProvince()))){//可送
+						jsonRet.put("errcode", ErrCodes.ORDER_ERROR_POSTAGE);
+						jsonRet.put("errmsg", "该配送模式不支持该收件地区配送！");
+						return jsonRet.toString();
+					}
+				}
 			}
 			List<GoodsSpec> applySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
 			if(applySpec == null || applySpec.size()<1) {
@@ -121,23 +151,28 @@ public class OrderController {
 				jsonRet.put("errmsg", "您的购买信息不可为空！");
 				return jsonRet.toString();
 			}
-			Double amount = 0.0;	//购买金额
-			Integer count = 0;	//购买数量
-			Integer weight = 0;	//购买毛重量
+			Map<String,Object> buyStatistics = new HashMap<String,Object>();
+//			Double amount = 0.0;	//购买金额
+//			Integer count = 0;	//购买数量
+//			Integer weight = 0;	//购买毛重量
+//			buyStatistics.put("amount", amount);
+//			buyStatistics.put("count", count);
+//			buyStatistics.put("weight", weight);
 			//订单数据检查
-			String errStr = this.checkOrderData(goods, applySpec, userId, count, amount, weight);
+			String errStr = this.checkOrderData(goods, applySpec, userId, buyStatistics);
 			if(errStr != null) {
 				return errStr;
 			}
-			if(applySpec.size()<1 || count < 1) {
+			if(applySpec.size()<1 || (Integer)buyStatistics.get("count") < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				jsonRet.put("errmsg", "您的购买信息不可为空！");
 				return jsonRet.toString();
 			}
 			//计算运费
-			Double carrage = this.getCarrage(postage, this.getDistance(goods.getPartner(), receiver), weight, amount);
+			Double carrage = this.getCarrage(postage, this.getDistance(goods.getPartner(), receiver),
+					(Integer)buyStatistics.get("weight"), (Double)buyStatistics.get("amount"));
 			//数据处理
-			order.setAmount(new BigDecimal(amount));
+			order.setAmount(new BigDecimal((Double)buyStatistics.get("amount")).add(new BigDecimal(carrage)).setScale(2));
 			order.setCarrage(new BigDecimal(carrage));
 			order.setGoodsSpec(JSONArray.toJSONString(applySpec));
 			BigInteger id = this.orderService.add(order);
@@ -180,28 +215,31 @@ public class OrderController {
 			String postageIds = goods.getPostageIds();
 			List<Postage> postages = postageService.getByIdList(postageIds);
 			List<GoodsSpec> applySpec = JSONArray.parseArray(goodsSpec, GoodsSpec.class);
-			List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getGoodsDesc(), GoodsSpec.class);
+			List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
 			if(user == null || goods == null || receiver == null || postages == null || applySpec.size() ==0 || sysSpec.size() ==0) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "获取数据失败！");
 				return jsonRet.toString();
 			}
-			
+			Map<String,Object> buyStatistics = new HashMap<String,Object>();
 			Double amount = 0.0;	//购买金额
 			Integer count = 0;	//购买数量
 			Integer weight = 0;	//购买毛重量
+			buyStatistics.put("amount", amount);
+			buyStatistics.put("count", count);
+			buyStatistics.put("weight", weight);
 			//订单数据检查
-			String errStr = this.checkOrderData(goods, applySpec, userId, count, amount, weight);
+			String errStr = this.checkOrderData(goods, applySpec, userId, buyStatistics);
 			if(errStr != null) {
 				return errStr;
 			}
-			if(applySpec.size()<1 || count < 1) {
+			if(applySpec.size()<1 || (Integer)buyStatistics.get("count") < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				jsonRet.put("errmsg", "您的购买信息不可为空！");
 				return jsonRet.toString();
 			}
 			//配送方案获取
-			JSONArray matchArray = this.getDispatchMatch(goods.getPartner(),goods, receiver, postages, weight, amount);
+			JSONArray matchArray = this.getDispatchMatch(goods.getPartner(),goods, receiver, postages, buyStatistics);
 			if(matchArray.size()>0) {
 				jsonRet.put("errcode", 0);
 				jsonRet.put("errmsg", "ok");
@@ -223,18 +261,16 @@ public class OrderController {
 	 * @param goods
 	 * @param applySpec
 	 * @param userId
-	 * @param count
-	 * @param amount
-	 * @param weight
+	 * @param buyStatistics	购买信息统计：总价(amount)，总重(weight)，总数量(counts)
 	 * @return 错误信息，null表示没有错误
 	 */
-	private String checkOrderData(Goods goods,List<GoodsSpec> applySpec,Integer userId,Integer count ,Double amount,Integer weight) {
-		List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getGoodsDesc(), GoodsSpec.class);
+	private String checkOrderData(Goods goods,List<GoodsSpec> applySpec,Integer userId,Map<String,Object> buyStatistics) {
+		List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
 
 		JSONObject jsonRet = new JSONObject();
 		
 		//库存检查
-		String overStockErr = this.checStock(applySpec, sysSpec, count, amount, weight);
+		String overStockErr = this.checStock(applySpec, sysSpec, buyStatistics);
 		if(overStockErr != null) {
 			jsonRet.put("errcode", ErrCodes.ORDER_STOCK_OVER);
 			jsonRet.put("errmsg", overStockErr);
@@ -248,9 +284,10 @@ public class OrderController {
 		jsonRet = new JSONObject();
 		
 		//限购检查
-		if(!this.buyLimitCheck(goods, userId, count)) {
+		if(!this.buyLimitCheck(goods, userId, (Integer)buyStatistics.get("count"))) {
 			jsonRet.put("errcode", ErrCodes.ORDER_BUY_LIMIT);
-			jsonRet.put("errmsg", "该商品当前限购，限购时间：" + goods.getBeginTime() + " 至 " + goods.getEndTime() + "，限购数量：" + "!");
+			jsonRet.put("errmsg", "该商品当前限购，限购时间：" + goods.getBeginTime() + " 至 " + goods.getEndTime() 
+				+ "，限购数量：" + goods.getLimitedNum() + "!");
 			return jsonRet.toJSONString();
 		}
 		return null;
@@ -260,24 +297,25 @@ public class OrderController {
 	 * 库存检查，使用系统中的规格信息补充提交的购买规格信息，并统计购买信息
 	 * @param applySpec	用户的提交的购买信息
 	 * @param sysSpec	系统中商品的规格信息
-	 * @param count		统计的购买数量
-	 * @param amount		统计的购买金额
-	 * @param weight		统计的重量
+	 * @param buyStatistics	购买信息统计：总价(amount)，总重(weight)，总数量(counts)
 	 * @return 检查结果信息，null表示没有错误
 	 */
-	private String checStock(List<GoodsSpec> applySpec,List<GoodsSpec> sysSpec,Integer count,Double amount,Integer weight) {
+	private String checStock(List<GoodsSpec> applySpec,List<GoodsSpec> sysSpec,Map<String,Object> buyStatistics) {
 		StringBuilder sb = new StringBuilder();
+		Integer count = 0;
+		BigDecimal amount = new BigDecimal(0);
+		Integer weight = 0;
 		for(int i=0;i<applySpec.size();i++) {
 			GoodsSpec spec = applySpec.get(i);
-			int buyNum = spec.getBuyNum();
-			if(buyNum > 0) {
+			Integer buyNum = spec.getBuyNum();
+			if(buyNum != null && buyNum > 0) {
 				boolean flag = false;	//是否有该规格
 				for(GoodsSpec p : sysSpec) {
 					if(p.getName().equals(spec.getName())) {
 						flag = true;
 						count += buyNum;
-						amount += buyNum * p.getPrice().doubleValue();
-						weight += p.getGrossWeight();
+						amount = amount.add(new BigDecimal(buyNum * p.getPrice().doubleValue()).setScale(2, BigDecimal.ROUND_HALF_UP));
+						weight += buyNum * p.getGrossWeight();
 						if(buyNum > p.getStock()) {
 							sb.append(" " + p.getName() + ": 最大库存 " + p.getStock() + " 件，您购买了 " + buyNum + " 件，超过了最大库存！");
 						}
@@ -295,6 +333,9 @@ public class OrderController {
 				applySpec.remove(i);
 			}
 		}
+		buyStatistics.put("count", count);
+		buyStatistics.put("amount", amount.doubleValue());
+		buyStatistics.put("weight", weight);
 		if(sb.length()>0) {
 			return sb.toString();
 		}else {
@@ -318,7 +359,7 @@ public class OrderController {
 			BigDecimal lat1 = partner.getLocationY();
 			BigDecimal lon2 = receiver.getLocationX();
 			BigDecimal lat2 = receiver.getLocationX();
-			if(lon1 != null && lat1 != null || lon2 != null && lat2 != null) {
+			if(lon1 != null && lat1 != null && lon2 != null && lat2 != null) {
 				double hsinX = Math.sin((lon1.doubleValue() - lon2.doubleValue()) * 0.5);
 		        double hsinY = Math.sin((lat1.doubleValue() - lat2.doubleValue()) * 0.5);
 		        double h = hsinY * hsinY +
@@ -331,8 +372,7 @@ public class OrderController {
 		        double Lx = (dx*Math.PI/180) * 6367 * Math.cos(b*Math.PI/180); // 东西距离
 		        double Ly = 6367 * (dy*Math.PI/180); // 南北距离
 		        distance = (int)Math.sqrt(Lx * Lx + Ly * Ly);  // 用平面的矩形对角距离公式计算总距离
-			}
-			if(distance == null) {
+			}else {
 				distance = 30;
 			}
 		}
@@ -348,9 +388,9 @@ public class OrderController {
 	 * @param amount
 	 * @return
 	 */
-	private JSONArray getDispatchMatch(PartnerBasic partner,Goods goods,Receiver receiver,List<Postage> postages,Integer weight,Double amount) {
+	private JSONArray getDispatchMatch(PartnerBasic partner,Goods goods,Receiver receiver,List<Postage> postages,Map<String,Object> buyStatistics) {
 		JSONArray matchArray = new JSONArray();
-		Integer distance = this.getDistance(partner, receiver);
+		
 		for(Postage postage:postages) {
 			Double carrage = null;
 			//同城配送
@@ -359,10 +399,11 @@ public class OrderController {
 				if(postage_distLimit == null) {
 					postage_distLimit = 0;
 				}
+				Integer distance = this.getDistance(partner, receiver);
 				//距离检查
-				if(0 == postage_distLimit || postage_distLimit <= distance) {//可送
+				if(distance != null && (0 == postage_distLimit || postage_distLimit <= distance)) {//可送
 					//费送计算
-					carrage = getCarrage(postage,distance,weight,amount);
+					carrage = getCarrage(postage,distance,(Integer)buyStatistics.get("weight"),(Double)buyStatistics.get("amount"));
 				}else {//不可送
 					continue;
 				}
@@ -373,18 +414,19 @@ public class OrderController {
 				}
 				//省份检查
 				if("全国".equals(postage_provLimit.trim()) || postage_provLimit.contains(receiver.getProvince())){//可送
-					carrage = getCarrage(postage,distance,weight,amount);	
+					carrage = getCarrage(postage,null,(Integer)buyStatistics.get("weight"),(Double)buyStatistics.get("amount"));	
 				}else {//不可送
 					continue;
 				}
 			}
-			JSONObject match = new JSONObject();
+			
 			String[] modes = postage.getDispatchMode().split("");
 			for(String mode:modes) {
+				JSONObject match = new JSONObject();
 				if(mode.trim().length()>0) {
 					match.put("postageId", postage.getPostageId());
 					match.put("mode", mode);
-					match.put("carrage", new BigDecimal(carrage).setScale(2));
+					match.put("carrage", new DecimalFormat("#0.00").format(carrage));
 					matchArray.add(match);
 				}
 			}
@@ -542,6 +584,33 @@ public class OrderController {
 	}
 	
 	/**
+	 * 根据ID获取订单信息
+	 * @param orderId
+	 * @return {errcode:0,errmsg:"ok",order:{...}}
+	 */
+	@RequestMapping("/get/{orderId}")
+	public Object getOrderByID(@PathVariable("orderId")BigInteger orderId) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			Order order = this.orderService.get(orderId);
+			if(order == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_NO_EXISTS);
+				jsonRet.put("errmsg", "该订单系统中不存在！");
+			}else {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+				jsonRet.put("order", order);
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	
+	/**
 	 * 查询指定查询条件、排序条件、分页条件的订单信息；
 	 * 商品ID与合作伙伴ID不可都为空
 	 * @param jsonSearchParams	查询条件:{userId: ,goodsId:, partnerId: ,status:'',keywords:'',categoryId:,dispatchMode:'',postageId:,appraiseStatus:''}
@@ -602,4 +671,26 @@ public class OrderController {
 		}
 	}
 
+	/**
+	 * 查询指定查询条件、排序条件、分页条件的订单信息；
+	 * 用户ID 或 合作伙伴ID不可都为空
+	 * @param userId		
+	 * @param partnerId
+	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
+	 */
+	@RequestMapping("/count/partibystatus")
+	public Object countPartibyStatus(Integer userId,Long goodsId,Integer partnerId) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			List<Map<String,Integer>> ret = this.orderService.countPartibyStatus(partnerId, goodsId, userId);
+			jsonRet.put("datas", ret);
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
 }

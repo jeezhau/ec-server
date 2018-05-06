@@ -1,5 +1,6 @@
 package com.mofangyouxuan.service.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -115,6 +116,11 @@ public class PostageServiceImpl implements PostageService{
 	 * @return
 	 */
 	public List<Postage> getByIdList(String idList){
-		return this.postageMapper.selectByIdList(idList);
+		List<Long> list = new ArrayList<Long>();
+		String[] arr = idList.split(",");
+		for(String s:arr) {
+			list.add(new Long(s));
+		}
+		return this.postageMapper.selectByIdList(list);
 	}
 }

@@ -113,7 +113,10 @@
     select 
     <include refid="Base_Column_List" />
     from tb_postage_tpl
-    where postate_id in concat('(',#{idList,jdbcType=VARCHAR},')')
+    where postage_id in 
+    <foreach item="item" index="index" collection="list" open="(" separator="," close=")"> 
+     #{item} 
+    </foreach>
   </select>
   
 </mapper>

@@ -71,7 +71,7 @@ public class ErrCodes {
 	public static int ORDER_BUY_LIMIT = -109007;		//限购
 	public static int ORDER_STOCK_OVER = -109008;		//购买超过库存
 	public static int ORDER_NO_POSTAGE = -109009;		//不支持配送
-	
+	public static int ORDER_ERROR_POSTAGE = -109010;	//该邮费模板不支持该地区配送
 	
 }
 

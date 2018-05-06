@@ -25,4 +25,7 @@ public interface OrderMapper {
     
     List<Order> selectAll(@Param("params")Map<String,Object> params,@Param("sorts")String sorts,@Param("pageCond")PageCond pageCond);
     
+    List<Map<String,Integer>> countPartibyStatus(@Param("partnerId")Integer partnerId,
+    		@Param("goodsId")Long goodsId,@Param("userId")Integer userId);
+    
 }
