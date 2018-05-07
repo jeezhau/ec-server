@@ -35,6 +35,11 @@
     <result column="appraise_info" jdbcType="LONGVARCHAR" property="appraiseInfo" />
     <result column="aftersales_reason" jdbcType="LONGVARCHAR" property="aftersalesReason" />
     <result column="aftersales_result" jdbcType="LONGVARCHAR" property="aftersalesResult" />
+    
+    <result column="goods_name" jdbcType="VARCHAR" property="goodsName" />
+    <result column="goods_main_img_path" jdbcType="VARCHAR" property="goodsMainImgPath" />
+    <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
+    <result column="partner_busi_name" jdbcType="VARCHAR" property="partnerBusiName" />
   </resultMap>
   
   <sql id="Base_Column_List">
@@ -43,13 +48,14 @@
     o.recv_area, o.recv_addr, o.logistics_comp, o.logistics_no, o.send_time, o.sign_user, o.sign_time, 
     o.score_logistics, o.score_goods, o.score_merchant, o.appraise_status, o.appraise_time, o.aftersales_apply_time, 
     o.aftersales_deal_time,
-    o.appraise_info, o.aftersales_reason, o.aftersales_result
+    o.appraise_info, o.aftersales_reason, o.aftersales_result,
+    g.goods_name,g.main_img_path goods_main_img_path,g.partner_id,p.busi_name partner_busi_name
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.math.BigInteger" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
-    from tb_order_info o
+    from tb_order_info o join tb_goods_info g on o.goods_id = g.goods_id join tb_partner_basic p on g.partner_id = p.partner_id 
     where o.order_id = #{orderId,jdbcType=INTEGER}
   </select>
   
@@ -283,7 +289,7 @@
   <!-- 根据查询条件统计 -->
   <select id="countAll" parameterType="map" resultType="int">
     select count(1)
-    from tb_order_info o join tb_goods_info g on o.goods_id = g.goods_id
+    from tb_order_info o join tb_goods_info g on o.goods_id = g.goods_id join tb_partner_basic p on g.partner_id = p.partner_id 
     <include refid="selectWhere" />
   </select>
   
@@ -291,10 +297,10 @@
   <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
-    from tb_order_info o join tb_goods_info g on o.goods_id = g.goods_id
+    from tb_order_info o join tb_goods_info g on o.goods_id = g.goods_id join tb_partner_basic p on g.partner_id = p.partner_id 
     <include refid="selectWhere" />
     <if test="sorts != null">
-     #{sorts}
+     ${sorts}
     </if>
     limit #{pageCond.begin},#{pageCond.pageSize}
   </select>

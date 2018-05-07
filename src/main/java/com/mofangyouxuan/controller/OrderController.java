@@ -172,7 +172,10 @@ public class OrderController {
 			Double carrage = this.getCarrage(postage, this.getDistance(goods.getPartner(), receiver),
 					(Integer)buyStatistics.get("weight"), (Double)buyStatistics.get("amount"));
 			//数据处理
-			order.setAmount(new BigDecimal((Double)buyStatistics.get("amount")).add(new BigDecimal(carrage)).setScale(2));
+			Double amount = (Double)buyStatistics.get("amount");
+			amount += carrage;
+			String am = new DecimalFormat("#0.00").format(amount); 
+			order.setAmount(new BigDecimal(am));
 			order.setCarrage(new BigDecimal(carrage));
 			order.setGoodsSpec(JSONArray.toJSONString(applySpec));
 			BigInteger id = this.orderService.add(order);
@@ -653,7 +656,7 @@ public class OrderController {
 			pageCond.setCount(cnt);
 			jsonRet.put("pageCond", pageCond);
 			jsonRet.put("errcode", ErrCodes.GOODS_NO_GOODS);
-			jsonRet.put("errmsg", "没有获取到商品信息！");
+			jsonRet.put("errmsg", "没有获取到订单信息！");
 			if(cnt>0) {
 				List<Order> list = this.orderService.getAll(jsonSearch, jsonSorts, pageCond);
 				if(list != null && list.size()>0) {
@@ -693,4 +696,5 @@ public class OrderController {
 		}
 		return jsonRet.toString();
 	}
+	
 }

@@ -175,7 +175,7 @@ public class OrderServiceImpl implements OrderService{
 	 */
 	public Map<String,Object> getParamsMap(JSONObject jsonParams){
 		Map<String,Object> params = new HashMap<String,Object>();
-		params.put("status", "41,56");	//默认评价完成
+		//params.put("status", "41,56");	//默认评价完成
 		
 		if(jsonParams.containsKey("userId")) { //下单用户
 			params.put("userId", jsonParams.getInteger("userId"));

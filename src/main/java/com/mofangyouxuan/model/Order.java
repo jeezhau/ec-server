@@ -72,6 +72,15 @@ public class Order {
     private String aftersalesReason;
 
     private String aftersalesResult;
+    
+    //补充字段，仅方便商品显示
+    private String goodsName;
+    
+    private String goodsMainImgPath;
+
+    private Integer partnerId;
+    
+    private String partnerBusiName;
 
     public BigInteger getOrderId() {
         return orderId;
@@ -345,6 +354,37 @@ public class Order {
 	public void setRecvId(Long recvId) {
 		this.recvId = recvId;
 	}
-    
+
+	public String getGoodsName() {
+		return goodsName;
+	}
+
+	public void setGoodsName(String goodsName) {
+		this.goodsName = goodsName;
+	}
+
+	public String getGoodsMainImgPath() {
+		return goodsMainImgPath;
+	}
+
+	public void setGoodsMainImgPath(String goodsMainImgPath) {
+		this.goodsMainImgPath = goodsMainImgPath;
+	}
+
+	public Integer getPartnerId() {
+		return partnerId;
+	}
+
+	public void setPartnerId(Integer partnerId) {
+		this.partnerId = partnerId;
+	}
+
+	public String getPartnerBusiName() {
+		return partnerBusiName;
+	}
+
+	public void setPartnerBusiName(String partnerBusiName) {
+		this.partnerBusiName = partnerBusiName;
+	}
     
 }
