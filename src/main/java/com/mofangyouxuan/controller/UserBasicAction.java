@@ -1,25 +1,40 @@
 package com.mofangyouxuan.controller;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.model.UserBasic;
+import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.UserBasicService;
+import com.mofangyouxuan.utils.FileFilter;
 import com.mofangyouxuan.utils.SHAUtils;
 
 /**
@@ -30,6 +45,9 @@ import com.mofangyouxuan.utils.SHAUtils;
 @RestController
 @RequestMapping("/user")
 public class UserBasicAction {
+	
+	@Value("sys.user-img-path")
+	private String userImgDir ;
 	
 	@Autowired
 	private UserBasicService userBasicService;
@@ -241,4 +259,93 @@ public class UserBasicAction {
 			return jsonRet.toString();
 		}
 	}
+	
+	/**
+	 * 证件照上传
+	 * 保存名称：headimg.xxx
+	 * @param image		照片,jpg格式
+	 * @param currUserId	当前操作用户
+	 * @return {errcode:0,errmsg:""}
+	 */
+	@RequestMapping("/headimg/upload/{currUserId}")
+	public String uploadHeadImg(@RequestParam(value="image")MultipartFile image,
+			@PathVariable(value="currUserId",required=true)Integer currUserId) {
+		
+		JSONObject jsonRet = new JSONObject();
+		try {
+			if(image == null || image.isEmpty()) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "头像照片信息不可为空！");
+				return jsonRet.toString();
+			}
+			//文件类型判断
+			String imgType = image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf('.')+1);
+			if(!"jpg".equalsIgnoreCase(imgType) && !"jpeg".equalsIgnoreCase(imgType) && !"png".equalsIgnoreCase(imgType)) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "头像图片文件必须是jpg,jpeg,png格式！");
+				return jsonRet.toString();
+			}
+			UserBasic user = this.userBasicService.get(currUserId);
+			if(user == null || !"1".equals(user.getStatus())){
+				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+				jsonRet.put("errmsg", " 系统中没有该用户！ ");
+				return jsonRet.toString();
+			}
+			//照片保存，删除旧的
+			File userDir = new File(this.userImgDir,"USERID_" + currUserId);
+			if(!userDir.exists()) {
+				userDir.mkdirs();
+			}else {
+				File[] oldFiles = userDir.listFiles(new FileFilter("headimg"));
+				if(oldFiles != null && oldFiles.length>0) {
+					for(File oldFile:oldFiles) {
+						oldFile.delete();
+					}
+				}
+			}
+			UserBasic newU = new UserBasic();
+			newU.setUserId(user.getUserId());
+			newU.setHeadimgurl("headimg");
+			this.userBasicService.update(newU);
+			File newFile = new File(userDir, "headimg." + imgType.toLowerCase());
+			FileUtils.copyInputStreamToFile(image.getInputStream(), newFile);
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+		} catch (Exception e) {
+			e.printStackTrace();
+			jsonRet = new JSONObject();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	/**
+	 * 显示头像照
+	 * @param currUserId
+	 * @param out
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@RequestMapping("/headimg/show/{currUserId}")
+	public void showHeadImg(@PathVariable(value="currUserId",required=true)Integer currUserId,
+			OutputStream out,HttpServletRequest request,HttpServletResponse response) throws IOException {
+//		UserBasic user = this.userBasicService.get(currUserId);
+//		if(user == null || !"1".equals(user.getStatus())){
+//			return;
+//		}
+		File dir = new File(this.userImgDir + "USERID_" + currUserId);
+		File[] files = dir.listFiles(new FileFilter("headimg"));
+		if(dir.exists() && dir.isDirectory() && files != null && files.length>0) {
+			File file = files[0];
+			BufferedImage image = ImageIO.read(file);
+			response.setContentType("image/*");
+			response.addHeader("filename", file.getName());
+			OutputStream os = response.getOutputStream();  
+			String type = file.getName().substring(file.getName().lastIndexOf('.')+1);
+			ImageIO.write(image, type, os); 
+		}
+	}
+	
 }

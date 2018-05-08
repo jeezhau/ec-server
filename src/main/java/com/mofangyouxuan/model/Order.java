@@ -81,6 +81,12 @@ public class Order {
     private Integer partnerId;
     
     private String partnerBusiName;
+    
+    private String userPhone;
+    
+    private String headimgurl;
+    
+    private String nickname;
 
     public BigInteger getOrderId() {
         return orderId;
@@ -386,5 +392,30 @@ public class Order {
 	public void setPartnerBusiName(String partnerBusiName) {
 		this.partnerBusiName = partnerBusiName;
 	}
+
+	public String getUserPhone() {
+		return userPhone;
+	}
+
+	public void setUserPhone(String userPhone) {
+		this.userPhone = userPhone;
+	}
+
+	public String getHeadimgurl() {
+		return headimgurl;
+	}
+
+	public void setHeadimgpath(String headimgurl) {
+		this.headimgurl = headimgurl;
+	}
+
+	public String getNickname() {
+		return nickname;
+	}
+
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
+	}
     
+	
 }

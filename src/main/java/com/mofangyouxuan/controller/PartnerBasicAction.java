@@ -500,7 +500,8 @@ public class PartnerBasicAction {
 	public void showCert(@PathVariable(value="certType",required=true)String certType,
 			@PathVariable(value="currUserId",required=true)Integer currUserId,
 			OutputStream out,HttpServletRequest request,HttpServletResponse response) throws IOException {
-		File dir = new File(this.partnerCertDir+"VIPID_"+currUserId);
+		
+		File dir = new File(this.partnerCertDir + "VIPID_" + currUserId);
 		File[] files = dir.listFiles(new FileFilter(certType));
 		if(dir.exists() && dir.isDirectory() && files != null && files.length>0) {
 			File file = files[0];
