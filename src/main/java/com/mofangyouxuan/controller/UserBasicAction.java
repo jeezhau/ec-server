@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -29,13 +28,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.model.UserBasic;
-import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.utils.FileFilter;
-import com.mofangyouxuan.utils.SHAUtils;
+import com.mofangyouxuan.utils.SignUtils;
 
 /**
  * 摩放优选用户管理
@@ -61,7 +60,7 @@ public class UserBasicAction {
 	/**
 	 * 创建用户
 	 * @param userBasic 用户基本信息
-	 * @return {errcode:0,errmsg:"ok"}
+	 * @return {errcode:0,errmsg:"ok",userId:1333}
 	 * @throws JSONException
 	 */
 	@RequestMapping(value="/create",method=RequestMethod.POST)
@@ -93,7 +92,7 @@ public class UserBasicAction {
 					jsonRet.put("errmsg", " passwd: not null and length range is 6-20. ");
 					return jsonRet.toString();
 				}else {
-					userBasic.setPasswd(SHAUtils.encodeSHAHex(passwd));//加密明文密码
+					userBasic.setPasswd(SignUtils.encodeSHAHex(passwd));//加密明文密码
 				}
 			}else if("2".equals(registType)) {
 				String openid = userBasic.getOpenId();
@@ -114,6 +113,7 @@ public class UserBasicAction {
 				UserBasic old = this.userBasicService.get(unique);
 				if( old != null) {	//已有该用户，直接返回成功
 					jsonRet.put("errcode", 0);
+					jsonRet.put("userId", old.getUserId());
 					jsonRet.put("errmsg", "系统中已有该用户，如果需要修改信息请使用修改功能！");
 					return jsonRet.toString();
 				}
@@ -126,6 +126,7 @@ public class UserBasicAction {
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
 				jsonRet.put("errcode", 0);
+				jsonRet.put("userId", id);
 				jsonRet.put("errmsg", "ok");
 			}
 		}catch(Exception e) {
@@ -175,7 +176,7 @@ public class UserBasicAction {
 					jsonRet.put("errmsg", " passwd: not null and length range is 6-20. ");
 					return jsonRet.toString();
 				}else {
-					userBasic.setPasswd(SHAUtils.encodeSHAHex(passwd));//加密明文密码
+					userBasic.setPasswd(SignUtils.encodeSHAHex(passwd));//加密明文密码
 				}
 			}else if("2".equals(registType)) {
 				String openId = userBasic.getOpenId();

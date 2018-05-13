@@ -1,6 +1,5 @@
 package com.mofangyouxuan.mapper;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -11,11 +10,11 @@ import com.mofangyouxuan.model.Order;
 
 public interface OrderMapper {
 
-	int deleteByPrimaryKey(BigInteger orderId);
+	int deleteByPrimaryKey(String orderId);
 
     int insert(Order record);
 
-    Order selectByPrimaryKey(BigInteger orderId);
+    Order selectByPrimaryKey(String orderId);
 
     int updateByPrimaryKeySelective(Order record);
 

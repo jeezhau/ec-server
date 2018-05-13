@@ -36,7 +36,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -54,7 +53,7 @@ import org.apache.http.util.EntityUtils;
  */
 public class HttpUtils {
     private static RequestConfig requestConfig;	
-    private static String TEMP_FILE_DIR = "";			//文件临时保存目录
+    //private static String TEMP_FILE_DIR = "";			//文件临时保存目录
     private static final int MAX_TIMEOUT = 7000;	//连接超时
 
     static {
@@ -156,8 +155,7 @@ public class HttpUtils {
             httpPost.setConfig(requestConfig);
             List<NameValuePair> pairList = new ArrayList<>(params.size());
             for (Map.Entry<String, Object> entry : params.entrySet()) {
-                NameValuePair pair = new BasicNameValuePair(entry.getKey(), entry
-                        .getValue().toString());
+                NameValuePair pair = new BasicNameValuePair(entry.getKey(), entry.getValue()== null ? "" :entry.getValue().toString());
                 pairList.add(pair);
             }
             httpPost.setEntity(new UrlEncodedFormEntity(pairList, Charset.forName("UTF-8")));
@@ -187,7 +185,7 @@ public class HttpUtils {
     /**
      * 发送 POST 请求（HTTP），JSON形式
      * @param apiUrl
-     * @param json json格式字符串
+     * @param json json对象
      * @return
      */
     public static String doPost(String apiUrl, String json) {
@@ -341,11 +339,11 @@ public class HttpUtils {
     /**
      * 发送 SSL POST 请求（HTTPS），JSON形式
      * @param apiUrl API接口URL
-     * @param json JSON格式字符串
+     * @param json JSON对象
      * @return
      * @throws IOException 
      */
-    public static String doPostSSL(String apiUrl,  String json) {
+    public static String doPostSSL(String apiUrl, String json) {
         CloseableHttpClient httpClient = createSSLConnSocketFactory();
         HttpPost httpPost = new HttpPost(apiUrl);
         CloseableHttpResponse response = null;
@@ -356,6 +354,54 @@ public class HttpUtils {
             StringEntity stringEntity = new StringEntity(json,"UTF-8");//解决中文乱码问题
             stringEntity.setContentEncoding("UTF-8");
             stringEntity.setContentType("application/json");
+            httpPost.setEntity(stringEntity);
+            response = httpClient.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK) {
+                return null;
+            }
+            HttpEntity entity = response.getEntity();
+            if (entity == null) {
+                return null;
+            }
+            httpStr = EntityUtils.toString(entity, "utf-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (response != null) {
+                try {
+                    EntityUtils.consume(response.getEntity());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+				httpClient.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
+        return httpStr;
+    }
+
+    /**
+     * 发送 SSL POST 请求（HTTPS）
+     * @param apiUrl API接口URL
+     * @param content 发送内容
+     * @return
+     * @throws IOException 
+     */
+    public static String doPostTextSSL(String apiUrl, String content) {
+        CloseableHttpClient httpClient = createSSLConnSocketFactory();
+        HttpPost httpPost = new HttpPost(apiUrl);
+        CloseableHttpResponse response = null;
+        String httpStr = null;
+
+        try {
+            httpPost.setConfig(requestConfig);
+            StringEntity stringEntity = new StringEntity(content,"UTF-8");//解决中文乱码问题
+            stringEntity.setContentEncoding("UTF-8");
+            stringEntity.setContentType("text/plain");
             httpPost.setEntity(stringEntity);
             response = httpClient.execute(httpPost);
             int statusCode = response.getStatusLine().getStatusCode();
@@ -424,26 +470,18 @@ public class HttpUtils {
 		HttpPost httpPost = new HttpPost(apiUrl);
 		String httpStr;
 		try {
-			// 实现将请求 的参数封装封装到HttpEntity中。
-	       /* EntityBuilder entityBuilder = EntityBuilder.create();
-	        entityBuilder.setContentEncoding("utf-8");
-	        entityBuilder.setContentType(ContentType.MULTIPART_FORM_DATA);
-	        List<NameValuePair> pairList = new ArrayList<NameValuePair>(paramPairs.size());
-            for (Map.Entry<String, String> entry : paramPairs.entrySet()) {
-                NameValuePair pair = new BasicNameValuePair(entry.getKey(), entry.getValue());
-                pairList.add(pair);
-            }
-	        entityBuilder.setParameters(pairList);
-	        entityBuilder.setFile(file);
-	        HttpEntity reqEntity = entityBuilder.build();*/
-	        FileBody fileBody = new FileBody(file);
+	        
 			MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
+			FileBody fileBody = new FileBody(file);
 			entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);// 以浏览器兼容模式运行，防止文件名乱码。
 			entityBuilder.addPart(fileField, fileBody);	//对应服务端类的同名属性<File类型>
 			entityBuilder.setCharset(CharsetUtils.get("UTF-8"));
+			//处理文字字段：放入字段名，字段值，以及contentType
+			ContentType strContent=ContentType.create("text/plain",Charset.forName("UTF-8"));
 			if(paramPairs != null && paramPairs.size()>0){
 				for (Map.Entry<String, String> entry : paramPairs.entrySet()) {
-	                entityBuilder.addPart(entry.getKey(), new StringBody(entry.getValue(),ContentType.DEFAULT_TEXT));
+	                //entityBuilder.addPart(entry.getKey(), new StringBody(entry.getValue(),ContentType.DEFAULT_TEXT));
+					entityBuilder.addTextBody(entry.getKey(), entry.getValue(),strContent);
 	            }
 			}
 			HttpEntity reqEntity = entityBuilder.build();
@@ -491,26 +529,18 @@ public class HttpUtils {
 		HttpPost httpPost = new HttpPost(apiUrl);
 		String httpStr;
 		try {
-			// 实现将请求 的参数封装封装到HttpEntity中。
-	       /* EntityBuilder entityBuilder = EntityBuilder.create();
-	        entityBuilder.setContentEncoding("utf-8");
-	        entityBuilder.setContentType(ContentType.MULTIPART_FORM_DATA);
-	        List<NameValuePair> pairList = new ArrayList<NameValuePair>(paramPairs.size());
-            for (Map.Entry<String, String> entry : paramPairs.entrySet()) {
-                NameValuePair pair = new BasicNameValuePair(entry.getKey(), entry.getValue());
-                pairList.add(pair);
-            }
-	        entityBuilder.setParameters(pairList);
-	        entityBuilder.setFile(file);
-	        HttpEntity reqEntity = entityBuilder.build();*/
-	        FileBody fileBody = new FileBody(file);
+	        
 			MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
+			FileBody fileBody = new FileBody(file);
 			entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);	// 以浏览器兼容模式运行，防止文件名乱码。
 			entityBuilder.addPart(fileField, fileBody);	//对应服务端类的同名属性<File类型>
 			entityBuilder.setCharset(CharsetUtils.get("UTF-8"));
+			//处理文字字段：放入字段名，字段值，以及contentType
+			ContentType strContent=ContentType.create("text/plain",Charset.forName("UTF-8"));
 			if(paramPairs != null && paramPairs.size()>0){
 				for (Map.Entry<String, String> entry : paramPairs.entrySet()) {
-	                entityBuilder.addPart(entry.getKey(), new StringBody(entry.getValue(),ContentType.DEFAULT_TEXT));
+	                //entityBuilder.addPart(entry.getKey(), new StringBody(entry.getValue(),ContentType.DEFAULT_TEXT));
+					entityBuilder.addTextBody(entry.getKey(), entry.getValue(),strContent);
 	            }
 			}
 			HttpEntity reqEntity = entityBuilder.build();
@@ -546,10 +576,11 @@ public class HttpUtils {
 	
 	/**
 	 * 文件下载（GET）
+	 * @param fileSaveDir 文件本地保存目录
 	 * @param apiUrl	文件下载路径
 	 * @return
 	 */
-	public static File downloadFile(String apiUrl){
+	public static File downloadFile(String fileSaveDir,String apiUrl){
 		CloseableHttpClient httpClient = HttpClients.createDefault();
 		CloseableHttpResponse httpResponse = null;
 		HttpGet httpGet = new HttpGet(apiUrl);
@@ -570,9 +601,9 @@ public class HttpUtils {
             String type = typeHead.substring(typeHead.lastIndexOf("/"));
             String fileName = UUID.randomUUID().toString() + "." +type;
             if(fileHead != null){
-            	fileName = fileHead.getValue();
+            		fileName = fileHead.getValue();
             }
-            File file = new File(TEMP_FILE_DIR + fileName);
+            File file = new File(fileSaveDir + fileName);
             FileUtils.copyInputStreamToFile(in, file);
             return file;
 		} catch (IOException e) {
@@ -595,12 +626,13 @@ public class HttpUtils {
 	
 	/**
 	 *  SSL 文件下载（GET）
+	 * @param fileSaveDir 文件本地保存目录
 	 * @param apiUrl	文件下载路径
 	 * @return
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public static File downloadFileSSL(String apiUrl){
+	public static File downloadFileSSL(String fileSaveDir,String apiUrl){
 		CloseableHttpClient httpClient = createSSLConnSocketFactory();
 		CloseableHttpResponse httpResponse = null;
 		HttpGet httpGet = new HttpGet(apiUrl);
@@ -623,7 +655,7 @@ public class HttpUtils {
             if(fileHead != null){
             	fileName = fileHead.getValue();
             }
-            File file = new File(TEMP_FILE_DIR + fileName);
+            File file = new File(fileSaveDir + fileName);
             FileUtils.copyInputStreamToFile(in, file);
             return file;
 		} catch (IOException e) {
@@ -645,12 +677,13 @@ public class HttpUtils {
 	
 	/**
      * 下载文件（SSL POST），JSON形式参数
+     * @param fileSaveDir 文件本地保存目录
      * @param apiUrl API接口URL
      * @param json JSON对象
      * @return
      * @throws IOException 
      */
-    public static File downloadFileSSL(String apiUrl, Object json) {
+    public static File downloadFileSSL(String fileSaveDir,String apiUrl, Object json) {
         CloseableHttpClient httpClient = createSSLConnSocketFactory();
         HttpPost httpPost = new HttpPost(apiUrl);
         CloseableHttpResponse response = null;
@@ -677,7 +710,7 @@ public class HttpUtils {
             if(fileHead != null){
             	fileName = fileHead.getValue();
             }
-            File file = new File(TEMP_FILE_DIR + fileName);
+            File file = new File(fileSaveDir + fileName);
             FileUtils.copyInputStreamToFile(in, file);
             return file;
         } catch (Exception e) {

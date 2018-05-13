@@ -7,14 +7,19 @@ server:
   tomcat:
     uri-encoding: UTF-8
 spring:
-    datasource:
-        name: mfyx
-        url: 'jdbc:mysql://172.18.235.107:3306/db_mfyx'
-        username: 'aoksen'
-        password: 'YesOrNoAnd0+1'
+  datasource:
+    name: mfyx
+    url: 'jdbc:mysql://172.18.235.107:3306/db_mfyx'
+    username: 'aoksen'
+    password: 'YesOrNoAnd0+1'
         # 使用druid数据源
-        type: com.alibaba.druid.pool.DruidDataSource
-        driver-class-name: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.jdbc.Driver    
+  servlet: 
+    multipart:
+      max-file-size: 10Mb
+      max-request-size: 10Mb
+        
 mybatis:
   mapper-locations: classpath:/mapping/*.xml
   type-aliases-package: com.mofanyouxuan.model
@@ -35,10 +40,18 @@ wxmp:
   
 ######系统参数############  
 sys:
-  tmp-file-dir: '/tmp/mfyx-server/'
-  partner-cert-dir: '/var/mfyx-server/partner-cert/'
-  partner-goods-dir: '/var/mfyx-server/goods-img/'
+  tmp-file-dir: '/tmp/mfyx/'  #系统临时目录
+  partner-cert-dir: '/var/mfyx/partner-cert/'   #合作伙伴证件照片主目录
+  image-gallery-dir: '/var/mfyx/image-gallery/' #系统图库主目录
+  image-folder-level-limit: 3   #文件夹最多三层
+  image-file-all-limit: 100     #每个会员最多可有100个文件（普通文件和目录）
+  image-folder-file-limit: 100   #每个文件夹下最多可有100个文件（普通文件和目录）
   
+  postage-cnt-limit: 20 #每个合作伙伴可添加的运费模版数量限制
+  goods-cnt-limit: 30 #每个合作伙伴可添加的商品数量限制
 
-
+  receiver-cnt-limit: 5 #每个用户可添加的收货人信息数量限制
+  
+  order-4pay-cnt-all-limit: 5 #每个用户可持有的所有待付款订单数
+  order-4pay-cnt-goods-limit: 1 #每个用户可持有的单个商品待付款订单数
   

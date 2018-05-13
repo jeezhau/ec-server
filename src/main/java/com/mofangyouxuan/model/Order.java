@@ -1,11 +1,10 @@
 package com.mofangyouxuan.model;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Date;
 
 public class Order {
-    private BigInteger orderId;
+    private String orderId;
 
     private Integer userId;
 
@@ -88,11 +87,11 @@ public class Order {
     
     private String nickname;
 
-    public BigInteger getOrderId() {
+    public String getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(BigInteger orderId) {
+    public void setOrderId(String orderId) {
         this.orderId = orderId;
     }
 

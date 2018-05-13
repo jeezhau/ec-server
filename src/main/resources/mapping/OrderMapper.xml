@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.mofangyouxuan.mapper.OrderMapper">
   <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Order">
-    <id column="order_id" jdbcType="INTEGER" property="orderId" />
+    <id column="order_id" jdbcType="VARCHAR" property="orderId" />
     <result column="user_id" jdbcType="INTEGER" property="userId" />
     <result column="goods_id" jdbcType="INTEGER" property="goodsId" />
     <result column="goods_spec" jdbcType="VARCHAR" property="goodsSpec" />
@@ -58,22 +58,22 @@
     u.phone user_phone,u.nickname,u.headimgurl
   </sql>
   
-  <select id="selectByPrimaryKey" parameterType="java.math.BigInteger" resultMap="BaseResultMap">
+  <select id="selectByPrimaryKey" parameterType="string" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
     from tb_order_info o 
      join tb_goods_info g on o.goods_id = g.goods_id 
      join tb_partner_basic p on g.partner_id = p.partner_id 
      join tb_user_basic u on o.user_id = u.user_id 
-    where o.order_id = #{orderId,jdbcType=INTEGER}
+    where o.order_id = #{orderId,jdbcType=VARCHAR}
   </select>
   
-  <delete id="deleteByPrimaryKey" parameterType="java.math.BigInteger">
+  <delete id="deleteByPrimaryKey" parameterType="string">
     delete from tb_order_info
-    where order_id = #{orderId,jdbcType=INTEGER}
+    where order_id = #{orderId,jdbcType=VARCHAR}
   </delete>
   
-  <insert id="insert" parameterType="com.mofangyouxuan.model.Order" keyProperty="orderId" useGeneratedKeys="true">
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Order" >
     insert into tb_order_info (order_id, user_id, goods_id, 
       goods_spec, carrage, amount, 
       create_time, remark, status, 
@@ -87,7 +87,7 @@
       aftersales_deal_time, appraise_info, 
       aftersales_reason, aftersales_result
       )
-    values (#{orderId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{goodsId,jdbcType=INTEGER}, 
+    values (#{orderId,jdbcType=VARCHAR}, #{userId,jdbcType=INTEGER}, #{goodsId,jdbcType=INTEGER}, 
       #{goodsSpec,jdbcType=VARCHAR}, #{carrage,jdbcType=DECIMAL}, #{amount,jdbcType=DECIMAL}, 
       #{createTime,jdbcType=TIMESTAMP}, #{remark,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, 
       #{dispatchMode,jdbcType=CHAR}, #{postageId,jdbcType=INTEGER}, #{recvName,jdbcType=VARCHAR}, 
@@ -202,7 +202,7 @@
         aftersales_result = #{aftersalesResult,jdbcType=LONGVARCHAR},
       </if>
     </set>
-    where order_id = #{orderId,jdbcType=INTEGER}
+    where order_id = #{orderId,jdbcType=VARCHAR}
   </update>
   
   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Order">
@@ -239,7 +239,7 @@
       appraise_info = #{appraiseInfo,jdbcType=LONGVARCHAR},
       aftersales_reason = #{aftersalesReason,jdbcType=LONGVARCHAR},
       aftersales_result = #{aftersalesResult,jdbcType=LONGVARCHAR}
-    where order_id = #{orderId,jdbcType=INTEGER}
+    where order_id = #{orderId,jdbcType=VARCHAR}
   </update>
   
   <sql id="selectWhere">
@@ -260,7 +260,7 @@
         and g.goods_name = #{params.goodsName,jdbcType=VARCHAR}
       </if>
       <if test="params.orderId != null">
-        and o.order_id = #{params.orderId,jdbcType=INTEGER}
+        and o.order_id = #{params.orderId,jdbcType=VARCHAR}
       </if>
       <if test="params.categoryId != null">
         and g.category_id = #{params.categoryId,jdbcType=INTEGER}

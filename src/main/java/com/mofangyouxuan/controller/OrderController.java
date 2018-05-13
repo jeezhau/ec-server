@@ -1,7 +1,6 @@
 package com.mofangyouxuan.controller;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,11 +30,16 @@ import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.Postage;
 import com.mofangyouxuan.model.Receiver;
 import com.mofangyouxuan.model.UserBasic;
+import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.OrderService;
+import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.PostageService;
 import com.mofangyouxuan.service.ReceiverService;
 import com.mofangyouxuan.service.UserBasicService;
+import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.utils.NonceStrUtil;
+import com.mofangyouxuan.wxapi.WXPay;
 
 /**
  * 点单管理
@@ -57,6 +61,10 @@ public class OrderController {
 	@Autowired
 	private UserBasicService userBasicService;
 	@Autowired
+	private VipBasicService vipBasicService;
+	@Autowired
+	private PartnerBasicService partnerBasicService;
+	@Autowired
 	private GoodsService goodsService;
 	@Autowired
 	private ReceiverService receiverService;
@@ -64,8 +72,8 @@ public class OrderController {
 	private PostageService postageService;
 	@Autowired
 	private OrderService orderService;
-
-	
+	@Autowired
+	private WXPay wXPay;
 	/**
 	 * 创建订单
 	 * @param userId
@@ -178,9 +186,9 @@ public class OrderController {
 			order.setAmount(new BigDecimal(am));
 			order.setCarrage(new BigDecimal(carrage));
 			order.setGoodsSpec(JSONArray.toJSONString(applySpec));
-			BigInteger id = this.orderService.add(order);
+			String id = this.orderService.add(order);
 			
-			if(id.intValue() > 0) {
+			if(!id.startsWith("-") ) {
 				jsonRet.put("orderId", id);
 				jsonRet.put("errcode", 0);
 				jsonRet.put("errmsg", "ok");
@@ -324,7 +332,7 @@ public class OrderController {
 						}
 						spec.setGrossWeight(p.getGrossWeight());
 						spec.setPrice(p.getPrice());
-						spec.setStock(p.getStock());
+						spec.setStock(null);
 						spec.setUnit(p.getUnit());
 						spec.setVal(p.getVal());
 					}
@@ -592,7 +600,7 @@ public class OrderController {
 	 * @return {errcode:0,errmsg:"ok",order:{...}}
 	 */
 	@RequestMapping("/get/{orderId}")
-	public Object getOrderByID(@PathVariable("orderId")BigInteger orderId) {
+	public Object getOrderByID(@PathVariable("orderId")String orderId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			Order order = this.orderService.get(orderId);
@@ -689,6 +697,114 @@ public class OrderController {
 			jsonRet.put("datas", ret);
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	/**
+	 * 创建支付订单
+	 * @param orderId	订单ID
+	 * @param payType	支付方式
+	 * @param userId		用户ID
+	 * @param userIp		用户IP
+	 * @return {errcode,errmsg,payType,appId,timeStamp,nonceStr,prepay_id,paySign}
+	 */
+	@RequestMapping("/{userId}/createpay/{orderId}")
+	public Object createPay(@PathVariable(value="orderId",required=true)String orderId,
+			@RequestParam(required=true)String payType,
+			@PathVariable(value="userId",required=true)Integer userId,
+			@RequestParam(required=true)String userIp) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			UserBasic user = this.userBasicService.get(userId);
+			VipBasic userVip = this.vipBasicService.get(userId);
+			Order order = this.orderService.get(orderId);
+			Goods goods = this.goodsService.get(true, order.getGoodsId());
+			if(user == null || userVip == null || order == null || goods == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			if(user.getUserId().equals(order.getUserId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			if(!"1".equals(payType) && !"2".equals(payType)) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "支付方式取值不正确！");
+				return jsonRet.toJSONString();
+			}
+			//库存检查
+			Map<String,Object> buyStatistics = new HashMap<String,Object>();
+			Double amount = 0.0;	//购买金额
+			Integer count = 0;	//购买数量
+			Integer weight = 0;	//购买毛重量
+			buyStatistics.put("amount", amount);
+			buyStatistics.put("count", count);
+			buyStatistics.put("weight", weight);
+			List<GoodsSpec> applySpec = JSONObject.parseArray(order.getGoodsSpec(), GoodsSpec.class);
+			List<GoodsSpec> sysSpec = JSONObject.parseArray(goods.getSpecDetail(), GoodsSpec.class);
+			String errmsg = this.checStock(applySpec, sysSpec, buyStatistics);
+			if(errmsg != null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", errmsg);
+				return jsonRet.toJSONString();
+			}
+			jsonRet = this.orderService.createPay(user, userVip, order, goods.getPartner().getVipId(), payType, userIp);
+			if(payType.equals("2") && jsonRet.getIntValue("errcode") == 0) {
+				Map<String,String> signMap = new HashMap<String,String>();
+				Long timeStamp = System.currentTimeMillis()/1000;
+				String nonceStr = NonceStrUtil.getNonceStr(20);
+				signMap.put("appId", this.wXPay.appId);
+				signMap.put("timeStamp", timeStamp+"");
+				signMap.put("package", "prepay_id=" + jsonRet.getString("prepay_id"));
+				signMap.put("nonceStr", nonceStr);
+				
+				jsonRet.put("nonceStr", nonceStr);
+				jsonRet.put("timeStamp", timeStamp+"");
+				jsonRet.put("appId", this.wXPay.appId);
+				jsonRet.put("paySign", this.wXPay.signMap(signMap));
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	/**
+	 * 取消订单
+	 * 
+	 * @param orderId	订单ID
+	 * @param userId		用户ID
+	 * @return {errcode,errmsg}
+	 */
+	@RequestMapping("/{userId}/cancel/{orderId}")
+	public Object cancelOrder(@PathVariable(value="orderId",required=true)String orderId,
+			@PathVariable(value="userId",required=true)Integer userId) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			UserBasic user = this.userBasicService.get(userId);
+			VipBasic userVip = this.vipBasicService.get(userId);
+			Order order = this.orderService.get(orderId);
+			if(user == null || userVip == null || order == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			if(user.getUserId().equals(order.getUserId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			PartnerBasic partner = this.partnerBasicService.getByID(order.getPartnerId());
+			jsonRet = this.orderService.cancelOrder(order, userVip, partner.getVipId());
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);

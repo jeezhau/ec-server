@@ -36,7 +36,15 @@ wxmp:
   qrcode-apply-url: '/qrcode/createTmp'
   qrcode-get-url: '/qrcode/getqrcode'
   qrcode-show-url: '/qrcode/show/'
-  
+
+#微信支付参数
+wxpay:
+  mchtid: ''
+  appid: ''
+  pay-notify-url: ''
+  refund-notify-url: ''
+  KEY: ''
+  wx-fee-rate: 0.007
   
 ######系统参数############  
 sys:
