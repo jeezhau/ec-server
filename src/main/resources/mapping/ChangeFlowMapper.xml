@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.ChangeFlowMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.ChangeFlow">
+    <id column="flow_id" jdbcType="VARCHAR" property="flowId" />
+    <result column="vip_id" jdbcType="INTEGER" property="vipId" />
+    <result column="change_type" jdbcType="CHAR" property="changeType" />
+    <result column="amount" jdbcType="DECIMAL" property="amount" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="create_opr" jdbcType="INTEGER" property="createOpr" />
+    <result column="reason" jdbcType="LONGVARCHAR" property="reason" />
+    <result column="sum_flag" jdbcType="CHAR" property="sumFlag" />
+  </resultMap>
+  
+  <sql id="Base_Column_List">
+    flow_id, vip_id, change_type, amount, create_time, create_opr,reason,sum_flag
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_change_flow
+    where flow_id = #{flowId,jdbcType=VARCHAR}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from tb_change_flow
+    where flow_id = #{flowId,jdbcType=VARCHAR}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.ChangeFlow">
+    insert into tb_change_flow (flow_id, vip_id, change_type, 
+      amount, create_time, create_opr, reason,sum_flag)
+    values (#{flowId,jdbcType=VARCHAR}, #{vipId,jdbcType=INTEGER}, #{changeType,jdbcType=CHAR}, 
+      #{amount,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{createOpr,jdbcType=INTEGER},
+      #{reason,jdbcType=LONGVARCHAR},#{sumFlag,jdbcType=CHAR})
+  </insert>
+  
+
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.ChangeFlow">
+    update tb_change_flow
+    <set>
+      <if test="vipId != null">
+        vip_id = #{vipId,jdbcType=INTEGER},
+      </if>
+      <if test="changeType != null">
+        change_type = #{changeType,jdbcType=CHAR},
+      </if>
+      <if test="amount != null">
+        amount = #{amount,jdbcType=DECIMAL},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createOpr != null">
+        create_opr = #{createOpr,jdbcType=INTEGER},
+      </if>
+      <if test="reason != null">
+        reason = #{reason,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="sumFlag != null">
+        sum_flag = #{sumFlag,jdbcType=CHAR},
+      </if>      
+    </set>
+    where flow_id = #{flowId,jdbcType=VARCHAR}
+  </update>
+  
+
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.ChangeFlow">
+    update tb_change_flow
+    set vip_id = #{vipId,jdbcType=INTEGER},
+      change_type = #{changeType,jdbcType=CHAR},
+      flow_type = #{flowType,jdbcType=CHAR},
+      amount = #{amount,jdbcType=DECIMAL},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      create_opr = #{createOpr,jdbcType=INTEGER},
+      sum_flag = #{sumFlag,jdbcType=CHAR}
+    where flow_id = #{flowId,jdbcType=VARCHAR}
+  </update>
+  
+</mapper>

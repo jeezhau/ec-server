@@ -6,7 +6,7 @@ import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.codec.binary.Hex;
 
-public class SHAUtils {
+public class SignUtils {
 	private static final String CHARSET = "utf-8";
 	public static String encodeSHAHex(String data) throws NoSuchAlgorithmException, UnsupportedEncodingException{
 		byte[] buf = data.getBytes(CHARSET);
@@ -36,4 +36,10 @@ public class SHAUtils {
 		return Hex.encodeHexString(retBuf);
 	}
 
+	public static String encodeMD5Hex(String data) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		byte[] buf = data.getBytes(CHARSET);
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		byte[] retBuf = md.digest(buf);
+		return Hex.encodeHexString(retBuf);
+	}
 }
