@@ -73,6 +73,9 @@ public class ErrCodes {
 	public static int ORDER_NO_POSTAGE = -109009;		//不支持配送
 	public static int ORDER_ERROR_POSTAGE = -109010;	//该邮费模板不支持该地区配送
 	public static int ORDER_STATUS_ERROR = -109011;	//状态不正确
+	public static int ORDER_PAY_ERROR = -109012;	//支付失败
+	
+	
 }
 
 

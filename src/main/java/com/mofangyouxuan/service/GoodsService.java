@@ -7,6 +7,7 @@ import java.util.Map;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
+import com.mofangyouxuan.model.GoodsSpec;
 
 /**
  * 商品服务接口
@@ -46,11 +47,15 @@ public interface GoodsService {
 	
 	/**
 	 * 变更商品规格与库存
-	 * @param goods
-	 * @param newCnt 新的库存数量
+	 * 
+	 * @param goodsId	商品ID
+	 * @param applySpec	变更的规格信息
+	 * @param updType	变更方式：1-覆盖，2-减少，3-增加
+	 * @param updStockSum	需要变更的库存
+	 * @param updPriceLowest	需要变更的最低价（全覆盖时有用）
 	 * @return
 	 */
-	public int changeSpec(Goods goods,String specDetail,Integer stockSum,BigDecimal priceLowest);
+	public int changeSpec(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest);
 	
 	/**
 	 * 记录商品审批结果

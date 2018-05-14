@@ -1,6 +1,7 @@
 package com.mofangyouxuan.model;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ChangeFlow {
@@ -19,6 +20,8 @@ public class ChangeFlow {
     private String reason;
     
     private String sumFlag;
+    
+    private Date sumTime;
 
     public String getFlowId() {
         return flowId;
@@ -52,8 +55,11 @@ public class ChangeFlow {
         this.amount = amount;
     }
 
-    public Date getCreateTime() {
-        return createTime;
+    public String getCreateTime() {
+    		if( createTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(createTime);
     }
 
     public void setCreateTime(Date createTime) {
@@ -82,6 +88,17 @@ public class ChangeFlow {
 
 	public void setSumFlag(String sumFlag) {
 		this.sumFlag = sumFlag;
+	}
+
+	public String getSumTime() {
+		if( sumTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(sumTime);
+	}
+
+	public void setSumTime(Date sumTime) {
+		this.sumTime = sumTime;
 	}
     
     

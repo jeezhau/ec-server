@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.mapper.ReceiverMapper;
@@ -12,6 +13,7 @@ import com.mofangyouxuan.model.Receiver;
 import com.mofangyouxuan.service.ReceiverService;
 
 @Service
+@Transactional
 public class ReceiverServiceImpl implements ReceiverService{
 	
 	@Value("${sys.receiver-cnt-limit}")

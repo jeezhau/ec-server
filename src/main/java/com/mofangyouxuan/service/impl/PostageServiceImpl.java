@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.mapper.GoodsMapper;
@@ -15,6 +16,7 @@ import com.mofangyouxuan.model.Postage;
 import com.mofangyouxuan.service.PostageService;
 
 @Service
+@Transactional
 public class PostageServiceImpl implements PostageService{
 	@Value("${sys.postage-cnt-limit}")
 	private int cntLimit;

@@ -1,5 +1,7 @@
 package com.mofangyouxuan.mapper;
 
+import org.apache.ibatis.annotations.Param;
+
 import com.mofangyouxuan.model.PayFlow;
 
 public interface PayFlowMapper {
@@ -15,6 +17,6 @@ public interface PayFlowMapper {
 
     int updateByPrimaryKey(PayFlow record);
     
-    PayFlow selectLastestFlow(String orderId,String payType);
+    PayFlow selectLastestFlow(@Param("orderId")String orderId,@Param("payType")String payType);
     
 }

@@ -29,15 +29,17 @@
   <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
-    from tb_Pay_flow
+    from tb_pay_flow
     where flow_id = #{flowId,jdbcType=VARCHAR}
   </select>
+  
   <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
-    delete from tb_Pay_flow
+    delete from tb_pay_flow
     where flow_id = #{flowId,jdbcType=VARCHAR}
   </delete>
+  
   <insert id="insert" parameterType="com.mofangyouxuan.model.PayFlow">
-    insert into tb_Pay_flow (flow_id, user_id, goods_id, 
+    insert into tb_pay_flow (flow_id, user_id, goods_id, 
       order_id, flow_type, pay_type, 
       pay_account, currency_type, pay_amount, 
       fee_amount, create_time, income_amount, 
@@ -52,8 +54,9 @@
       #{outTradeUrl,jdbcType=VARCHAR}, #{outFinishId,jdbcType=VARCHAR}, #{memo,jdbcType=VARCHAR}
       )
   </insert>
+  
   <insert id="insertSelective" parameterType="com.mofangyouxuan.model.PayFlow">
-    insert into tb_Pay_flow
+    insert into tb_pay_flow
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="flowId != null">
         flow_id,
@@ -167,8 +170,9 @@
       </if>
     </trim>
   </insert>
+  
   <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.PayFlow">
-    update tb_Pay_flow
+    update tb_pay_flow
     <set>
       <if test="userId != null">
         user_id = #{userId,jdbcType=INTEGER},
@@ -224,8 +228,9 @@
     </set>
     where flow_id = #{flowId,jdbcType=VARCHAR}
   </update>
+  
   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PayFlow">
-    update tb_Pay_flow
+    update tb_pay_flow
     set user_id = #{userId,jdbcType=INTEGER},
       goods_id = #{goodsId,jdbcType=INTEGER},
       order_id = #{orderId,jdbcType=VARCHAR},
@@ -245,4 +250,16 @@
       memo = #{memo,jdbcType=VARCHAR}
     where flow_id = #{flowId,jdbcType=VARCHAR}
   </update>
+  
+  <select id="selectLastestFlow" parameterType="map" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" /> 
+    from tb_pay_flow f
+    where f.create_time =(select max(t.create_time) from tb_pay_flow t 
+    		where t.order_id = #{orderId,jdbcType=VARCHAR} and t.pay_type = #{payType,jdbcType=CHAR})
+    and f.order_id = #{orderId,jdbcType=VARCHAR} and f.pay_type = #{payType,jdbcType=CHAR}
+  </select>
+  
+  
 </mapper>
+

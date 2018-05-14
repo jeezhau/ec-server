@@ -1,6 +1,7 @@
 package com.mofangyouxuan.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Param;
 
@@ -22,6 +23,9 @@ public interface ChangeFlowMapper {
 
     int updateByPrimaryKey(ChangeFlow record);
     
-    List<ChangeFlow> selectByVip(@Param("vipId")Integer vipId,@Param("pageCond")PageCond pageCond);
+    List<ChangeFlow> selectAll(@Param("params")Map<String,Object> params,
+    		@Param("pageCond")PageCond pageCond,@Param("sorts")String sorts);
+   
+    int countAll(@Param("params")Map<String,Object> params);
     
 }

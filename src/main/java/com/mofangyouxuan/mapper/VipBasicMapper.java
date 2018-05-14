@@ -12,4 +12,6 @@ public interface VipBasicMapper {
 
     int updateByPrimaryKey(VipBasic record);
     
+    int sumAccount(Integer vipId);
+    
 }

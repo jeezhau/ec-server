@@ -3,12 +3,11 @@ package com.mofangyouxuan.service.impl;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.mapper.ChangeFlowMapper;
 import com.mofangyouxuan.model.ChangeFlow;
 import com.mofangyouxuan.model.VipBasic;
@@ -16,6 +15,7 @@ import com.mofangyouxuan.service.ChangeFlowService;
 import com.mofangyouxuan.utils.NonceStrUtil;
 
 @Service
+@Transactional
 public class ChangeFlowServiceImpl implements ChangeFlowService{
 	
 	@Autowired
@@ -254,20 +254,6 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	public ChangeFlow get(String flowId) {
 		return this.changeFlowMapper.selectByPrimaryKey(flowId);
 	}
-	
-	/**
-	 * 根据会员ID获取流水 
-	 * @param vipId
-	 * @param pageCond
-	 * @return
-	 */
-	public List<ChangeFlow> getAll(Integer vipId,PageCond pageCond){
-		if(pageCond == null) {
-			pageCond = new PageCond(0,20);
-		}
-		return this.changeFlowMapper.selectByVip(vipId, pageCond);
-	}
-	
 	
 	
 	/**

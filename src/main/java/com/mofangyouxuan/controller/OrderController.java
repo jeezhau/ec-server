@@ -580,7 +580,7 @@ public class OrderController {
 		if(cnt_w>0) {
 			carrage += cnt_w * additonWPrice;
 		}
-		if(distance != null && distance > 0) {
+		if("1".equals(postage.getIsCityWide()) && distance != null && distance > 0) {
 			Integer firstDist = postage.getFirstDist() == null ? 1 : postage.getFirstDist();
 			double firstDPrice = postage.getFirstDPrice() == null ? 3.0 : postage.getFirstDPrice().doubleValue();
 			Integer additionDist = postage.getAdditionDist() == null ? 1 : postage.getAdditionDist();
@@ -715,9 +715,9 @@ public class OrderController {
 	 */
 	@RequestMapping("/{userId}/createpay/{orderId}")
 	public Object createPay(@PathVariable(value="orderId",required=true)String orderId,
-			@RequestParam(required=true)String payType,
+			@RequestParam(value="payType",required=true)String payType,
 			@PathVariable(value="userId",required=true)Integer userId,
-			@RequestParam(required=true)String userIp) {
+			@RequestParam(value="userIp",required=true)String userIp) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			UserBasic user = this.userBasicService.get(userId);
@@ -729,7 +729,7 @@ public class OrderController {
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
 				return jsonRet.toJSONString();
 			}
-			if(user.getUserId().equals(order.getUserId())) {
+			if(!user.getUserId().equals(order.getUserId())) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
@@ -805,6 +805,47 @@ public class OrderController {
 			}
 			PartnerBasic partner = this.partnerBasicService.getByID(order.getPartnerId());
 			jsonRet = this.orderService.cancelOrder(order, userVip, partner.getVipId());
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	/**
+	 * 创建支付订单
+	 * @param orderId	订单ID
+	 * @param status		支付状态，客户端发送的
+	 * @param userId		用户ID
+	 * @return {errcode,errmsg,payType,payTime,amount,fee}
+	 */
+	@RequestMapping("/{userId}/payfinish/{orderId}/{status}")
+	public Object payFinish(@PathVariable(value="orderId",required=true)String orderId,
+			@PathVariable(value="status",required=true)String status,
+			@PathVariable(value="userId",required=true)Integer userId) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			UserBasic user = this.userBasicService.get(userId);
+			VipBasic userVip = this.vipBasicService.get(userId);
+			Order order = this.orderService.get(orderId);
+			Goods goods = this.goodsService.get(true, order.getGoodsId());
+			if(user == null || userVip == null || order == null || goods == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			if(!user.getUserId().equals(order.getUserId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			if(!"success".equals(status) && !"fail".equals(status)) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "支付状态取值不正确！");
+				return jsonRet.toJSONString();
+			}
+			jsonRet = this.orderService.payFinish(user, order, status);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);

@@ -4,6 +4,7 @@ import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mofangyouxuan.mapper.UserBasicMapper;
 import com.mofangyouxuan.model.UserBasic;
@@ -12,6 +13,7 @@ import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
 
 @Service
+@Transactional
 public class UserBasicServiceImpl implements UserBasicService{
 	
 	@Autowired

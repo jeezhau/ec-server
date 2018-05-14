@@ -92,6 +92,14 @@ public interface OrderService {
 	 */
 	public JSONObject createPay(UserBasic user,VipBasic userVip,Order order,Integer mchtVipId,String payType,String ip);
 	
+	/**
+	 * 客户端支付完成
+	 * @param user
+	 * @param order
+	 * @param clientStatus
+	 * @return
+	 */
+	public JSONObject payFinish(UserBasic user,Order order,String clientStatus);
 }
 
 

@@ -9,15 +9,20 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.alibaba.fastjson.JSONArray;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.mapper.GoodsMapper;
 import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
+import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.service.GoodsService;
 
+
 @Service
+@Transactional
 public class GoodsServiceImpl implements GoodsService{
 	
 	@Value("${sys.goods-cnt-limit}")
@@ -99,25 +104,56 @@ public class GoodsServiceImpl implements GoodsService{
 	}
 	
 	/**
-	 * 变更商品规格与库存
-	 * @param goods
-	 * @param specDetail 规格明细
-	 * @param stockSum
-	 * @param priceLowest
+	 * 变更商品规格与库存:需要确保同步
+	 * @param goodsId	商品ID
+	 * @param specDetail	变更的规格信息
+	 * @param updType	变更方式：1-覆盖，2-减少，3-增加
+	 * @param updStockSum	需要变更的库存
+	 * @param updPriceLowest	需要变更的最低价（全覆盖时有用）
 	 * @return 更新记录数
 	 */
 	@Override
-	public int changeSpec(Goods goods,String specDetail,Integer stockSum,BigDecimal priceLowest){
-		Long id = goods.getGoodsId();
-		Goods g = new Goods();
-		g.setGoodsId(id);
-		g.setSpecDetail(specDetail);
-		g.setStockSum(stockSum);
-		g.setPriceLowest(priceLowest);
-		if(stockSum<=0) {
-			g.setStatus("2"); //下架
+	public synchronized int changeSpec(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest){
+		Goods goods = this.get(false, goodsId);
+		if(goods == null) {
+			return ErrCodes.GOODS_NO_GOODS;
 		}
-		int cnt = this.goodsMapper.updateByPrimaryKey(g);
+		Goods updG = new Goods();
+		updG.setGoodsId(goodsId);
+		updG.setStockSum(goods.getStockSum());
+		if(updType == 1) {//全覆盖
+			updG.setSpecDetail(JSONArray.toJSONString(applySpec));
+			updG.setStockSum(updStockSum);
+			updG.setPriceLowest(updPriceLowest);
+			updG.setUpdateTime(new Date());
+		}else if(updType == 2) {//增加
+			List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
+			for(GoodsSpec spec:sysSpec) {
+				for(GoodsSpec p : applySpec) {
+					if(p.getName().equals(spec.getName())) {
+						spec.setStock(spec.getStock() + p.getBuyNum());//增加库存
+						updG.setStockSum(updG.getStockSum() + p.getBuyNum());
+					}
+				}
+			}
+			updG.setSpecDetail(JSONArray.toJSONString(sysSpec));
+		}else {//减少
+			List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
+			for(GoodsSpec spec:sysSpec) {
+				for(GoodsSpec p : applySpec) {
+					if(p.getName().equals(spec.getName())) {
+						spec.setStock(spec.getStock() - p.getBuyNum());//减少库存
+						updG.setStockSum(updG.getStockSum() - p.getBuyNum());
+					}
+				}
+			}
+			updG.setSpecDetail(JSONArray.toJSONString(sysSpec));
+		}
+		
+		if(updG.getStockSum()<=0) {
+			updG.setStatus("2"); //下架
+		}
+		int cnt = this.goodsMapper.updateByPrimaryKey(updG);
 		return cnt;
 	}
 	

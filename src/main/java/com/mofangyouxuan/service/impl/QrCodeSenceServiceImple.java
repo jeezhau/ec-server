@@ -4,12 +4,14 @@ import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mofangyouxuan.mapper.QrCodeSenceMapper;
 import com.mofangyouxuan.model.QrCodeSence;
 import com.mofangyouxuan.service.QrCodeSenceService;
 
 @Service
+@Transactional
 public class QrCodeSenceServiceImple implements QrCodeSenceService {
 
 	@Autowired

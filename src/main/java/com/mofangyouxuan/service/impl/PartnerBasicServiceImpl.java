@@ -4,6 +4,7 @@ import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.mapper.PartnerBasicMapper;
@@ -11,6 +12,7 @@ import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.service.PartnerBasicService;
 
 @Service
+@Transactional
 public class PartnerBasicServiceImpl implements PartnerBasicService{
 	
 	@Autowired

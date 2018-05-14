@@ -8,9 +8,10 @@
     <result column="freeze" jdbcType="DECIMAL" property="freeze" />
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="status" jdbcType="CHAR" property="status" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
   </resultMap>
   <sql id="Base_Column_List">
-    vip_id, scores, balance, freeze, create_time, status
+    vip_id, scores, balance, freeze, create_time, status,update_time
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -27,9 +28,9 @@
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.VipBasic">
     insert into tb_vip_basic (vip_id, scores, balance, 
-      freeze, create_time, status)
+      freeze, create_time, status,update_time)
     values (#{vipId,jdbcType=INTEGER}, #{scores,jdbcType=INTEGER}, #{balance,jdbcType=DECIMAL}, 
-      #{freeze,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR})
+      #{freeze,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR},#{updateTime,jdbcType=TIMESTAMP})
   </insert>
  
   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.VipBasic">
@@ -50,8 +51,12 @@
       <if test="status != null">
         status = #{status,jdbcType=CHAR},
       </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>      
     </set>
     where vip_id = #{vipId,jdbcType=INTEGER}
   </update>
 
+  
 </mapper>

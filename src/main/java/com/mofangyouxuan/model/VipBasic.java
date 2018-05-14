@@ -15,7 +15,9 @@ public class VipBasic {
     private Date createTime;
 
     private String status;
-
+    
+    private Date updateTime;
+    
     public Integer getVipId() {
         return vipId;
     }
@@ -63,4 +65,13 @@ public class VipBasic {
     public void setStatus(String status) {
         this.status = status == null ? null : status.trim();
     }
+
+	public Date getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
+    
 }

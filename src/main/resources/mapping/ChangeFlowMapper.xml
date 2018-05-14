@@ -10,10 +10,11 @@
     <result column="create_opr" jdbcType="INTEGER" property="createOpr" />
     <result column="reason" jdbcType="LONGVARCHAR" property="reason" />
     <result column="sum_flag" jdbcType="CHAR" property="sumFlag" />
+    <result column="sum_time" jdbcType="TIMESTAMP" property="sumTime" />
   </resultMap>
   
   <sql id="Base_Column_List">
-    flow_id, vip_id, change_type, amount, create_time, create_opr,reason,sum_flag
+    flow_id, vip_id, change_type, amount, create_time, create_opr,reason,sum_flag,sum_time
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
@@ -30,10 +31,10 @@
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.ChangeFlow">
     insert into tb_change_flow (flow_id, vip_id, change_type, 
-      amount, create_time, create_opr, reason,sum_flag)
+      amount, create_time, create_opr, reason,sum_flag,sum_time)
     values (#{flowId,jdbcType=VARCHAR}, #{vipId,jdbcType=INTEGER}, #{changeType,jdbcType=CHAR}, 
       #{amount,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{createOpr,jdbcType=INTEGER},
-      #{reason,jdbcType=LONGVARCHAR},#{sumFlag,jdbcType=CHAR})
+      #{reason,jdbcType=LONGVARCHAR},#{sumFlag,jdbcType=CHAR}, #{sumTime,jdbcType=TIMESTAMP})
   </insert>
   
 
@@ -60,7 +61,10 @@
       </if>
       <if test="sumFlag != null">
         sum_flag = #{sumFlag,jdbcType=CHAR},
-      </if>      
+      </if>   
+      <if test="sumTime != null">
+        sum_time = #{sumTime,jdbcType=TIMESTAMP},
+      </if>          
     </set>
     where flow_id = #{flowId,jdbcType=VARCHAR}
   </update>
@@ -70,12 +74,68 @@
     update tb_change_flow
     set vip_id = #{vipId,jdbcType=INTEGER},
       change_type = #{changeType,jdbcType=CHAR},
-      flow_type = #{flowType,jdbcType=CHAR},
       amount = #{amount,jdbcType=DECIMAL},
       create_time = #{createTime,jdbcType=TIMESTAMP},
       create_opr = #{createOpr,jdbcType=INTEGER},
-      sum_flag = #{sumFlag,jdbcType=CHAR}
+      sum_flag = #{sumFlag,jdbcType=CHAR},
+      sum_time = #{sumTime,jdbcType=TIMESTAMP},
+      reason = #{reason,jdbcType=LONGVARCHAR}
     where flow_id = #{flowId,jdbcType=VARCHAR}
   </update>
+  
+  <sql id="whereSql4All">
+    <where>
+      <if test="params.vipId != null">
+        and vip_id = #{params.vipId,jdbcType=INTEGER}
+      </if>
+      <if test="params.changeType != null">
+        and change_type like concat(#{params.changeType,jdbcType=CHAR},'%')
+      </if>
+      <if test="params.amountDown != null">
+        and amount &gt;= #{params.amountDown,jdbcType=DECIMAL}
+      </if>
+      <if test="params.amountUp != null">
+        and amount &lt;= #{params.amountUp,jdbcType=DECIMAL},
+      </if>
+      <if test="params.beginCrtTime != null">
+        and create_time &gt;= concat(#{params.beginCrtTime},' 00:00:00')
+      </if>
+      <if test="params.endCrtTime != null">
+        and create_time &lt;= concat(#{params.endCrtTime},' 23:59:59')
+      </if>  
+      <if test="params.beginSumTime != null">
+        and sum_time &gt;= concat(#{params.beginSumTime},' 00:00:00')
+      </if>
+      <if test="params.endSumTime != null">
+        and sum_time &lt;= concat(#{params.endSumTime},' 23:59:59')
+      </if>            
+      <if test="params.createOpr != null">
+        and create_opr = #{params.createOpr,jdbcType=INTEGER}
+      </if>
+      <if test="params.reason != null">
+        and reason like concat('%',#{params.reason,jdbcType=LONGVARCHAR},'%')
+      </if>
+      <if test="params.sumFlag != null">
+        and sum_flag = #{params.sumFlag,jdbcType=CHAR}
+      </if>      
+    </where> 
+  </sql>
+  
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" /> 
+    from tb_change_flow f
+    <include refid="whereSql4All" />
+    <if test="sorts != null">
+     ${sorts} 
+    </if>
+    limit #{pageCond.begin},#{pageCond.pageSize}
+  </select>
+  
+  <select id="countAll" parameterType="map" resultType="int">
+    select count(1) cnt
+    from tb_change_flow f
+    <include refid="whereSql4All" />
+  </select>
   
 </mapper>

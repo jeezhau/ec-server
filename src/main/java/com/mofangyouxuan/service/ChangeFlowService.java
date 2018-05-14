@@ -100,14 +100,7 @@ public interface ChangeFlowService {
 	 */
 	public ChangeFlow get(String flowId);
 	
-	/**
-	 * 根据会员ID获取流水 
-	 * @param vipId
-	 * @param pageCond
-	 * @return
-	 */
-	public List<ChangeFlow> getAll(Integer vipId,PageCond pageCond);
-	
+
 }
 
 
