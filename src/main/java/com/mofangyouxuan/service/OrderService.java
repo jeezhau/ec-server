@@ -6,6 +6,7 @@ import java.util.Map;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.Order;
+import com.mofangyouxuan.model.PayFlow;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 
@@ -73,11 +74,12 @@ public interface OrderService {
 	 * 买家取消订单
 	 * 
 	 * @param order		订单信息
-	 * @param userVip	买家会员账户
+	 * @param userVipId	买家会员账户ID
 	 * @param mchtVipId	卖家会员账户ID
+	 * @param reason		取消理由
 	 * @return
 	 */
-	public JSONObject cancelOrder(Order order,VipBasic userVip,Integer mchtVipId) ;
+	public JSONObject cancelOrder(Order order,Integer userVipId,Integer mchtVipId,String reason) ;
 	
 	/**
 	 * 生成预支付订单
@@ -100,6 +102,53 @@ public interface OrderService {
 	 * @return
 	 */
 	public JSONObject payFinish(UserBasic user,Order order,String clientStatus);
+	
+	/**
+	 * 获取指定订单的最新支付流水
+	 * @param orderId
+	 * @param flowType 流水类型：1-支付，2-退款
+	 * @return
+	 */
+	public PayFlow getLastedFlow(String orderId,String flowType) ;
+	
+	/**
+	 * 订单退款执行
+	 * 1、向第三方支付申请退款，或余额退款；
+	 * 2、保存退款流水；
+	 * 3、更新订单售后信息；
+	 * @param isMcht		是否是商家申请退款
+	 * @param order		订单信息
+	 * @param payFlow	支付流水
+	 * @param userVipId	买家会员账户ID
+	 * @param mchtVipId	卖家会员ID
+	 * @param type		退款类型 ：0-买家取消，1-卖家未发货，2-买家未收到货，3-买家收货后申请卖家同意，4-其他
+	 * @param reason		退款理由，对于收货退款，其中包含退款方式与快递信息
+	 * @return
+	 */
+	public JSONObject execRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,String reason) ;
+	
+	/**
+	 * 添加买家对商家的评价或者系统自动超时评价
+	 * @param order	订单信息
+	 * @param scoreLogistics		物流得分
+	 * @param scoreMerchant	商家服务得分
+	 * @param scoreGoods		商品描述得分
+	 * @param content	评价内容
+	 * @return
+	 */
+	public JSONObject appraise2Mcht(Order order,Integer scoreLogistics,Integer scoreMerchant,
+			Integer scoreGoods,String content);
+	
+	/**
+	 * 添加卖家对买家的评价或者系统自动超时评价
+	 * @param order	订单信息
+	 * @param score	得分
+	 * @param content	评价内容
+	 * @return
+	 */
+	public JSONObject appraise2User(Order order,Integer score,String content);
+	
+	
 }
 
 

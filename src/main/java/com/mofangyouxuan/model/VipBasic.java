@@ -18,6 +18,8 @@ public class VipBasic {
     
     private Date updateTime;
     
+    private String passwd;
+    
     public Integer getVipId() {
         return vipId;
     }
@@ -72,6 +74,14 @@ public class VipBasic {
 
 	public void setUpdateTime(Date updateTime) {
 		this.updateTime = updateTime;
+	}
+
+	public String getPasswd() {
+		return passwd;
+	}
+
+	public void setPasswd(String passwd) {
+		this.passwd = passwd;
 	}
     
 }

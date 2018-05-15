@@ -50,7 +50,7 @@ public interface GoodsService {
 	 * 
 	 * @param goodsId	商品ID
 	 * @param applySpec	变更的规格信息
-	 * @param updType	变更方式：1-覆盖，2-减少，3-增加
+	 * @param updType	变更方式：1-覆盖，2-增加，3-减少
 	 * @param updStockSum	需要变更的库存
 	 * @param updPriceLowest	需要变更的最低价（全覆盖时有用）
 	 * @return

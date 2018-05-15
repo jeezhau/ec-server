@@ -72,6 +72,14 @@ public class Order {
 
     private String aftersalesResult;
     
+    private Integer score2User;
+    
+    private String appr2User;
+    
+    private Date apprUserTime;
+    
+    private String logistics;
+    
     //补充字段，仅方便商品显示
     private String goodsName;
     
@@ -352,6 +360,40 @@ public class Order {
         this.aftersalesResult = aftersalesResult == null ? null : aftersalesResult.trim();
     }
 
+    
+	public Integer getScore2User() {
+		return score2User;
+	}
+
+	public void setScore2User(Integer score2User) {
+		this.score2User = score2User;
+	}
+
+	public String getAppr2User() {
+		return appr2User;
+	}
+
+	public void setAppr2User(String appr2User) {
+		this.appr2User = appr2User;
+	}
+
+	
+	public Date getApprUserTime() {
+		return apprUserTime;
+	}
+
+	public void setApprUserTime(Date apprUserTime) {
+		this.apprUserTime = apprUserTime;
+	}
+
+	public String getLogistics() {
+		return logistics;
+	}
+
+	public void setLogistics(String logistics) {
+		this.logistics = logistics;
+	}
+
 	public Long getRecvId() {
 		return recvId;
 	}
@@ -404,7 +446,7 @@ public class Order {
 		return headimgurl;
 	}
 
-	public void setHeadimgpath(String headimgurl) {
+	public void setHeadimgurl(String headimgurl) {
 		this.headimgurl = headimgurl;
 	}
 

@@ -60,6 +60,9 @@ sys:
 
   receiver-cnt-limit: 5 #每个用户可添加的收货人信息数量限制
   
-  order-4pay-cnt-all-limit: 5 #每个用户可持有的所有待付款订单数
-  order-4pay-cnt-goods-limit: 1 #每个用户可持有的单个商品待付款订单数
+  order-4pay-cnt-all-limit: 5   #每个用户可持有的所有待付款订单数
+  order-4pay-cnt-goods-limit: 1   #每个用户可持有的单个商品待付款订单数
+  order-nodelivery-days-4refund: 10   #超过10天卖家未发货买家可申请直接退款
+  order-nosign-days-4refund: 60   #至卖家发货之后超过60天买家没有获得签收可申请退款
+  
   

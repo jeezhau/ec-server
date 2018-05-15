@@ -1,9 +1,7 @@
 package com.mofangyouxuan.service;
 
 import java.math.BigDecimal;
-import java.util.List;
 
-import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.ChangeFlow;
 import com.mofangyouxuan.model.VipBasic;
 
@@ -21,12 +19,12 @@ public interface ChangeFlowService {
 	 * 
 	 * @param useVip		是否使用会员余额支付
 	 * @param amount		交易金额
-	 * @param userVip	买家会员账户
+	 * @param userVipId	买家会员账户
 	 * @param reason
 	 * @param oprId		操作员ID
 	 * @param mchtVipId	卖家会员账户Id
 	 */
-	public void refundSuccess(boolean useVip,BigDecimal amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId);
+	public void refundSuccess(boolean useVip,BigDecimal amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId);
 	
 	/**
 	 * 添加客户支付成功流水(买商家的商品)

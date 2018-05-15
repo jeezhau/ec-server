@@ -1,5 +1,8 @@
 package com.mofangyouxuan.utils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.servlet.http.HttpServletRequest;
 
 public class CommonUtil {
@@ -22,5 +25,40 @@ public class CommonUtil {
 	    }
 	    return type;
 	}
+	
+	/**
+	 * 生成30位的订单ID
+	 * @param userId
+	 * @return
+	 */
+	public static String genOrderId(Integer userId) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
+		String currTime = sdf.format(new Date());
+		String uId = userId + "";
+		for(int i=0;i<16-uId.length();i++) {
+			uId = "0" + uId;
+		}
+		return currTime + uId;
+	}
+	
+	/**
+	 * 生成32位的支付流水ID
+	 * @param orderId
+	 * @return
+	 */
+	public static String genPayFlowId(String orderId,String oldId) {
+		int next = 0;
+		if(oldId != null && oldId.length() == 32) {
+			next = Integer.parseInt(oldId.substring(30));
+		}
+		next += 1;
+		if(next<10) {
+			return orderId + "0" +next;
+		}
+		return orderId + next;
+	}
+	
+
+	
 
 }

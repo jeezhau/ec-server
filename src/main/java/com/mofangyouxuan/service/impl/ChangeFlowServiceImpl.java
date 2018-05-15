@@ -34,12 +34,13 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
  	 * 
 	 * @return
 	 */
-	public void refundSuccess(boolean useVip,BigDecimal amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId) {
+	@Override
+	public void refundSuccess(boolean useVip,BigDecimal amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId) {
 		if(useVip) {//卖家使用余额支付
 			//客户退款
 			ChangeFlow flow1 = new ChangeFlow();
-			flow1.setFlowId(this.genFlowId(userVip.getVipId()));
-			flow1.setVipId(userVip.getVipId());
+			flow1.setFlowId(this.genFlowId(userVipId));
+			flow1.setVipId(userVipId);
 			flow1.setCreateTime(new Date());
 			flow1.setAmount(amount);
 			flow1.setChangeType("11");
@@ -50,7 +51,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		}
 		//商家解冻
 		ChangeFlow flow2 = new ChangeFlow();
-		flow2.setFlowId(this.genFlowId(userVip.getVipId()));
+		flow2.setFlowId(this.genFlowId(userVipId));
 		flow2.setVipId(mchtVipId);
 		flow2.setCreateTime(new Date());
 		flow2.setAmount(amount);
