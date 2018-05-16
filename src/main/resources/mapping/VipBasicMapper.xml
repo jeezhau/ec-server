@@ -9,9 +9,13 @@
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="passwd" jdbcType="VARCHAR" property="passwd" />
+    <result column="account_name" jdbcType="VARCHAR" property="accountName" />
+    <result column="account_no" jdbcType="VARCHAR" property="accountNo" />
+    <result column="account_bank" jdbcType="VARCHAR" property="accountBank" />
   </resultMap>
   <sql id="Base_Column_List">
-    vip_id, scores, balance, freeze, create_time, status,update_time
+    vip_id, scores, balance, freeze, create_time, status,update_time,passwd,account_name,account_no,account_bank
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -58,5 +62,18 @@
     where vip_id = #{vipId,jdbcType=INTEGER}
   </update>
 
+  <update id="updPasswd" parameterType="map">
+    update tb_vip_basic
+    set passwd = #{passwd,jdbcType=VARCHAR}
+    where vip_id = #{vipId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updAccount" parameterType="map">
+    update tb_vip_basic
+    set account_name = #{accountName,jdbcType=VARCHAR},
+    account_no = #{accountNo,jdbcType=VARCHAR},
+    account_bank = #{accountBank,jdbcType=VARCHAR}
+    where vip_id = #{vipId,jdbcType=INTEGER}
+  </update>
   
 </mapper>

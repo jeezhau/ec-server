@@ -45,7 +45,7 @@ import com.mofangyouxuan.utils.SignUtils;
 @RequestMapping("/user")
 public class UserBasicAction {
 	
-	@Value("sys.user-img-path")
+	@Value("${sys.user-img-path}")
 	private String userImgDir ;
 	
 	@Autowired
@@ -262,15 +262,15 @@ public class UserBasicAction {
 	}
 	
 	/**
-	 * 证件照上传
+	 * 头像上传
 	 * 保存名称：headimg.xxx
-	 * @param image		照片,jpg格式
-	 * @param currUserId	当前操作用户
-	 * @return {errcode:0,errmsg:""}
+	 * @param image		照片
+	 * @param userId	当前操作用户
+	 * @return {errcode:0,errmsg:"",filename:''}
 	 */
-	@RequestMapping("/headimg/upload/{currUserId}")
+	@RequestMapping("/headimg/upload/{userId}")
 	public String uploadHeadImg(@RequestParam(value="image")MultipartFile image,
-			@PathVariable(value="currUserId",required=true)Integer currUserId) {
+			@PathVariable(value="userId",required=true)Integer currUserId) {
 		
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -312,6 +312,7 @@ public class UserBasicAction {
 			FileUtils.copyInputStreamToFile(image.getInputStream(), newFile);
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
+			jsonRet.put("filename", newU.getHeadimgurl());
 		} catch (Exception e) {
 			e.printStackTrace();
 			jsonRet = new JSONObject();

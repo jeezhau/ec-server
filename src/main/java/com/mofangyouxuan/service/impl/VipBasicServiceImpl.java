@@ -211,4 +211,29 @@ public class VipBasicServiceImpl implements VipBasicService{
 		return params;
 	}
 	
+	/**
+	 * 更新资金密码
+	 * @param vipId
+	 * @param passwd
+	 * @return
+	 */
+	@Override
+	public int updPwd(Integer vipId,String passwd) {
+		int cnt = this.vipBasicMapper.updPasswd(vipId, passwd);
+		return cnt;
+	}
+	
+	/**
+	 * 更新提现账户信息
+	 * @param vipId
+	 * @param accountName
+	 * @param accountNo
+	 * @param accountBank
+	 * @return
+	 */
+	public int updAccount(Integer vipId,String accountName,String accountNo,String accountBank) {
+		int cnt = this.vipBasicMapper.updAccount(vipId, accountName, accountNo, accountBank);
+		return cnt;
+	}
+	
 }

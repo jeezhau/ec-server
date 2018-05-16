@@ -14,7 +14,12 @@ public interface OrderMapper {
 
     int insert(Order record);
 
-    Order selectByPrimaryKey(String orderId);
+    /**
+     * params 需要显示哪些分类字段：needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser
+     * @param orderId
+     * @return
+     */
+    Order selectByPrimaryKey(@Param("params")Map<String,Object> params,@Param("orderId")String orderId);
 
     int updateByPrimaryKeySelective(Order record);
 
@@ -22,6 +27,13 @@ public interface OrderMapper {
     
     int countAll(@Param("params")Map<String,Object> params);
     
+    /**
+     * 
+     * @param params 包含查询条件，需要显示哪些分类字段：needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser
+     * @param sorts
+     * @param pageCond
+     * @return
+     */
     List<Order> selectAll(@Param("params")Map<String,Object> params,@Param("sorts")String sorts,@Param("pageCond")PageCond pageCond);
     
     List<Map<String,Integer>> countPartibyStatus(@Param("partnerId")Integer partnerId,

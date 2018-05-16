@@ -50,7 +50,7 @@ import com.mofangyouxuan.service.VipBasicService;
  */
 @RestController
 @RequestMapping("/goods")
-public class GoodsAction {
+public class GoodsController {
 	
 	@Autowired
 	private GoodsService goodsService;

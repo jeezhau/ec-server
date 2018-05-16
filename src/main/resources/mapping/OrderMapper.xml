@@ -22,6 +22,7 @@
     <result column="recv_addr" jdbcType="VARCHAR" property="recvAddr" />
     <result column="logistics_comp" jdbcType="VARCHAR" property="logisticsComp" />
     <result column="logistics_no" jdbcType="VARCHAR" property="logisticsNo" />
+    <result column="logistics" jdbcType="LONGVARCHAR" property="logistics" />
     <result column="send_time" jdbcType="TIMESTAMP" property="sendTime" />
     <result column="sign_user" jdbcType="VARCHAR" property="signUser" />
     <result column="sign_time" jdbcType="TIMESTAMP" property="signTime" />
@@ -30,6 +31,10 @@
     <result column="score_merchant" jdbcType="INTEGER" property="scoreMerchant" />
     <result column="appraise_status" jdbcType="CHAR" property="appraiseStatus" />
     <result column="appraise_time" jdbcType="TIMESTAMP" property="appraiseTime" />
+    <result column="score_user" jdbcType="INTEGER" property="scoreUser" />
+    <result column="appr_user" jdbcType="LONGVARCHAR" property="apprUser" />
+    <result column="appr_user_time" jdbcType="TIMESTAMP" property="apprUserTime" />
+    
     <result column="aftersales_apply_time" jdbcType="TIMESTAMP" property="aftersalesApplyTime" />
     <result column="aftersales_deal_time" jdbcType="TIMESTAMP" property="aftersalesDealTime" />
     <result column="appraise_info" jdbcType="LONGVARCHAR" property="appraiseInfo" />
@@ -47,20 +52,45 @@
     
   </resultMap>
   
-  <sql id="Base_Column_List">
+  <sql id="Column_List_Base">
     o.order_id, o.user_id, o.goods_id, o.goods_spec, o.carrage, o.amount, o.create_time, o.remark, o.status, 
-    o.dispatch_mode, o.postage_id, o.recv_name, o.recv_phone, o.recv_country, o.recv_province, o.recv_city, 
-    o.recv_area, o.recv_addr, o.logistics_comp, o.logistics_no, o.send_time, o.sign_user, o.sign_time, 
-    o.score_logistics, o.score_goods, o.score_merchant, o.appraise_status, o.appraise_time, o.aftersales_apply_time, 
-    o.aftersales_deal_time,
-    o.appraise_info, o.aftersales_reason, o.aftersales_result,
+    o.dispatch_mode, o.postage_id, o.send_time, o.sign_user, o.sign_time
+  </sql>
+  <sql id="Column_List_Receiver">
+    o.recv_name, o.recv_phone, o.recv_country, o.recv_province, o.recv_city,  o.recv_area, o.recv_addr
+  </sql>  
+  <sql id="Column_List_Logistics">
+    o.logistics_comp, o.logistics_no,o.score_logistics
+  </sql>  
+  <sql id="Column_List_Appr"> 
+    o.score_logistics, o.score_goods, o.score_merchant, o.appraise_status, o.appraise_time,o.score_user,o.appr_user,o.appr_user_time
+  </sql>
+  <sql id="Column_List_AfterSales">
+    o.aftersales_apply_time, o.aftersales_deal_time, o.appraise_info, o.aftersales_reason, o.aftersales_result
+  </sql> 
+  <sql id="Column_List_GoodsAndUser">
     g.goods_name,g.main_img_path goods_main_img_path,g.partner_id,p.busi_name partner_busi_name,
     u.phone user_phone,u.nickname,u.headimgurl
-  </sql>
+  </sql> 
   
-  <select id="selectByPrimaryKey" parameterType="string" resultMap="BaseResultMap">
+  <select id="selectByPrimaryKey" parameterType="map" resultMap="BaseResultMap">
     select 
-    <include refid="Base_Column_List" />
+    <include refid="Column_List_Base" />
+    <if test="params.needReceiver != null">
+    ,<include refid="Column_List_Receiver" />
+    </if>
+    <if test="params.needLogistics != null">
+    ,<include refid="Column_List_Logistics" />
+    </if>
+    <if test="params.needAppr != null">
+    ,<include refid="Column_List_Appr" />
+    </if>
+    <if test="parmas.needAfterSales != null">
+    ,<include refid="Column_List_AfterSales" />
+    </if>
+    <if test="params.needGoodsAndUser != null">
+    ,<include refid="Column_List_GoodsAndUser" />
+    </if>
     from tb_order_info o 
      join tb_goods_info g on o.goods_id = g.goods_id 
      join tb_partner_basic p on g.partner_id = p.partner_id 
@@ -80,10 +110,11 @@
       dispatch_mode, postage_id, recv_name, 
       recv_phone, recv_country, recv_province, 
       recv_city, recv_area, recv_addr, 
-      logistics_comp, logistics_no, send_time, 
+      logistics_comp, logistics_no,logistics, send_time, 
       sign_user, sign_time, score_logistics, 
       score_goods, score_merchant, appraise_status, 
       appraise_time, aftersales_apply_time, 
+      score_user,appr_user_time,appr_user,
       aftersales_deal_time, appraise_info, 
       aftersales_reason, aftersales_result
       )
@@ -93,10 +124,11 @@
       #{dispatchMode,jdbcType=CHAR}, #{postageId,jdbcType=INTEGER}, #{recvName,jdbcType=VARCHAR}, 
       #{recvPhone,jdbcType=VARCHAR}, #{recvCountry,jdbcType=VARCHAR}, #{recvProvince,jdbcType=VARCHAR}, 
       #{recvCity,jdbcType=VARCHAR}, #{recvArea,jdbcType=VARCHAR}, #{recvAddr,jdbcType=VARCHAR}, 
-      #{logisticsComp,jdbcType=VARCHAR}, #{logisticsNo,jdbcType=VARCHAR}, #{sendTime,jdbcType=TIMESTAMP}, 
+      #{logisticsComp,jdbcType=VARCHAR}, #{logisticsNo,jdbcType=VARCHAR},#{logistics,jdbcType=LONGVARCHAR} #{sendTime,jdbcType=TIMESTAMP}, 
       #{signUser,jdbcType=VARCHAR}, #{signTime,jdbcType=TIMESTAMP}, #{scoreLogistics,jdbcType=INTEGER}, 
       #{scoreGoods,jdbcType=INTEGER}, #{scoreMerchant,jdbcType=INTEGER}, #{appraiseStatus,jdbcType=CHAR}, 
       #{appraiseTime,jdbcType=TIMESTAMP}, #{aftersalesApplyTime,jdbcType=TIMESTAMP}, 
+      #{scoreUser,jdbcType=INTEGER}, #{apprUserTime,jdbcType=TIMESTAMP}, #{apprUser,jdbcType=LONGVARCHAR}, 
       #{aftersalesDealTime,jdbcType=TIMESTAMP}, #{appraiseInfo,jdbcType=LONGVARCHAR}, 
       #{aftersalesReason,jdbcType=LONGVARCHAR}, #{aftersalesResult,jdbcType=LONGVARCHAR}
       )
@@ -162,6 +194,9 @@
       <if test="logisticsNo != null">
         logistics_no = #{logisticsNo,jdbcType=VARCHAR},
       </if>
+      <if test="logistics != null">
+        logistics = #{logistics,jdbcType=LONGVARCHAR},
+      </if>
       <if test="sendTime != null">
         send_time = #{sendTime,jdbcType=TIMESTAMP},
       </if>
@@ -186,6 +221,15 @@
       <if test="appraiseTime != null">
         appraise_time = #{appraiseTime,jdbcType=TIMESTAMP},
       </if>
+      <if test="scoreUser != null">
+        score_user = #{scoreUser,jdbcType=INTEGER},
+      </if>
+      <if test="apprUser != null">
+        appr_user = #{apprUser,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="apprUserTime != null">
+        appr_user_time = #{apprUserTime,jdbcType=TIMESTAMP},
+      </if>      
       <if test="aftersalesApplyTime != null">
         aftersales_apply_time = #{aftersalesApplyTime,jdbcType=TIMESTAMP},
       </if>
@@ -226,6 +270,7 @@
       recv_addr = #{recvAddr,jdbcType=VARCHAR},
       logistics_comp = #{logisticsComp,jdbcType=VARCHAR},
       logistics_no = #{logisticsNo,jdbcType=VARCHAR},
+      logistics = #{logistics,jdbcType=LONGVARCHAR},
       send_time = #{sendTime,jdbcType=TIMESTAMP},
       sign_user = #{signUser,jdbcType=VARCHAR},
       sign_time = #{signTime,jdbcType=TIMESTAMP},
@@ -234,6 +279,9 @@
       score_merchant = #{scoreMerchant,jdbcType=INTEGER},
       appraise_status = #{appraiseStatus,jdbcType=CHAR},
       appraise_time = #{appraiseTime,jdbcType=TIMESTAMP},
+      score_user = #{scoreUser,jdbcType=INTEGER},
+      appr_user = #{apprUser,jdbcType=LONGVARCHAR},
+      appr_user_time = #{apprUserTime,jdbcType=TIMESTAMP},
       aftersales_apply_time = #{aftersalesApplyTime,jdbcType=TIMESTAMP},
       aftersales_deal_time = #{aftersalesDealTime,jdbcType=TIMESTAMP},
       appraise_info = #{appraiseInfo,jdbcType=LONGVARCHAR},
@@ -308,7 +356,22 @@
   <!-- 根据查询条件统计 -->
   <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
     select 
-    <include refid="Base_Column_List" />
+    <include refid="Column_List_Base" />
+    <if test="needReceiver != null">
+    ,<include refid="Column_List_Receiver" />
+    </if>
+    <if test="needLogistics != null">
+    ,<include refid="Column_List_Logistics" />
+    </if>
+    <if test="needAppr != null">
+    ,<include refid="Column_List_Appr" />
+    </if>
+    <if test="needAfterSales != null">
+    ,<include refid="Column_List_AfterSales" />
+    </if>
+    <if test="needGoodsAndUser != null">
+    ,<include refid="Column_List_GoodsAndUser" />
+    </if>
     from tb_order_info o 
      join tb_goods_info g on o.goods_id = g.goods_id 
      join tb_partner_basic p on g.partner_id = p.partner_id 

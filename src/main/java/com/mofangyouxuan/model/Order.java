@@ -72,9 +72,9 @@ public class Order {
 
     private String aftersalesResult;
     
-    private Integer score2User;
+    private Integer scoreUser;
     
-    private String appr2User;
+    private String apprUser;
     
     private Date apprUserTime;
     
@@ -361,20 +361,20 @@ public class Order {
     }
 
     
-	public Integer getScore2User() {
-		return score2User;
+	public Integer getScoreUser() {
+		return scoreUser;
 	}
 
-	public void setScore2User(Integer score2User) {
-		this.score2User = score2User;
+	public void setScoreUser(Integer scoreUser) {
+		this.scoreUser = scoreUser;
 	}
 
-	public String getAppr2User() {
-		return appr2User;
+	public String getApprUser() {
+		return apprUser;
 	}
 
-	public void setAppr2User(String appr2User) {
-		this.appr2User = appr2User;
+	public void setApprUser(String apprUser) {
+		this.apprUser = apprUser;
 	}
 
 	

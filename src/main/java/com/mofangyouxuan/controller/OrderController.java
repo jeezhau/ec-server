@@ -504,7 +504,7 @@ public class OrderController {
 				jsonParams.put("endCreateTime", goods.getEndTime());
 				String status = "10,11,20,21,30,31,,40,41,50,51,52,53,54,55,56";
 				jsonParams.put("status", status);
-				List<Order> list = this.orderService.getAll(jsonParams, null, new PageCond(0,10000));
+				List<Order> list = this.orderService.getAll(null,jsonParams, null, new PageCond(0,10000));
 				if(list != null && list.size()>0) {
 					int num = 0;
 					for(Order o:list) {
@@ -604,13 +604,16 @@ public class OrderController {
 	/**
 	 * 根据ID获取订单信息
 	 * @param orderId
+	 * @param 需要显示哪些分类字段：needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser
 	 * @return {errcode:0,errmsg:"ok",order:{...}}
 	 */
 	@RequestMapping("/get/{orderId}")
-	public Object getOrderByID(@PathVariable("orderId")String orderId) {
+	public Object getOrderByID(@PathVariable("orderId")String orderId,
+			Boolean needReceiver,Boolean needLogistics,Boolean needAppr,Boolean needAfterSales,Boolean needGoodsAndUser) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			Order order = this.orderService.get(orderId);
+			
+			Order order = this.orderService.get(needReceiver, needLogistics, needAppr, needAfterSales, needGoodsAndUser,orderId);
 			if(order == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_NO_EXISTS);
 				jsonRet.put("errmsg", "该订单系统中不存在！");
@@ -631,13 +634,15 @@ public class OrderController {
 	/**
 	 * 查询指定查询条件、排序条件、分页条件的订单信息；
 	 * 商品ID与合作伙伴ID不可都为空
+	 * @param jsonShowGroups		显示字段分组:{needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser}
 	 * @param jsonSearchParams	查询条件:{userId: ,goodsId:, partnerId: ,status:'',keywords:'',categoryId:,dispatchMode:'',postageId:,appraiseStatus:''}
 	 * @param jsonSortParams		排序条件:{createTime:"N#0/1",sendTime:"N#0/1",signTime:"N#0/1",appraiseTime:"N#0/1",aftersalesApplyTime:"N#0/1",aftersalesDealTime:"N#0/1"}
 	 * @param jsonPageCond		分页信息:{begin:, pageSize:}
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
 	 */
 	@RequestMapping("/getall")
-	public Object searchOrders(@RequestParam(value="jsonSearchParams",required=true)String jsonSearchParams,
+	public Object searchOrders(@RequestParam(value="jsonShowGroups",required=true)String jsonShowGroups,
+			@RequestParam(value="jsonSearchParams",required=true)String jsonSearchParams,
 			String jsonSortParams,String jsonPageCond) {
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -647,6 +652,9 @@ public class OrderController {
 				jsonRet.put("errmsg", "下单用户ID、商品ID和合作伙伴ID不可都为空！");
 				return jsonRet.toString();
 			}
+			
+			JSONObject jsonShow = JSONObject.parseObject(jsonShowGroups);
+			
 			JSONObject jsonSorts = new JSONObject();
 			if(jsonSortParams != null && jsonSortParams.length()>0) {
 				jsonSorts = JSONObject.parseObject(jsonSortParams);
@@ -673,7 +681,7 @@ public class OrderController {
 			jsonRet.put("errcode", ErrCodes.GOODS_NO_GOODS);
 			jsonRet.put("errmsg", "没有获取到订单信息！");
 			if(cnt>0) {
-				List<Order> list = this.orderService.getAll(jsonSearch, jsonSorts, pageCond);
+				List<Order> list = this.orderService.getAll(jsonShow,jsonSearch, jsonSorts, pageCond);
 				if(list != null && list.size()>0) {
 					jsonRet.put("datas", list);
 					jsonRet.put("errcode", 0);
@@ -731,7 +739,7 @@ public class OrderController {
 		try {
 			UserBasic user = this.userBasicService.get(userId);
 			VipBasic userVip = this.vipBasicService.get(userId);
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, null, null, true,orderId);
 			Goods goods = this.goodsService.get(true, order.getGoodsId());
 			if(user == null || userVip == null || order == null || goods == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
@@ -823,7 +831,7 @@ public class OrderController {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			VipBasic userVip = this.vipBasicService.get(userId);
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, null, true, true,orderId);
 			PartnerBasic partner = this.partnerBasicService.getByID(order.getPartnerId());
 			if(userVip == null || order == null || partner == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
@@ -878,7 +886,7 @@ public class OrderController {
 		try {
 			UserBasic user = this.userBasicService.get(userId);
 			VipBasic userVip = this.vipBasicService.get(userId);
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, null, null, true,orderId);
 			Goods goods = this.goodsService.get(true, order.getGoodsId());
 			if(user == null || userVip == null || order == null || goods == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
@@ -915,7 +923,7 @@ public class OrderController {
 			@PathVariable(value="orderId",required=true)String orderId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, null, null, true,orderId);
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
 			if(order == null || partner == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
@@ -967,7 +975,7 @@ public class OrderController {
 			@RequestParam(value="logisticsNo",required=true)String logisticsNo) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, null, null, true,orderId);
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
 			if(order == null || partner == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
@@ -1015,7 +1023,7 @@ public class OrderController {
 	public Object getLogistics(@PathVariable(value="orderId",required=true)String orderId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(true, true, null, null, true,orderId);
 			if(order == null ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
@@ -1069,7 +1077,7 @@ public class OrderController {
 			}
 			
 			VipBasic userVip = this.vipBasicService.get(userId);
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, null, true, true,orderId);
 			PartnerBasic partner = this.partnerBasicService.getByID(order.getPartnerId());
 			if(userVip == null || order == null || partner == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
@@ -1191,7 +1199,6 @@ public class OrderController {
 	 * @param orderId	订单ID
 	 * @param userId		用户ID
 	 * @param reason		换货理由，包含快递信息{reason,dispatchMode,logisticsComp,logisticsNo}
-	 * @param passwd		会员操作密码
 	 * @return {errcode,errmsg}
 	 */
 	@RequestMapping("/{userId}/exchange/{orderId}")
@@ -1208,7 +1215,7 @@ public class OrderController {
 			}
 			
 			UserBasic user = this.userBasicService.get(userId);
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, null, true, true,orderId);
 			if(user == null || order == null ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
@@ -1300,7 +1307,7 @@ public class OrderController {
 				return jsonRet.toJSONString();
 			}
 			UserBasic user = this.userBasicService.get(userId);
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, true, null, true,orderId);
 			if(user == null || order == null ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
@@ -1393,7 +1400,7 @@ public class OrderController {
 				return jsonRet.toJSONString();
 			}
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, true, null, true,orderId);
 			if(partner == null || order == null ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
@@ -1432,7 +1439,7 @@ public class OrderController {
 					jsonRet.put("errmsg", "追加评价的内容不可为空，不可少于3个字符！");
 					return jsonRet.toJSONString();
 				}
-				score = order.getScore2User();
+				score = order.getScoreUser();
 			}else {
 				if(score == null) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
@@ -1482,7 +1489,7 @@ public class OrderController {
 				return jsonRet.toJSONString();
 			}
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			Order order = this.orderService.get(orderId);
+			Order order = this.orderService.get(null, null, null, true, true,orderId);
 			if(partner == null || order == null ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");

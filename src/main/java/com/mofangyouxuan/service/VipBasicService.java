@@ -43,4 +43,22 @@ public interface VipBasicService {
 	 */
 	public int countAll(JSONObject jsonParams) ;
 	
+	/**
+	 * 更新资金密码
+	 * @param vipId
+	 * @param passwd
+	 * @return
+	 */
+	public int updPwd(Integer vipId,String passwd);
+	
+	/**
+	 * 更新提现账户信息
+	 * @param vipId
+	 * @param accountName
+	 * @param accountNo
+	 * @param accountBank
+	 * @return
+	 */
+	public int updAccount(Integer vipId,String accountName,String accountNo,String accountBank);
+	
 }

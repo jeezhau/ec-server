@@ -20,6 +20,12 @@ public class VipBasic {
     
     private String passwd;
     
+    private String accountName;
+    
+    private String accountNo;
+    
+    private String accountBank;
+    
     public Integer getVipId() {
         return vipId;
     }
@@ -82,6 +88,30 @@ public class VipBasic {
 
 	public void setPasswd(String passwd) {
 		this.passwd = passwd;
+	}
+
+	public String getAccountName() {
+		return accountName;
+	}
+
+	public void setAccountName(String accountName) {
+		this.accountName = accountName;
+	}
+
+	public String getAccountNo() {
+		return accountNo;
+	}
+
+	public void setAccountNo(String accountNo) {
+		this.accountNo = accountNo;
+	}
+
+	public String getAccountBank() {
+		return accountBank;
+	}
+
+	public void setAccountBank(String accountBank) {
+		this.accountBank = accountBank;
 	}
     
 }

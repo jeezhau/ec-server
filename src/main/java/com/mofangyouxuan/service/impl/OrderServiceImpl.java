@@ -101,22 +101,40 @@ public class OrderServiceImpl implements OrderService{
 	
 	/**
 	 * 根据ID获取订单
-	 * @param orderId
+	 * @param params 需要显示哪些分类字段：needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser
+     * @param orderId
 	 * @return
 	 */
 	@Override
-	public Order get(String orderId) {
-		return this.orderMapper.selectByPrimaryKey(orderId);
+	public Order get(Boolean needReceiver,Boolean needLogistics,Boolean needAppr,Boolean needAfterSales,Boolean needGoodsAndUser,String orderId) {
+		Map<String,Object> params = new HashMap<String,Object>();
+		if(needReceiver != null) {
+			params.put("needReceiver", needReceiver);
+		}
+		if(needLogistics != null) {
+			params.put("needLogistics", needLogistics);
+		}
+		if(needAppr != null) {
+			params.put("needAppr", needAppr);
+		}
+		if(needAfterSales != null) {
+			params.put("needAfterSales", needAfterSales);
+		}
+		if(needGoodsAndUser != null) {
+			params.put("needGoodsAndUser", needGoodsAndUser);
+		}
+		return this.orderMapper.selectByPrimaryKey(params,orderId);
 	}
 	
 	/**
 	 * 根据指定查询条件、排序条件、分页信息获取订单信息
+	 * @param jsonShowGroups	需要显示的字段分组
 	 * @param jsonParams
 	 * @param jsonSorts
 	 * @param pageCond
 	 * @return
 	 */
-	public List<Order> getAll(JSONObject jsonParams,JSONObject jsonSorts,PageCond pageCond){
+	public List<Order> getAll(JSONObject jsonShow,JSONObject jsonParams,JSONObject jsonSorts,PageCond pageCond){
 		String sorts = null;
 		if(jsonSorts != null) {
 			Map<Integer,String> sortMap = new HashMap<Integer,String>();
@@ -176,6 +194,23 @@ public class OrderServiceImpl implements OrderService{
 		}
 		
 		Map<String,Object> params = getSearParamsMap(jsonParams);
+		if(jsonShow != null) {
+			if(jsonShow.containsKey("needReceiver") && jsonShow.get("needReceiver") != null) {
+				params.put("needReceiver", true);
+			}
+			if(jsonShow.containsKey("needLogistics") && jsonShow.get("needLogistics") != null) {
+				params.put("needLogistics", true);
+			}
+			if(jsonShow.containsKey("needAppr") && jsonShow.get("needAppr") != null) {
+				params.put("needAppr", true);
+			}
+			if(jsonShow.containsKey("needAfterSales") && jsonShow.get("needAfterSales") != null) {
+				params.put("needAfterSales", true);
+			}
+			if(jsonShow.containsKey("needGoodsAndUser") && jsonShow.get("needGoodsAndUser") != null) {
+				params.put("needGoodsAndUser", true);
+			}
+		}
 		
 		return this.orderMapper.selectAll(params, sorts, pageCond);
 	}
@@ -271,10 +306,10 @@ public class OrderServiceImpl implements OrderService{
 	 */
 	public JSONObject cancelOrder(Order order,Integer userVipId,Integer mchtVipId,String reason) {
 		JSONObject jsonRet = new JSONObject();
-		Order cancelOrder = new Order();
-		cancelOrder.setOrderId(order.getOrderId());
 		//未支付直接取消
 		if("10".equals(order.getStatus()) || "12".equals(order.getStatus())) {
+			Order cancelOrder = new Order();
+			cancelOrder.setOrderId(order.getOrderId());
 			cancelOrder.setStatus("DS");
 			int cnt = this.orderMapper.updateByPrimaryKeySelective(cancelOrder);
 			if(cnt>0) {
@@ -305,7 +340,7 @@ public class OrderServiceImpl implements OrderService{
 			return jsonRet;
 		}
 		//退款
-		return this.execRefund(false,cancelOrder, oldFlow, userVipId, mchtVipId, "0", reason);
+		return this.execRefund(false,order, oldFlow, userVipId, mchtVipId, "0", reason);
 	}
 	
 	/**
@@ -711,7 +746,7 @@ public class OrderServiceImpl implements OrderService{
 		Date currTime = new Date();
 		Order updOdr = new Order();
 		updOdr.setOrderId(order.getOrderId());
-		updOdr.setScore2User(score);
+		updOdr.setScoreUser(score);
 		updOdr.setApprUserTime(currTime);
 		if(content != null && content.length()>1) {
 			JSONObject asr = new JSONObject();
@@ -720,7 +755,7 @@ public class OrderServiceImpl implements OrderService{
 			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
 			JSONArray asrArr = JSONArray.parseArray(oldAsr);
 			asrArr.add(asr);
-			updOdr.setAppr2User(asrArr.toJSONString());
+			updOdr.setApprUser(asrArr.toJSONString());
 		}
 		int cnt = this.orderMapper.updateByPrimaryKeySelective(updOdr);
 		if(cnt >0) {

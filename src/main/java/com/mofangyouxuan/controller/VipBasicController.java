@@ -18,6 +18,7 @@ import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.utils.SignUtils;
 
 /**
  * 会员信息管理
@@ -26,7 +27,7 @@ import com.mofangyouxuan.service.VipBasicService;
  */
 @RestController
 @RequestMapping("/vip")
-public class VipBasicAction {
+public class VipBasicController {
 	
 	@Autowired
 	private VipBasicService vipBasicService;
@@ -125,4 +126,102 @@ public class VipBasicAction {
 	}
 
 
+	/**
+	 * 更新会员资金操作密码
+	 * @param vipId
+	 * @param passwd
+	 * @return
+	 */
+	@RequestMapping(value="/updpwd",method=RequestMethod.POST)
+	public Object updPasswd(@RequestParam(value="vipId",required=true)Integer vipId,
+			@RequestParam(value="passwd",required=true)String passwd) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			passwd = passwd.trim();
+			if(passwd.length()<6 || passwd.length()>20) {
+				jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
+				jsonRet.put("errmsg", "密码长度为6-20位字符！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(vipId);
+			if(vip == null) {
+				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该会员用户！");
+				return jsonRet.toString();
+			}
+			String passwdSign = SignUtils.encodeSHA256Hex(passwd);
+			int cnt = this.vipBasicService.updPwd(vipId, passwdSign);
+			if(cnt>0) {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			}else {
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+				jsonRet.put("errmsg", "数据库数据保存出错！");
+			}
+		}catch(Exception e) {
+			//数据处理
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+
+	/**
+	 * 更新会员银行提现账户信息
+	 * @param vipId
+	 * @param accountName
+	 * @param accountNo
+	 * @param accountBank
+	 * @return
+	 */
+	@RequestMapping(value="/updact",method=RequestMethod.POST)
+	public Object updAccount(@RequestParam(value="vipId",required=true)Integer vipId,
+			@RequestParam(value="actNm",required=true)String accountName,
+			@RequestParam(value="actNo",required=true)String accountNo,
+			@RequestParam(value="actBlk",required=true)String accountBank) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			accountName = accountName.trim();
+			accountNo = accountNo.trim();
+			accountBank = accountBank.trim();
+			if(accountName.length()<2 || accountName.length()>100) {
+				jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
+				jsonRet.put("errmsg", "账户名长度为2-100位字符！");
+				return jsonRet.toString();
+			}
+			if(accountNo.length()<3 || accountNo.length()>30) {
+				jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
+				jsonRet.put("errmsg", "账户号长度为3-30位字符！");
+				return jsonRet.toString();
+			}
+			if(accountBank.length()<2 || accountBank.length()>100) {
+				jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
+				jsonRet.put("errmsg", "开户行名称长度为2-100位字符！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(vipId);
+			if(vip == null) {
+				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该会员用户！");
+				return jsonRet.toString();
+			}
+			int cnt = this.vipBasicService.updAccount(vipId, accountName, accountNo, accountBank);
+			if(cnt>0) {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			}else {
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+				jsonRet.put("errmsg", "数据库数据保存出错！");
+			}
+		}catch(Exception e) {
+			//数据处理
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
 }

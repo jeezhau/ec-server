@@ -40,10 +40,11 @@ public interface OrderService {
 	
 	/**
 	 * 根据ID获取订单
-	 * @param orderId
+	 * @param params 需要显示哪些分类字段：needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser
+     * @param orderId
 	 * @return
 	 */
-	public Order get(String orderId);
+	public Order get(Boolean needReceiver,Boolean needLogistics,Boolean needAppr,Boolean needAfterSales,Boolean needGoodsAndUser,String orderId);
 	
 	/**
 	 * 根据指定查询条件订单数量
@@ -54,12 +55,13 @@ public interface OrderService {
 	
 	/**
 	 * 根据指定查询条件、排序条件、分页信息获取订单信息
+	 * @param jsonShowGroups	需要显示的字段分组
 	 * @param jsonParams
 	 * @param jsonSorts
 	 * @param pageCond
 	 * @return
 	 */
-	public List<Order> getAll(JSONObject jsonParams,JSONObject jsonSorts,PageCond pageCond);
+	public List<Order> getAll(JSONObject jsonShowGroups,JSONObject jsonParams,JSONObject jsonSorts,PageCond pageCond);
 	
 	/**
 	 * 分状态统计订单数量

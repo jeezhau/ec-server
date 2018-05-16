@@ -49,6 +49,7 @@ wxpay:
 ######系统参数############  
 sys:
   tmp-file-dir: '/Users/jeekhan/mfyx/tmp/'  #系统临时目录
+  user-img-path: '/Users/jeekhan/mfyx/user-img/' #用户图片主目录
   partner-cert-dir: '/Users/jeekhan/mfyx/partner-cert/'   #合作伙伴证件照片主目录
   image-gallery-dir: '/Users/jeekhan/mfyx/image-gallery/' #系统图库主目录
   image-folder-level-limit: 3   #文件夹最多三层
