@@ -226,7 +226,7 @@
         and p.area = #{params.area,jdbcType=VARCHAR}
       </if>        
       <if test="params.postageId != null">
-        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids)>0
+        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids)&gt;0
       </if>
       <if test="params.reviewResult != null">
         and g.review_result = #{params.reviewResult,jdbcType=CHAR}
@@ -255,7 +255,7 @@
         and goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%')
       </if>
       <if test="params.postageId != null">
-        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),postage_ids)>0
+        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),postage_ids)&gt;0
       </if>
       <if test="params.reviewResult != null">
         and review_result = #{params.reviewResult,jdbcType=CHAR}
@@ -305,7 +305,7 @@
         and p.area = #{params.area,jdbcType=VARCHAR}
       </if>        
       <if test="params.postageId != null">
-        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids)>0
+        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids)&gt;0
       </if>
       <if test="params.reviewResult != null">
         and g.review_result = #{params.reviewResult,jdbcType=CHAR}

@@ -4,6 +4,7 @@ package com.mofangyouxuan.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,9 +15,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.ChangeFlow;
-import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
-import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.SignUtils;
 
@@ -32,28 +31,18 @@ public class VipBasicController {
 	@Autowired
 	private VipBasicService vipBasicService;
 	
-	@Autowired
-	private UserBasicService userBasicService;
-	
-	
 	/**
 	 * 获取用户的VIP信息
-	 * @param openId 微信公众号OenID或UnionID或Email
+	 * @param vipId 会员ID
 	 * 
 	 * @return {errcode:0,errmsg:"ok"} 或 {用户所有VIP字段}
 	 * @throws JSONException 
 	 */
-	@RequestMapping(value="/get",method=RequestMethod.POST)
-	public Object getVipBasic(String openId) {
+	@RequestMapping(value="/get/{vipId}")
+	public Object getVipBasic(@PathVariable("vipId")Integer vipId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			UserBasic userBasic = this.userBasicService.get(openId);
-			if(userBasic == null) {
-				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该会员用户！");
-				return jsonRet.toString();
-			}
-			VipBasic vipBasic = this.vipBasicService.get(userBasic.getUserId());
+			VipBasic vipBasic = this.vipBasicService.get(vipId);
 			if(vipBasic == null) {
 				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该会员用户！");
