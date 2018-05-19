@@ -15,17 +15,27 @@ public class VipBasic {
     private Date createTime;
 
     private String status;
-    
+
     private Date updateTime;
-    
+
+    private String phone;
+
+    private String email;
+
     private String passwd;
-    
+
+    private String accountType;
+
+    private String cashType;
+
+    private String idNo;
+
     private String accountName;
-    
+
     private String accountNo;
-    
+
     private String accountBank;
-    
+
     public Integer getVipId() {
         return vipId;
     }
@@ -74,44 +84,83 @@ public class VipBasic {
         this.status = status == null ? null : status.trim();
     }
 
-	public Date getUpdateTime() {
-		return updateTime;
-	}
+    public Date getUpdateTime() {
+        return updateTime;
+    }
 
-	public void setUpdateTime(Date updateTime) {
-		this.updateTime = updateTime;
-	}
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
+    }
 
-	public String getPasswd() {
-		return passwd;
-	}
+    public String getPhone() {
+        return phone;
+    }
 
-	public void setPasswd(String passwd) {
-		this.passwd = passwd;
-	}
+    public void setPhone(String phone) {
+        this.phone = phone == null ? null : phone.trim();
+    }
 
-	public String getAccountName() {
-		return accountName;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public void setAccountName(String accountName) {
-		this.accountName = accountName;
-	}
+    public void setEmail(String email) {
+        this.email = email == null ? null : email.trim();
+    }
 
-	public String getAccountNo() {
-		return accountNo;
-	}
+    public String getPasswd() {
+        return passwd;
+    }
 
-	public void setAccountNo(String accountNo) {
-		this.accountNo = accountNo;
-	}
+    public void setPasswd(String passwd) {
+        this.passwd = passwd == null ? null : passwd.trim();
+    }
 
-	public String getAccountBank() {
-		return accountBank;
-	}
+    public String getAccountType() {
+        return accountType;
+    }
 
-	public void setAccountBank(String accountBank) {
-		this.accountBank = accountBank;
-	}
-    
+    public void setAccountType(String accountType) {
+        this.accountType = accountType == null ? null : accountType.trim();
+    }
+
+    public String getCashType() {
+        return cashType;
+    }
+
+    public void setCashType(String cashType) {
+        this.cashType = cashType == null ? null : cashType.trim();
+    }
+
+    public String getIdNo() {
+        return idNo;
+    }
+
+    public void setIdNo(String idNo) {
+        this.idNo = idNo == null ? null : idNo.trim();
+    }
+
+    public String getAccountName() {
+        return accountName;
+    }
+
+    public void setAccountName(String accountName) {
+        this.accountName = accountName == null ? null : accountName.trim();
+    }
+
+    public String getAccountNo() {
+        return accountNo;
+    }
+
+    public void setAccountNo(String accountNo) {
+        this.accountNo = accountNo == null ? null : accountNo.trim();
+    }
+
+    public String getAccountBank() {
+        return accountBank;
+    }
+
+    public void setAccountBank(String accountBank) {
+        this.accountBank = accountBank == null ? null : accountBank.trim();
+    }
 }

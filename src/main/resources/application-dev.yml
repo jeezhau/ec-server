@@ -45,6 +45,14 @@ wxpay:
   refund-notify-url: ''
   KEY: ''
   wx-fee-rate: 0.007
+
+#信息管理平台
+messmp:
+  messmp-server-url: 'http://localhost:8888'
+  verify-phone-vericode: '/sms/vericode/verify'
+  verify-email-vericode: '/email/vericode/verify'
+  send-phone-resetpwd: '/sms/resetpwd/send'
+  send-email-resetpwd: '/email/resetpwd/send'
   
 ######系统参数############  
 sys:
@@ -55,6 +63,9 @@ sys:
   image-folder-level-limit: 3   #文件夹最多三层
   image-file-all-limit: 100     #每个会员最多可有100个文件（普通文件和目录）
   image-folder-file-limit: 100   #每个文件夹下最多可有100个文件（普通文件和目录）
+  
+  activate-vip-need-score: 100 #激活会员需要多少积分
+  spread-per-user-score: 10 #每推广一个用户可获得多少积分
   
   postage-cnt-limit: 20 #每个合作伙伴可添加的运费模版数量限制
   goods-cnt-limit: 30 #每个合作伙伴可添加的商品数量限制

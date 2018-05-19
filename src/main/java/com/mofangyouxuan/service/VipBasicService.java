@@ -53,12 +53,40 @@ public interface VipBasicService {
 	
 	/**
 	 * 更新提现账户信息
+	 * 
 	 * @param vipId
+	 * @param cashType
+	 * @param accountType
+	 * @param idNo
 	 * @param accountName
 	 * @param accountNo
 	 * @param accountBank
 	 * @return
 	 */
-	public int updAccount(Integer vipId,String accountName,String accountNo,String accountBank);
+	public int updAccount(Integer vipId,String cashType,String accountType,String idNo,String accountName,String accountNo,String accountBank);
+	
+	/**
+	 * 更新手机号
+	 * @param vipId
+	 * @param phone
+	 * @return
+	 */
+	public int updPhone(Integer vipId,String phone);
+	
+	/**
+	 * 更新邮箱
+	 * @param vipId
+	 * @param email
+	 * @return
+	 */
+	public int updEmail(Integer vipId,String email);
+	
+	/**
+	 * 更新会员积分
+	 * @param vipBasic
+	 * @param subScore 需要增加的积分
+	 * @return
+	 */
+	public int updScore(VipBasic vipBasic,Integer subScore);
 	
 }

@@ -3,6 +3,7 @@ package com.mofangyouxuan.service.impl;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,8 @@ public class UserBasicServiceImpl implements UserBasicService{
 	private UserBasicMapper userBasicMapper;
 	@Autowired
 	private VipBasicService vipBasicService;
+	@Value("${sys.spread-per-user-score}")
+	private Integer spreadPerUserScore;
 	
 	/**
 	 * 添加新用户
@@ -37,6 +40,12 @@ public class UserBasicServiceImpl implements UserBasicService{
 			VipBasic vipBasic = new VipBasic();
 			vipBasic.setVipId(id);
 			vipBasicService.add(vipBasic);
+		}
+		if(userBasic.getSenceId() != null) { //有介绍人员
+			VipBasic vip = this.vipBasicService.get(userBasic.getSenceId());
+			if(vip != null) {
+				this.vipBasicService.updScore(vip, spreadPerUserScore);
+			}
 		}
 		return id;
 	}

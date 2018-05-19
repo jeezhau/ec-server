@@ -17,7 +17,7 @@ public class SignUtils {
 	
 	public static String encodeSHA256Hex(String data) throws NoSuchAlgorithmException, UnsupportedEncodingException{
 		byte[] buf = data.getBytes(CHARSET);
-		MessageDigest md = MessageDigest.getInstance("SHA256");
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		byte[] retBuf = md.digest(buf);
 		return Hex.encodeHexString(retBuf);
 	}

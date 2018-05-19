@@ -16,6 +16,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -113,6 +114,12 @@ public class OrderController {
 				}
 				jsonRet.put("errmsg", sb.toString());
 				jsonRet.put("errcode", ErrCodes.RECEIVER_PARAM_ERROR);
+				return jsonRet.toString();
+			}
+			//用户数据检查
+			if(user.getPhone() == null || user.getPhone().length()<6) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "您的联系电话还未补充，请先到个人信息中补充提交，该电话将方便商家与您取得联系！");
 				return jsonRet.toString();
 			}
 			//商品、配送信息检查
@@ -246,6 +253,12 @@ public class OrderController {
 			buyStatistics.put("amount", amount);
 			buyStatistics.put("count", count);
 			buyStatistics.put("weight", weight);
+			//用户数据检查
+			if(user.getPhone() == null || user.getPhone().length()<6) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "您的联系电话还未补充，请先到个人信息中补充提交，该电话将方便商家与您取得联系！");
+				return jsonRet.toString();
+			}
 			//订单数据检查
 			String errStr = this.checkOrderData(goods, applySpec, userId, buyStatistics);
 			if(errStr != null) {
@@ -772,25 +785,7 @@ public class OrderController {
 				jsonRet.put("errmsg", errmsg);
 				return jsonRet.toJSONString();
 			}
-			//密码检查
-			if("1".equals(payType) && "1".equals(userVip.getStatus())) {
-				if(passwd == null || passwd.length()<6) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您的操作密码不可为空！");
-					return jsonRet.toJSONString();
-				}
-				//密码验证
-				if(userVip.getPasswd() == null || userVip.getPasswd().length()<10) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您还未设置资金操作密码，请先到会员中心完成设置！");
-					return jsonRet.toJSONString();
-				}
-				if(!SignUtils.encodeSHA256Hex(passwd).equals(userVip.getPasswd())) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您的资金操作密码输入不正确！");
-					return jsonRet.toJSONString();
-				}
-			}
+			
 			jsonRet = this.orderService.createPay(user, userVip, order, goods.getPartner().getVipId(), payType, userIp);
 			if(payType.equals("2") && jsonRet.getIntValue("errcode") == 0) {
 				Map<String,String> signMap = new HashMap<String,String>();
@@ -805,6 +800,101 @@ public class OrderController {
 				jsonRet.put("timeStamp", timeStamp+"");
 				jsonRet.put("appId", this.wXPay.appId);
 				jsonRet.put("paySign", this.wXPay.signMap(signMap));
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	/**
+	 * 提交余额支付
+	 * @param orderId	订单ID
+	 * @param userId		用户ID
+	 * @param passwd		会员操作密码
+	 * @return {errcode,errmsg}
+	 */
+	@RequestMapping(value="/{userId}/balpay/submit/{orderId}",method=RequestMethod.POST)
+	public Object submitBalPay(@PathVariable(value="orderId",required=true)String orderId,
+			@PathVariable(value="userId",required=true)Integer userId,
+			@RequestParam(value="passwd",required=true)String passwd) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			VipBasic userVip = this.vipBasicService.get(userId);
+			Order order = this.orderService.get(null, null, null, null, true,orderId);
+			Goods goods = this.goodsService.get(true, order.getGoodsId());
+			PayFlow payFlow = this.orderService.getLastedFlow(orderId, "1");
+			if(userVip == null || payFlow == null || order == null || goods == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			
+			if(!userVip.getVipId().equals(payFlow.getUserId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			if(!"00".equals(payFlow.getStatus()) ) {//非待支付
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg", "该订单当前不可进行支付！");
+				return jsonRet;
+			}
+			//密码验证
+			if(userVip.getPasswd() == null || userVip.getPasswd().length()<10) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您还未设置资金操作密码，请先到会员中心完成设置！");
+				return jsonRet.toJSONString();
+			}
+			if(!SignUtils.encodeSHA256Hex(passwd).equals(userVip.getPasswd())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您的资金操作密码输入不正确！");
+				return jsonRet.toJSONString();
+			}
+			this.orderService.submitBalPay(payFlow, userVip,order, goods.getPartner().getVipId());
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	/**
+	 * 获取订单的最新支付流水
+	 * @param orderId	订单ID
+	 * @param userId		用户ID
+	 * @return {errcode,errmsg,payflow:{}}
+	 */
+	@RequestMapping("/{userId}/payflow/{orderId}/{type}")
+	public Object getPayFlow(@PathVariable(value="orderId",required=true)String orderId,
+			@PathVariable(value="userId",required=true)Integer userId,
+			@PathVariable(value="type",required=true)String type) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			UserBasic user = this.userBasicService.get(userId);
+			VipBasic userVip = this.vipBasicService.get(userId);
+			if(user == null || userVip == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			PayFlow payFlow = this.orderService.getLastedFlow(orderId, type);
+			if(payFlow == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该订单的支付流水！");
+			}else if(!user.getUserId().equals(payFlow.getUserId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限查询该数据！");
+				return jsonRet.toJSONString();
+			}else {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+				jsonRet.put("payFlow", payFlow);
 			}
 		}catch(Exception e) {
 			e.printStackTrace();

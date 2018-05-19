@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,8 @@ public class VipBasicServiceImpl implements VipBasicService{
 	private VipBasicMapper vipBasicMapper;
 	@Autowired
 	private ChangeFlowMapper changeFlowMapper;
+	@Value("${sys.activate-vip-need-score}")
+	private Integer activateVipNeedScore;
 	
 	/**
 	 * 添加新会员
@@ -58,11 +61,22 @@ public class VipBasicServiceImpl implements VipBasicService{
 	}
 	
 	/**
-	 * 累积账户信息
+	 * 更新会员积分
+	 * @param vipBasic
+	 * @param subScore 需要增加的积分
+	 * @return
+	 */
+	public int updScore(VipBasic vipBasic,Integer subScore) {
+		int cnt = this.vipBasicMapper.updateScores(vipBasic.getVipId(), subScore);
+		return cnt;
+	}
+	
+	/**
+	 * 累积账户信息 1000 条流水
 	 * @param id
 	 * @return
 	 */
-	public VipBasic updAccount(Integer id) {
+	private VipBasic updBalance(Integer id) {
 		VipBasic vip = this.vipBasicMapper.selectByPrimaryKey(id);
 		if(vip == null) {
 			return null;
@@ -130,6 +144,11 @@ public class VipBasicServiceImpl implements VipBasicService{
 		vip.setBalance(balance);
 		vip.setFreeze(freeze);
 		vip.setUpdateTime(sumTime);
+		if("0".endsWith(vip.getStatus())){
+			if(vip.getScores() >= this.activateVipNeedScore) {
+				vip.setStatus("1"); //激活会员
+			}
+		}
 		this.vipBasicMapper.updateByPrimaryKey(vip);
 		return vip;
 	}
@@ -141,7 +160,7 @@ public class VipBasicServiceImpl implements VipBasicService{
 	 */
 	@Override
 	public VipBasic get(Integer id) {
-		return this.updAccount(id);
+		return this.updBalance(id);
 	}
 	
 	/**
@@ -219,20 +238,64 @@ public class VipBasicServiceImpl implements VipBasicService{
 	 */
 	@Override
 	public int updPwd(Integer vipId,String passwd) {
-		int cnt = this.vipBasicMapper.updPasswd(vipId, passwd);
+		VipBasic vip = new VipBasic();
+		vip.setVipId(vipId);
+		vip.setPasswd(passwd);
+		int cnt = this.vipBasicMapper.updateByPrimaryKeySelective(vip);
 		return cnt;
 	}
 	
 	/**
 	 * 更新提现账户信息
+	 * 
 	 * @param vipId
+	 * @param cashType
+	 * @param accountType
+	 * @param idNo
 	 * @param accountName
 	 * @param accountNo
 	 * @param accountBank
 	 * @return
 	 */
-	public int updAccount(Integer vipId,String accountName,String accountNo,String accountBank) {
-		int cnt = this.vipBasicMapper.updAccount(vipId, accountName, accountNo, accountBank);
+	public int updAccount(Integer vipId,String cashType,String accountType,String idNo,String accountName,String accountNo,String accountBank) {
+		VipBasic vip = new VipBasic();
+		vip.setVipId(vipId);
+		vip.setCashType(cashType);
+		vip.setAccountType(accountType);
+		vip.setIdNo(idNo);
+		vip.setAccountName(accountName);
+		vip.setAccountNo(accountNo);
+		vip.setAccountBank(accountBank);
+		int cnt = this.vipBasicMapper.updateByPrimaryKeySelective(vip);
+		return cnt;
+	}
+	
+	
+	/**
+	 * 更新手机号
+	 * @param vipId
+	 * @param phone
+	 * @return
+	 */
+	public int updPhone(Integer vipId,String phone) {
+		VipBasic vip = new VipBasic();
+		vip.setVipId(vipId);
+		vip.setPhone(phone);
+		int cnt = this.vipBasicMapper.updateByPrimaryKeySelective(vip);
+		return cnt;
+	}
+	
+	/**
+	 * 更新邮箱
+	 * @param vipId
+	 * @param email
+	 * @return
+	 */
+	public int updEmail(Integer vipId,String email) {
+		VipBasic vip = new VipBasic();
+		vip.setVipId(vipId);
+		vip.setEmail(email);
+		int cnt = this.vipBasicMapper.updateByPrimaryKeySelective(vip);
 		return cnt;
 	}
 	

@@ -13,10 +13,12 @@ public class ErrCodes {
 	public static int COMMON_DB_ERROR = -100002;	//数据库处理失败
 	public static int COMMON_PARAM_ERROR = -100003;	//参数格式不正确
 	
+	
 	//用户管理功能码：101
 	public static int USER_PARAM_ERROR = -101001;	//参数格式不正确
 	public static int USER_NO_EXISTS = -101002;	//系统中没有该用户
 	public static int USER_NOT_REVIEW_ADMIN = -101003;	//不是系统审核管理员
+	public static int USER_VIP_VERICODE_ERROR = -101004;	//验证码出现错误
 	
 	
 	//推广二维码功能码：102

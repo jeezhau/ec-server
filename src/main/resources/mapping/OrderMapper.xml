@@ -85,7 +85,7 @@
     <if test="params.needAppr != null">
     ,<include refid="Column_List_Appr" />
     </if>
-    <if test="parmas.needAfterSales != null">
+    <if test="params.needAfterSales != null">
     ,<include refid="Column_List_AfterSales" />
     </if>
     <if test="params.needGoodsAndUser != null">
@@ -124,7 +124,7 @@
       #{dispatchMode,jdbcType=CHAR}, #{postageId,jdbcType=INTEGER}, #{recvName,jdbcType=VARCHAR}, 
       #{recvPhone,jdbcType=VARCHAR}, #{recvCountry,jdbcType=VARCHAR}, #{recvProvince,jdbcType=VARCHAR}, 
       #{recvCity,jdbcType=VARCHAR}, #{recvArea,jdbcType=VARCHAR}, #{recvAddr,jdbcType=VARCHAR}, 
-      #{logisticsComp,jdbcType=VARCHAR}, #{logisticsNo,jdbcType=VARCHAR},#{logistics,jdbcType=LONGVARCHAR} #{sendTime,jdbcType=TIMESTAMP}, 
+      #{logisticsComp,jdbcType=VARCHAR}, #{logisticsNo,jdbcType=VARCHAR},#{logistics,jdbcType=LONGVARCHAR}, #{sendTime,jdbcType=TIMESTAMP}, 
       #{signUser,jdbcType=VARCHAR}, #{signTime,jdbcType=TIMESTAMP}, #{scoreLogistics,jdbcType=INTEGER}, 
       #{scoreGoods,jdbcType=INTEGER}, #{scoreMerchant,jdbcType=INTEGER}, #{appraiseStatus,jdbcType=CHAR}, 
       #{appraiseTime,jdbcType=TIMESTAMP}, #{aftersalesApplyTime,jdbcType=TIMESTAMP}, 
@@ -357,19 +357,19 @@
   <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
     select 
     <include refid="Column_List_Base" />
-    <if test="needReceiver != null">
+    <if test="params.needReceiver != null">
     ,<include refid="Column_List_Receiver" />
     </if>
-    <if test="needLogistics != null">
+    <if test="params.needLogistics != null">
     ,<include refid="Column_List_Logistics" />
     </if>
-    <if test="needAppr != null">
+    <if test="params.needAppr != null">
     ,<include refid="Column_List_Appr" />
     </if>
-    <if test="needAfterSales != null">
+    <if test="params.needAfterSales != null">
     ,<include refid="Column_List_AfterSales" />
     </if>
-    <if test="needGoodsAndUser != null">
+    <if test="params.needGoodsAndUser != null">
     ,<include refid="Column_List_GoodsAndUser" />
     </if>
     from tb_order_info o 

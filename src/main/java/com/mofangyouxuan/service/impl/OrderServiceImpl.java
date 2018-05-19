@@ -438,7 +438,8 @@ public class OrderServiceImpl implements OrderService{
 				jsonRet.put("errmsg", "余额支付失败，余额不足！");
 				return jsonRet;
 			}else {
-				totalAmount = amount.longValue() + fee.longValue();//支付金额
+				fee = new BigDecimal(0);		//余额支付手续费
+				totalAmount = amount.longValue() + fee.longValue();//总支付金额
 				payAccount = userVip.getVipId() + "";
 				outTradeNo = null;
 			}
@@ -459,23 +460,6 @@ public class OrderServiceImpl implements OrderService{
 		newFlow.setPayAmount(amount.longValue());
 		newFlow.setUserId(user.getUserId());
 		newFlow.setStatus("00");
-		if("1".equals(payType)) {//余额支付
-			this.changeFlowService.paySuccess(true, new BigDecimal(totalAmount/100), userVip, 
-					"商品购买【订单号:" + order.getOrderId() + "】", 
-					order.getUserId(), mchtVipId);
-			newFlow.setStatus("11");
-			newFlow.setIncomeAmount(totalAmount);//入账金额，分
-			newFlow.setIncomeTime(payTime);
-			
-			Order newO = new Order();
-			newO.setOrderId(order.getOrderId());
-			newO.setStatus("20"); //支付成功，待发货
-			this.orderMapper.updateByPrimaryKeySelective(newO);
-			
-			//更新库存:减少
-			List<GoodsSpec> buySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
-			this.goodsService.changeSpec(order.getGoodsId(), buySpec, 3, null, null);
-		}
 		int cnt = this.payFlowMapper.insert(newFlow);
 		if(cnt>0) {
 			jsonRet.put("errcode", 0);
@@ -488,6 +472,37 @@ public class OrderServiceImpl implements OrderService{
 			jsonRet.put("errmsg", "数据保存出错！");
 		}
 		return jsonRet;
+	}
+	
+	/**
+	 * 提交余额支付
+	 * @param payFlow
+	 * @param userVip
+	 * @param order
+	 * @param mchtVipId
+	 */
+	@Override
+	public void submitBalPay(PayFlow payFlow,VipBasic userVip,Order order,Integer mchtVipId) {
+		Long totalAmount = payFlow.getPayAmount() + payFlow.getFeeAmount();
+		//添加现金余额流水
+		this.changeFlowService.paySuccess(true, new BigDecimal(totalAmount/100), userVip, 
+				"商品购买【订单号:" + payFlow.getOrderId() + "】", 
+				payFlow.getUserId(), mchtVipId);
+		//更新支付流水
+		payFlow.setStatus("11");	//支付完成
+		payFlow.setIncomeAmount(totalAmount);//入账金额，分
+		payFlow.setIncomeTime(new Date());
+		this.payFlowMapper.updateByPrimaryKeySelective(payFlow);
+		//更新订单
+		Order newO = new Order();
+		newO.setOrderId(payFlow.getOrderId());
+		newO.setStatus("20"); //支付成功，待发货
+		this.orderMapper.updateByPrimaryKeySelective(newO);
+		
+		//更新库存:减少
+		//Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+		List<GoodsSpec> buySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
+		this.goodsService.changeSpec(order.getGoodsId(), buySpec, 3, null, null);
 	}
 	
 	/**

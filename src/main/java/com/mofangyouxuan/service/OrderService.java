@@ -97,6 +97,15 @@ public interface OrderService {
 	public JSONObject createPay(UserBasic user,VipBasic userVip,Order order,Integer mchtVipId,String payType,String ip);
 	
 	/**
+	 * 提交余额支付
+	 * @param payFlow
+	 * @param userVip
+	 * @param order
+	 * @param mchtVipId
+	 */
+	public void submitBalPay(PayFlow payFlow,VipBasic userVip,Order order,Integer mchtVipId);
+	
+	/**
 	 * 客户端支付完成
 	 * @param user
 	 * @param order
