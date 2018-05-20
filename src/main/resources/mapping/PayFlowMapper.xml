@@ -256,8 +256,15 @@
     <include refid="Base_Column_List" /> 
     from tb_pay_flow f
     where f.create_time =(select max(t.create_time) from tb_pay_flow t 
-    		where t.order_id = #{orderId,jdbcType=VARCHAR} and t.pay_type = #{payType,jdbcType=CHAR})
-    and f.order_id = #{orderId,jdbcType=VARCHAR} and f.pay_type = #{payType,jdbcType=CHAR}
+    		where t.order_id = #{orderId,jdbcType=VARCHAR} 
+    		<if test="payType != null">
+    		and t.pay_type = #{payType,jdbcType=CHAR}
+    		</if>
+    		)
+    and f.order_id = #{orderId,jdbcType=VARCHAR} 
+    <if test="payType != null">
+    	and f.pay_type = #{payType,jdbcType=CHAR}
+    	</if>
   </select>
   
   

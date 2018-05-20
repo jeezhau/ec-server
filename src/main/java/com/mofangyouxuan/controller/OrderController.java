@@ -362,6 +362,7 @@ public class OrderController {
 				}
 			}else {
 				applySpec.remove(i);
+				i--;
 			}
 		}
 		buyStatistics.put("count", count);
@@ -868,12 +869,13 @@ public class OrderController {
 	 * 获取订单的最新支付流水
 	 * @param orderId	订单ID
 	 * @param userId		用户ID
+	 * @param type	支付类型：1-消费，2-退款，空则不论
 	 * @return {errcode,errmsg,payflow:{}}
 	 */
-	@RequestMapping("/{userId}/payflow/{orderId}/{type}")
+	@RequestMapping("/{userId}/payflow/{orderId}")
 	public Object getPayFlow(@PathVariable(value="orderId",required=true)String orderId,
 			@PathVariable(value="userId",required=true)Integer userId,
-			@PathVariable(value="type",required=true)String type) {
+			String type) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			UserBasic user = this.userBasicService.get(userId);
@@ -882,6 +884,9 @@ public class OrderController {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
 				return jsonRet.toJSONString();
+			}
+			if(type == null || type.trim().length() == 0) {
+				type = null;
 			}
 			PayFlow payFlow = this.orderService.getLastedFlow(orderId, type);
 			if(payFlow == null) {
@@ -906,7 +911,10 @@ public class OrderController {
 	
 	/**
 	 * 买家取消订单
-	 * 
+	 * 1、会员需要输入密码才可取消；
+	 * 2、如果未付款，则直接取消；如果预付款，则申请原路退款；
+	 * 3、保存退款与取消缘由至售后信息；
+	 * 4、余额支付则直接退款，并解冻商家，修改库存；
 	 * @param orderId	订单ID
 	 * @param userId		用户ID
 	 * @param reason		取消理由
@@ -917,7 +925,7 @@ public class OrderController {
 	public Object cancelOrder(@PathVariable(value="orderId",required=true)String orderId,
 			@PathVariable(value="userId",required=true)Integer userId,
 			@RequestParam(value="reason",required=true)String reason,
-			@RequestParam(value="passwd")String passwd) {
+			String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			VipBasic userVip = this.vipBasicService.get(userId);
@@ -1087,7 +1095,7 @@ public class OrderController {
 			nO.setStatus("30");	//待收货
 			nO.setSendTime(new Date()); //设置发货时间
 			nO.setLogisticsComp(logisticsComp);
-			nO.setLogisticsComp(logisticsComp);
+			nO.setLogisticsNo(logisticsNo);
 			int cnt = this.orderService.update(nO);
 			if(cnt >0) {
 				jsonRet.put("errcode", 0);
@@ -1258,7 +1266,8 @@ public class OrderController {
 				updOdr.setOrderId(order.getOrderId());
 				updOdr.setAftersalesApplyTime(currTime);
 				JSONObject asr = new JSONObject();
-				asr.put("time", currTime);
+				asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
+				asr.put("type", "申请退款");
 				asr.put("content", reason);
 				String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);
@@ -1328,7 +1337,8 @@ public class OrderController {
 			updOdr.setOrderId(order.getOrderId());
 			updOdr.setAftersalesApplyTime(currTime);
 			JSONObject asr = new JSONObject();
-			asr.put("time", currTime);
+			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
+			asr.put("type", "申请换货");
 			asr.put("content", reason);
 			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
 			JSONArray asrArr = JSONArray.parseArray(oldAsr);
@@ -1362,7 +1372,7 @@ public class OrderController {
 	 * @param content	评价内容
 	 * @return {errcode,errmsg}
 	 */
-	@RequestMapping("/{userId}/appraise/{orderId}")
+	@RequestMapping("/{userId}/appr2mcht/{orderId}")
 	public String appraise2Mcht(@PathVariable(value="orderId",required=true)String orderId,
 			@PathVariable(value="userId",required=true)Integer userId,
 			Integer scoreLogistics,Integer scoreMerchant,Integer scoreGoods,String content) {
@@ -1385,7 +1395,7 @@ public class OrderController {
 					sb.append("商品描述得分范围 0-10 分！");
 				}
 			}
-			if(content != null) {
+			if(content != null && content.length()>0) {
 				content = content.trim();
 				if(content.length()<3 || content.length()>600) {
 					sb.append("图文评价内容长度3-600字符！");
@@ -1397,7 +1407,7 @@ public class OrderController {
 				return jsonRet.toJSONString();
 			}
 			UserBasic user = this.userBasicService.get(userId);
-			Order order = this.orderService.get(null, null, true, null, true,orderId);
+			Order order = this.orderService.get(true, true, true, true, true,orderId);
 			if(user == null || order == null ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
@@ -1408,13 +1418,13 @@ public class OrderController {
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
-			if(!order.getStatus().equals("40") && !order.getStatus().equals("55") &&
-					!order.getStatus().equals("41") && !order.getStatus().equals("56") ) {
+			if(!"30".equals(order.getStatus()) && !"31".equals(order.getStatus()) && !"40".equals(order.getStatus()) && !"41".equals(order.getStatus()) && 
+					!"54".equals(order.getStatus()) && !"55".equals(order.getStatus()) && !"56".equals(order.getStatus())) {
 				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 				jsonRet.put("errmsg", "该订单当前不可进行评价！");
 				return jsonRet.toJSONString();
 			}
-			//时间与次数检查
+			//时间与次数检查(天)
 			Long limitApprDaysGap = 1800l;
 			if(order.getStatus().equals("41") || order.getStatus().equals("56")) {
 				Long d = (new Date().getTime()-order.getAppraiseTime().getTime())/1000/3600/24;
@@ -1478,7 +1488,7 @@ public class OrderController {
 					sb.append("得分范围 0-10 分！");
 				}
 			}
-			if(content != null) {
+			if(content != null && content.length()>0) {
 				content = content.trim();
 				if(content.length()<3 || content.length()>600) {
 					sb.append("图文评价内容长度3-600字符！");
@@ -1490,7 +1500,7 @@ public class OrderController {
 				return jsonRet.toJSONString();
 			}
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			Order order = this.orderService.get(null, null, true, null, true,orderId);
+			Order order = this.orderService.get(true, true, true, true, true,orderId);
 			if(partner == null || order == null ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
@@ -1501,22 +1511,21 @@ public class OrderController {
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
-			if(!order.getStatus().equals("40") && !order.getStatus().equals("55") &&
-					!order.getStatus().equals("41") && !order.getStatus().equals("56") ) {
+			if(!order.getStatus().equals("41") && !order.getStatus().equals("56") ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 				jsonRet.put("errmsg", "该订单当前不可进行评价！");
 				return jsonRet.toJSONString();
 			}
 			//时间与次数检查
 			Long limitApprDaysGap = 1800l;
-			if(order.getStatus().equals("41") || order.getStatus().equals("56")) {
-				Long d = (new Date().getTime()-order.getAppraiseTime().getTime())/1000/3600/24;
+			if(order.getApprUserTime() != null) {//已有评价
+				Long d = (new Date().getTime()-order.getApprUserTime().getTime())/1000/3600/24;
 				if(d > limitApprDaysGap) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 					jsonRet.put("errmsg", "该订单当前不可再次进行评价，已经超过期限！");
 					return jsonRet.toJSONString();
 				}
-				String oldCtn = order.getAppraiseInfo();
+				String oldCtn = order.getApprUser();
 				if(oldCtn != null) {
 					if(JSONArray.parseArray(oldCtn).size() >= 3) {//已有三次评价
 						jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
@@ -1615,7 +1624,8 @@ public class OrderController {
 				updOdr.setOrderId(order.getOrderId());
 				updOdr.setAftersalesDealTime(currTime);
 				JSONObject asr = new JSONObject();
-				asr.put("time", currTime);
+				asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
+				asr.put("type", "售后处理");
 				asr.put("content", content);
 				String oldAsr = order.getAftersalesResult()==null ? "[]" : order.getAftersalesResult();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);

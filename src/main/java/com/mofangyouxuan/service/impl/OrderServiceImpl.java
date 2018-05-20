@@ -311,6 +311,16 @@ public class OrderServiceImpl implements OrderService{
 			Order cancelOrder = new Order();
 			cancelOrder.setOrderId(order.getOrderId());
 			cancelOrder.setStatus("DS");
+			JSONObject asr = new JSONObject();
+			Date currTime = new Date();
+			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
+			asr.put("type", "申请取消");
+			asr.put("content", reason);
+			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
+			JSONArray asrArr = JSONArray.parseArray(oldAsr);
+			asrArr.add(asr);
+			cancelOrder.setAftersalesApplyTime(currTime);
+			cancelOrder.setAftersalesReason(asrArr.toJSONString());
 			int cnt = this.orderMapper.updateByPrimaryKeySelective(cancelOrder);
 			if(cnt>0) {
 				jsonRet.put("errcode", 0);
@@ -584,7 +594,7 @@ public class OrderServiceImpl implements OrderService{
 	/**
 	 * 获取指定订单的最新支付流水
 	 * @param orderId
-	 * @param flowType 流水类型：1-支付，2-退款
+	 * @param flowType 流水类型：1-支付，2-退款,可为空
 	 * @return
 	 */
 	@Override
@@ -665,13 +675,14 @@ public class OrderServiceImpl implements OrderService{
 			refundFlow.setFlowType("2");
 			refundFlow.setGoodsId(order.getGoodsId());
 			refundFlow.setOrderId(order.getOrderId());
-			refundFlow.setPayAccount(refundFlow.getPayAccount());
+			refundFlow.setPayAccount(payFlow.getPayAccount());
 			refundFlow.setPayAmount(totalAmount);
-			refundFlow.setUserId(refundFlow.getUserId());
+			refundFlow.setUserId(payFlow.getUserId());
 			
 			updOdr.setOrderId(order.getOrderId());
 			JSONObject asr = new JSONObject();
-			asr.put("time", currTime);
+			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
+			asr.put("type", "申请退款");
 			asr.put("content", reason);
 			if(isMcht) { //商户申请处理退款
 				String oldAsr = order.getAftersalesResult()==null ? "[]" : order.getAftersalesResult();
@@ -716,24 +727,27 @@ public class OrderServiceImpl implements OrderService{
 		//更新订单信息
 		Date currTime = new Date();
 		Order updOdr = new Order();
-		if(order.getStatus().equals("40")) {
+		if("30".equals(order.getStatus()) || "31".equals(order.getStatus()) || "40".equals(order.getStatus()) || "41".equals(order.getStatus())) {
 			updOdr.setStatus("41"); //41:评价完成
 		}else {
 			updOdr.setStatus("56"); //56：评价完成（换货结束）
 		}
+		if("30".equals(order.getStatus()) || "31".equals(order.getStatus()) || "54".equals(order.getStatus()) || "55".equals(order.getStatus())){
+			updOdr.setSignTime(currTime);
+			updOdr.setSignUser(order.getNickname());
+		}
 		updOdr.setOrderId(order.getOrderId());
-		updOdr.setAftersalesApplyTime(currTime);
 		updOdr.setScoreGoods(scoreGoods);
 		updOdr.setScoreLogistics(scoreLogistics);
 		updOdr.setScoreMerchant(scoreMerchant);
 		updOdr.setAppraiseTime(currTime);
 		if(content != null && content.length()>1) {
 			JSONObject asr = new JSONObject();
-			asr.put("time", currTime);
+			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
 			asr.put("content", content);
-			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
+			String oldAsr = order.getAppraiseInfo()==null ? "[]" : order.getAppraiseInfo();
 			JSONArray asrArr = JSONArray.parseArray(oldAsr);
-			asrArr.add(asr);
+			asrArr.add(0, asr);
 			updOdr.setAppraiseInfo(asrArr.toJSONString());
 		}
 		int cnt = this.orderMapper.updateByPrimaryKeySelective(updOdr);
@@ -765,11 +779,11 @@ public class OrderServiceImpl implements OrderService{
 		updOdr.setApprUserTime(currTime);
 		if(content != null && content.length()>1) {
 			JSONObject asr = new JSONObject();
-			asr.put("time", currTime);
+			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
 			asr.put("content", content);
-			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
+			String oldAsr = order.getApprUser()==null ? "[]" : order.getApprUser();
 			JSONArray asrArr = JSONArray.parseArray(oldAsr);
-			asrArr.add(asr);
+			asrArr.add(0,asr);
 			updOdr.setApprUser(asrArr.toJSONString());
 		}
 		int cnt = this.orderMapper.updateByPrimaryKeySelective(updOdr);

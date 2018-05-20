@@ -32,13 +32,14 @@ public class CommonUtil {
 	 * @return
 	 */
 	public static String genOrderId(Integer userId) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmss");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmssSSS"); //17位时间
 		String currTime = sdf.format(new Date());
 		String uId = userId + "";
-		for(int i=0;i<16-uId.length();i++) {
+		int len = 11 - uId.length();
+		for(int i=0;i<len;i++) {	//11位用户
 			uId = "0" + uId;
 		}
-		return currTime + uId;
+		return currTime + uId + NonceStrUtil.getNonceNum(2);
 	}
 	
 	/**
@@ -52,13 +53,15 @@ public class CommonUtil {
 			next = Integer.parseInt(oldId.substring(30));
 		}
 		next += 1;
-		if(next<10) {
+		if(next<99) {
 			return orderId + "0" +next;
 		}
 		return orderId + next;
 	}
 	
 
-	
+	public static void main(String[] args) {
+		System.out.println(genOrderId(100002));
+	}
 
 }
