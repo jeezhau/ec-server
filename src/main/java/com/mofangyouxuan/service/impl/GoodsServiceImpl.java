@@ -34,16 +34,14 @@ public class GoodsServiceImpl implements GoodsService{
 	
 	/**
 	 * 根据ID获取指定商品信息
-	 * @param hasPartner 是否包含合作伙伴信息
+	 * @param needPartner 是否包含合作伙伴信息
+	 * @param isSelf 是否时合作伙伴自己
 	 * @param id
 	 * @return
 	 */
 	@Override
-	public Goods get(boolean hasPartner,Long id){
-		if(hasPartner) {
-			return this.goodsMapper.selectByPrimaryKeyWithPartner(id);
-		}
-		return this.goodsMapper.selectByPrimaryKeyNoPartner(id);
+	public Goods get(Boolean needPartner,Long id,Boolean isSelf){
+		return this.goodsMapper.selectByPrimaryKey(needPartner,id,isSelf);
 	}
 	
 	/**
@@ -114,7 +112,7 @@ public class GoodsServiceImpl implements GoodsService{
 	 */
 	@Override
 	public synchronized int changeSpec(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest){
-		Goods goods = this.get(false, goodsId);
+		Goods goods = this.get(false, goodsId,true);
 		if(goods == null) {
 			return ErrCodes.GOODS_NO_GOODS;
 		}
@@ -197,18 +195,22 @@ public class GoodsServiceImpl implements GoodsService{
 	
 	/**
 	 * 根据指定查询和排序条件分页获取商品信息
-	 * @param hasPartner 是否包含合作伙伴信息
+	 * @param needPartner 是否包含合作伙伴信息
 	 * @param params
 	 * @param sorts
 	 * @param pageCond
 	 * @return
 	 */
 	@Override
-	public List<Goods> getAll(boolean hasPartner,Map<String,Object> params,String sorts,PageCond pageCond){
-		if(hasPartner) {
-			return this.goodsMapper.selectAllWithPartner(params, sorts, pageCond);
+	public List<Goods> getAll(boolean needPartner,Map<String,Object> params,String sorts,PageCond pageCond){
+		if(params == null) {
+			params = new HashMap<String,Object>();
 		}
-		return this.goodsMapper.selectAllNoPartner(params, sorts, pageCond);
+		if(needPartner) { //需要合作伙伴信息
+			params.put("needPartner", true);
+			return this.goodsMapper.selectAll(params, sorts, pageCond);
+		}
+		return this.goodsMapper.selectAll(params, sorts, pageCond);
 	}
 
 	/**

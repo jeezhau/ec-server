@@ -49,7 +49,7 @@
     <result column="user_phone" jdbcType="VARCHAR" property="userPhone" />
     <result column="nickname" jdbcType="VARCHAR" property="nickname" />
     <result column="headimgpath" jdbcType="VARCHAR" property="headimgpath" />
-    
+    <result column="mchtUId" jdbcType="INTEGER" property="mchtUId"/>
   </resultMap>
   
   <sql id="Column_List_Base">
@@ -69,7 +69,7 @@
     o.aftersales_apply_time, o.aftersales_deal_time, o.aftersales_reason, o.aftersales_result
   </sql> 
   <sql id="Column_List_GoodsAndUser">
-    g.goods_name,g.main_img_path goods_main_img_path,g.partner_id,p.busi_name partner_busi_name,
+    g.goods_name,g.main_img_path goods_main_img_path,g.partner_id,p.busi_name partner_busi_name,p.vip_id mchtUId,
     u.phone user_phone,u.nickname,u.headimgurl
   </sql> 
   
@@ -340,6 +340,12 @@
       <if test="params.endSignTime != null">
         and o.sign_time &lt;= concat(#{params.endSignTime,jdbcType=VARCHAR},' 23:59:59')
       </if>
+      <if test="params.partnerStatus != null">
+        and p.status = #{params.partnerStatus,jdbcType=CHAR}
+      </if>
+      <if test="params.goodsStatus != null">
+        and g.status = #{params.goodsStatus,jdbcType=CHAR}
+      </if>
     </where>
   </sql>
   
@@ -385,7 +391,8 @@
   
   <select id="countPartibyStatus" parameterType="map" resultType="map">
    select o.status,count(1) cnt
-   from tb_order_info o inner join tb_goods_info g 
+   from tb_order_info o
+   join tb_goods_info g on o.goods_id = g.goods_id 
    <where>
     <if test="userId != null">
      and o.user_id = #{userId,jdbcType=INTEGER}

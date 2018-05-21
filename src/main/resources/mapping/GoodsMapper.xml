@@ -81,30 +81,26 @@
     g.postage_ids, g.update_time, 
     g.review_result, g.review_log, g.review_opr, g.review_time, g.status, g.memo
   </sql>
-  <sql id="Base_Column_List_with_partner">
-    g.goods_id, g.partner_id, g.category_id,g.goods_name, g.goods_desc, g.main_img_path,g.carousel_img_paths,g.place,g.vender,
-    g.saled_cnt, g.stock_sum, g.price_lowest, g.spec_detail,g.limited_num, g.begin_time,  g.end_time, 
-    g.postage_ids, g.update_time, 
-    g.review_result, g.review_log, g.review_opr, g.review_time, g.status, g.memo,
-    
+  <sql id="Base_Column_Partner">
     p.vip_id, p.country, p.province, p.city, p.area, p.addr, p.busi_name, p.legal_pername, p.legal_peridno, 
     p.comp_type, p.comp_name, p.licence_no, p.cert_dir, p.phone, p.location_x, p.location_y, p.introduce,p.status partner_status
 
   </sql>
     
-  <select id="selectByPrimaryKeyWithPartner" parameterType="java.lang.Long" resultMap="BaseResultMapWithPartner">
+  <select id="selectByPrimaryKey" parameterType="map" resultMap="BaseResultMapWithPartner">
     select 
-    <include refid="Base_Column_List_with_partner" />, '0' as distance 
-    from tb_goods_info g join tb_partner_basic p on g.partner_id = p.partner_id
-    where goods_id = #{goodsId,jdbcType=INTEGER}
-  </select>
-  
-  <select id="selectByPrimaryKeyNoPartner" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    select 
-    <include refid="Base_Column_List" /> 
+    <include refid="Base_Column_List" />
+    <if test="needPartner != null">
+    , <include refid="Base_Column_Partner" />, '0' as distance 
+    </if>
     from tb_goods_info g 
-    where goods_id = #{goodsId,jdbcType=INTEGER}
-  </select>  
+    join tb_partner_basic p on g.partner_id = p.partner_id
+    where g.goods_id = #{goodsId,jdbcType=INTEGER}
+    <if test="isSelf == null or isSelf == false">
+    and p.status = 'S' and g.status='1' and g.review_result = '1'
+    </if>
+  </select>
+   
   
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from tb_goods_info
@@ -203,117 +199,69 @@
     where goods_id = #{goodsId,jdbcType=INTEGER}
   </update>
 
+  <sql id="whereSql">
+    <where>
+      <if test="params.goodsId != null">
+        and g.goods_id = #{goodsId,jdbcType=INTEGER}
+      </if>
+      <if test="params.partnerId != null">
+        and g.partner_id = #{params.partnerId,jdbcType=INTEGER}
+      </if>
+      <if test="params.categoryId != null">
+        and g.category_id = #{params.categoryId,jdbcType=INTEGER}
+      </if>       
+      <if test="params.goodsName != null">
+        and g.goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%')
+      </if>
+      <if test="params.city != null">
+        and p.city = #{params.city,jdbcType=VARCHAR}
+      </if> 
+      <if test="params.area != null">
+        and p.area = #{params.area,jdbcType=VARCHAR}
+      </if>        
+      <if test="params.postageId != null">
+        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids)&gt;0
+      </if>
+      <if test="params.reviewResult != null">
+        and g.review_result = #{params.reviewResult,jdbcType=CHAR}
+      </if>
+      <if test="params.status != null">
+        and g.status = #{params.status,jdbcType=CHAR}
+      </if>
+      <if test="params.partnerStatus != null">
+        and p.status = #{params.partnerStatus,jdbcType=CHAR}
+      </if>
+    </where>
+  </sql>
+  
   <select id="countAll" parameterType="map" resultType="int">
     select count(1)
-    from tb_goods_info g join tb_partner_basic p on g.partner_id = p.partner_id
-    <where>
-      <if test="params.goodsId != null">
-        and g.goods_id = #{goodsId,jdbcType=INTEGER}
-      </if>
-      <if test="params.partnerId != null">
-        and g.partner_id = #{params.partnerId,jdbcType=INTEGER}
-      </if>
-      <if test="params.categoryId != null">
-        and g.category_id = #{params.categoryId,jdbcType=INTEGER}
-      </if>       
-      <if test="params.goodsName != null">
-        and g.goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%')
-      </if>
-      <if test="params.city != null">
-        and p.city = #{params.city,jdbcType=VARCHAR}
-      </if> 
-      <if test="params.area != null">
-        and p.area = #{params.area,jdbcType=VARCHAR}
-      </if>        
-      <if test="params.postageId != null">
-        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids)&gt;0
-      </if>
-      <if test="params.reviewResult != null">
-        and g.review_result = #{params.reviewResult,jdbcType=CHAR}
-      </if>
-      <if test="params.status != null">
-        and g.status = #{params.status,jdbcType=CHAR}
-      </if>
-    </where>
+    from tb_goods_info g 
+    join tb_partner_basic p on g.partner_id = p.partner_id
+    <include refid="whereSql" />
   </select> 
 
-  <select id="selectAllNoPartner" parameterType="map" resultMap="BaseResultMap">
+  
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMapWithPartner">
     select 
      <include refid="Base_Column_List" />
+     <if test="params.needPartner != null">
+	     ,<include refid="Base_Column_Partner" />
+	     <if test="params.city != null">
+	       <if test="params.currUserLocX != null and params.currUserLocY != null ">
+	        , ROUND(sqrt(pow((#{params.currUserLocX,jdbcType=DECIMAL}-p.location_x),2) + pow((#{params.currUserLocY,jdbcType=DECIMAL}-p.location_y),2))*6367000.0)  distance
+	       </if>
+	       <if test="params.currUserLocX == null and params.currUserLocY == null ">
+	        , '' distance
+	       </if>
+	     </if>
+	     <if test="params.city == null ">
+	       , '' as distance
+	     </if>
+     </if>
     from tb_goods_info g 
-    <where>
-      <if test="params.goodsId != null">
-        and goods_id = #{goodsId,jdbcType=INTEGER}
-      </if>
-      <if test="params.partnerId != null">
-        and partner_id = #{params.partnerId,jdbcType=INTEGER}
-      </if>
-      <if test="params.categoryId != null">
-        and category_id = #{params.categoryId,jdbcType=INTEGER}
-      </if>       
-      <if test="params.goodsName != null">
-        and goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%')
-      </if>
-      <if test="params.postageId != null">
-        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),postage_ids)&gt;0
-      </if>
-      <if test="params.reviewResult != null">
-        and review_result = #{params.reviewResult,jdbcType=CHAR}
-      </if>
-      <if test="params.status != null">
-        and `status` = #{params.status,jdbcType=CHAR}
-      </if>
-    </where>
-    <if test="sorts != null">
-      ${sorts} 
-    </if>
-    limit #{pageCond.begin},#{pageCond.pageSize}
-  </select>
-  
-  <select id="selectAllWithPartner" parameterType="map" resultMap="BaseResultMapWithPartner">
-    select 
-     <include refid="Base_Column_List_with_partner" />
-     <if test="params.city != null">
-       <if test="params.currUserLocX != null and params.currUserLocY != null ">
-        , ROUND(sqrt(pow((#{params.currUserLocX,jdbcType=DECIMAL}-p.location_x),2) + pow((#{params.currUserLocY,jdbcType=DECIMAL}-p.location_y),2))*6367000.0)  distance
-       </if>
-       <if test="params.currUserLocX == null and params.currUserLocY == null ">
-        , '' distance
-       </if>
-     </if>
-     <if test="params.city == null ">
-       , '' as distance
-     </if>
-    from tb_goods_info g join tb_partner_basic p on g.partner_id = p.partner_id
-    <where>
-      <if test="params.goodsId != null">
-        and g.goods_id = #{goodsId,jdbcType=INTEGER}
-      </if>
-      <if test="params.partnerId != null">
-        and g.partner_id = #{params.partnerId,jdbcType=INTEGER}
-      </if>
-      <if test="params.categoryId != null">
-        and g.category_id = #{params.categoryId,jdbcType=INTEGER}
-      </if>       
-      <if test="params.goodsName != null">
-        and g.goods_name like concat('%',#{params.goodsName,jdbcType=VARCHAR},'%')
-      </if>
-      <if test="params.city != null">
-        and p.city = #{params.city,jdbcType=VARCHAR}
-      </if> 
-      <if test="params.area != null">
-        and p.area = #{params.area,jdbcType=VARCHAR}
-      </if>        
-      <if test="params.postageId != null">
-        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids)&gt;0
-      </if>
-      <if test="params.reviewResult != null">
-        and g.review_result = #{params.reviewResult,jdbcType=CHAR}
-      </if>
-      <if test="params.status != null">
-        and g.status = #{params.status,jdbcType=CHAR}
-      </if>
-    </where>
+    join tb_partner_basic p on g.partner_id = p.partner_id
+    <include refid="whereSql"/>
     <if test="sorts != null">
       ${sorts} 
     </if>

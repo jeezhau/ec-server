@@ -227,7 +227,7 @@ public class GoodsController {
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-			Goods old = this.goodsService.get(false,goods.getGoodsId());
+			Goods old = this.goodsService.get(false,goods.getGoodsId(),true);
 			if(old == null) {
 				jsonRet.put("errcode", ErrCodes.GOODS_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该商品信息！");
@@ -328,20 +328,26 @@ public class GoodsController {
 	
 	/**
 	 * 根据ID获取商品信息
-	 * @param hasPartner 是否包含合作伙伴信息
+	 * @param needPartner 是否包含合作伙伴信息
 	 * @param goodsId
 	 * @return {"errcode":-1,"errmsg":"错误信息",goods:{...}} 
 	 */
-	@RequestMapping("/get/{goodsId}/{hasPartner}")
-	public Object getByID(@PathVariable("goodsId")Long goodsId,@PathVariable("hasPartner")String hasPartner) {
+	@RequestMapping("/get/{goodsId}/{isSelf}/{needPartner}")
+	public Object getByID(@PathVariable("goodsId")Long goodsId,
+			@PathVariable("isSelf")String isSelf,
+			@PathVariable("needPartner")String needPartner) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			Goods goods = null;
-			if(hasPartner != null && "1".equals(hasPartner)) {
-				goods = this.goodsService.get(true,goodsId);
-			}else {
-				goods = this.goodsService.get(false,goodsId);
+			Boolean needPt = null;
+			Boolean isSlf = null;
+			if(needPartner != null && "1".equals(needPartner)) {
+				needPt = true;
 			}
+			if(isSelf != null && "1".equals(isSelf)) {
+				isSlf = true;
+			}
+			goods = this.goodsService.get(needPt,goodsId,isSlf);
 			
 			if(goods == null) {
 				jsonRet.put("errcode", ErrCodes.GOODS_NO_EXISTS);
@@ -419,7 +425,7 @@ public class GoodsController {
 			}
 			List<Goods> list = new ArrayList<Goods>();
 			for(Long id:okSet) {
-				Goods g = this.goodsService.get(false,id);
+				Goods g = this.goodsService.get(false,id,true);
 				if(g != null && g.getPartnerId().equals(partner.getPartnerId())) {
 					list.add(g);
 				}else {
@@ -475,7 +481,7 @@ public class GoodsController {
 				jsonRet.put("errmsg", "该用户不是审核管理员！");
 				return jsonRet.toString();
 			}
-			Goods old = this.goodsService.get(false,goodsId);
+			Goods old = this.goodsService.get(false,goodsId,true);
 			if(old == null || !"0".equals(old.getReviewResult())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
 				jsonRet.put("errmsg", "该商品不存在或状态不正确！");
@@ -522,7 +528,7 @@ public class GoodsController {
 				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
 				return jsonRet.toString();
 			}
-			Goods goods = this.goodsService.get(false, goodsId);
+			Goods goods = this.goodsService.get(false, goodsId,true);
 			if(goods == null || !goods.getPartnerId().equals(partnerId)) {
 				jsonRet.put("errmsg", "您没有权限执行该操作！");
 				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
@@ -572,17 +578,19 @@ public class GoodsController {
 		return jsonRet.toString();
 	}
 	
-	private Object searchGoods(boolean hasPartner,String jsonSearchParams,String jsonSortParams,String jsonPageCond) {
+	private Object searchGoods(boolean needPartner,String jsonSearchParams,String jsonSortParams,String jsonPageCond) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			Map<String,Object> params = new HashMap<String,Object>();
 			params.put("reviewResult", "1");	//默认审核通过
 			params.put("status", "1");	//默认已上架
+			params.put("partnerStatus", "S"); //合作伙伴状态为审核通过
 			if(jsonSearchParams != null && jsonSearchParams.length()>0) {
 				JSONObject jsonSearch = JSONObject.parseObject(jsonSearchParams);
 				if(jsonSearch.containsKey("isSelf") && jsonSearch.getBooleanValue("isSelf")) {//合作伙伴自己
 					params.put("reviewResult", null);
 					params.put("status", null);
+					params.put("partnerStatus", null);
 				}
 				if(jsonSearch.containsKey("reviewResult")) {
 					params.put("reviewResult", jsonSearch.getString("reviewResult"));
@@ -674,7 +682,7 @@ public class GoodsController {
 			jsonRet.put("errcode", ErrCodes.GOODS_NO_GOODS);
 			jsonRet.put("errmsg", "没有获取到商品信息！");
 			if(cnt>0) {
-				List<Goods> list = this.goodsService.getAll(hasPartner,params, strSorts, pageCond);
+				List<Goods> list = this.goodsService.getAll(needPartner,params, strSorts, pageCond);
 				if(list != null && list.size()>0) {
 					jsonRet.put("datas", list);
 					jsonRet.put("errcode", 0);

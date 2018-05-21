@@ -612,7 +612,7 @@ public class OrderServiceImpl implements OrderService{
 	 * @param payFlow	支付流水
 	 * @param userVipId	买家会员账户
 	 * @param mchtVipId	卖家会员ID
-	 * @param type		退款类型 ：0-买家取消，1-卖家未发货，2-买家未收到货，3-买家收货后不满意，卖家同意
+	 * @param type		退款类型 ：0-买家取消，3-买家申请，卖家同意
 	 * @param reason		退款理由，对于收货退款，其中包含退款方式与快递信息
 	 * @return
 	 */
@@ -630,12 +630,8 @@ public class OrderServiceImpl implements OrderService{
 			updOdr.setStatus("65"); //65 退款完成
 			if("0".equals(type)) {
 				changeReason = "买家取消全额退款";
-			}else if("1".equals(type)) {//未发货退款
-				changeReason = "卖家限时未发货全额退款";
-			}else if("2".equals(type)) {//未收到货退款
-				changeReason = "买家限时未收到货全额退款";
 			}else { //3-收货后退款
-				changeReason = "买家收货后申请全额退款";
+				changeReason = "卖家申请全额退款";
 			}
 			//账户余额退款
 			this.changeFlowService.refundSuccess(true, new BigDecimal(totalAmount/100), 
@@ -736,6 +732,9 @@ public class OrderServiceImpl implements OrderService{
 			updOdr.setSignTime(currTime);
 			updOdr.setSignUser(order.getNickname());
 		}
+		if(updOdr.getAppraiseStatus() == null || "0".equals(updOdr.getAppraiseStatus())) {
+			updOdr.setAppraiseStatus("1");
+		}
 		updOdr.setOrderId(order.getOrderId());
 		updOdr.setScoreGoods(scoreGoods);
 		updOdr.setScoreLogistics(scoreLogistics);
@@ -777,6 +776,9 @@ public class OrderServiceImpl implements OrderService{
 		updOdr.setOrderId(order.getOrderId());
 		updOdr.setScoreUser(score);
 		updOdr.setApprUserTime(currTime);
+		if(updOdr.getAppraiseStatus() == null || "0".equals(updOdr.getAppraiseStatus())) {
+			updOdr.setAppraiseStatus("1");
+		}
 		if(content != null && content.length()>1) {
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));

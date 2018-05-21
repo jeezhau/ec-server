@@ -123,10 +123,15 @@ public class OrderController {
 				return jsonRet.toString();
 			}
 			//商品、配送信息检查
-			Goods goods = this.goodsService.get(true, order.getGoodsId());
+			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
 			if(goods == null || !"1".equals(goods.getStatus()) || !"1".equals(goods.getReviewResult())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
 				jsonRet.put("errmsg", "您的购买商品当前不支持下单购买！");
+				return jsonRet.toString();
+			}
+			if(user.getUserId().equals(goods.getPartner().getVipId())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
+				jsonRet.put("errmsg", "您不可以购买自己的商品！");
 				return jsonRet.toString();
 			}
 			Receiver receiver = this.receiverService.getById(order.getRecvId());
@@ -235,7 +240,7 @@ public class OrderController {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			UserBasic user = userBasicService.get(userId);
-			Goods goods = goodsService.get(true, goodsId);
+			Goods goods = goodsService.get(true, goodsId,false);
 			Receiver receiver = receiverService.getById(recvId);
 			String postageIds = goods.getPostageIds();
 			List<Postage> postages = postageService.getByIdList(postageIds);
@@ -257,6 +262,11 @@ public class OrderController {
 			if(user.getPhone() == null || user.getPhone().length()<6) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				jsonRet.put("errmsg", "您的联系电话还未补充，请先到个人信息中补充提交，该电话将方便商家与您取得联系！");
+				return jsonRet.toString();
+			}
+			if(user.getUserId().equals(goods.getPartner().getVipId())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
+				jsonRet.put("errmsg", "您不可以购买自己的商品！");
 				return jsonRet.toString();
 			}
 			//订单数据检查
@@ -754,7 +764,7 @@ public class OrderController {
 			UserBasic user = this.userBasicService.get(userId);
 			VipBasic userVip = this.vipBasicService.get(userId);
 			Order order = this.orderService.get(null, null, null, null, true,orderId);
-			Goods goods = this.goodsService.get(true, order.getGoodsId());
+			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
 			if(user == null || userVip == null || order == null || goods == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
@@ -825,7 +835,7 @@ public class OrderController {
 		try {
 			VipBasic userVip = this.vipBasicService.get(userId);
 			Order order = this.orderService.get(null, null, null, null, true,orderId);
-			Goods goods = this.goodsService.get(true, order.getGoodsId());
+			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
 			PayFlow payFlow = this.orderService.getLastedFlow(orderId, "1");
 			if(userVip == null || payFlow == null || order == null || goods == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
@@ -985,7 +995,7 @@ public class OrderController {
 			UserBasic user = this.userBasicService.get(userId);
 			VipBasic userVip = this.vipBasicService.get(userId);
 			Order order = this.orderService.get(null, null, null, null, true,orderId);
-			Goods goods = this.goodsService.get(true, order.getGoodsId());
+			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
 			if(user == null || userVip == null || order == null || goods == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
@@ -1145,7 +1155,7 @@ public class OrderController {
 	}	
 	
 	/**
-	 * 买家申请退款
+	 * 买家申请退款(退货)
 	 * 
 	 * @param orderId	订单ID
 	 * @param userId		用户ID
@@ -1191,18 +1201,18 @@ public class OrderController {
 			if("1".equals(userVip.getStatus())) {
 				if(passwd == null || passwd.length()<6) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您的基金操作密码不可为空！");
+					jsonRet.put("errmsg", "您的会员操作密码不可为空！");
 					return jsonRet.toJSONString();
 				}
 				//密码验证
 				if(userVip.getPasswd() == null || userVip.getPasswd().length()<10) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您还未设置资金操作密码，请先到会员中心完成设置！");
+					jsonRet.put("errmsg", "您还未设置会员操作密码，请先到会员中心完成设置！");
 					return jsonRet.toJSONString();
 				}
 				if(!SignUtils.encodeSHA256Hex(passwd).equals(userVip.getPasswd())) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您的资金操作密码输入不正确！");
+					jsonRet.put("errmsg", "您的会员操作密码输入不正确！");
 					return jsonRet.toJSONString();
 				}
 			}
@@ -1216,11 +1226,10 @@ public class OrderController {
 			//订单与退款类型检查
 			if("1".equals(type)) {//买家未收到货
 				//订单状态检查
-				if(!"20".equals(order.getStatus()) && "21".equals(order.getStatus()) &&
-						!"22".equals(order.getStatus()) && !"30".equals(order.getStatus()) &&
+				if(!order.getStatus().startsWith("2") && !"30".equals(order.getStatus()) &&
 						!"54".equals(order.getStatus()) ) {
 					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-					jsonRet.put("errmsg", "您当前不可执行退款申请操作！");
+					jsonRet.put("errmsg", "您当前不可执行未收到货退款申请操作！");
 					return jsonRet.toJSONString();
 				}
 				if("20".equals(order.getStatus()) || "21".equals(order.getStatus())) {//未发货
@@ -1228,60 +1237,69 @@ public class OrderController {
 					Long d = (new Date().getTime()-payTime.getTime())/1000/3600/24;
 					if(d < this.noDeliveryDates4Refund) {
 						jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-						jsonRet.put("errmsg", "还未到最后发货时间限制，您不可申请退款！");
+						jsonRet.put("errmsg", "还未到最后发货时间限制，您可与卖家联系，然后执行订单取消！");
 						return jsonRet.toJSONString();
 					}
-				}else if("30".equals(order.getStatus()) || "54".equals(order.getStatus())) {//发货未收到
+				}else if("22".equals(order.getStatus()) || "30".equals(order.getStatus()) || "54".equals(order.getStatus())) {//发货未收到
 					Long d = null;
-					if("30".equals(order.getStatus())) {
-						d = (new Date().getTime()-order.getSendTime().getTime())/1000/3600/24;
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+					if("22".equals(order.getStatus()) || "30".equals(order.getStatus())) {
+						d = (new Date().getTime() - sdf.parse(order.getSendTime()).getTime())/1000/3600/24;
 					}else {
-						d = (new Date().getTime()-order.getAftersalesDealTime().getTime())/1000/3600/24;
+						d = (new Date().getTime() - sdf.parse(order.getAftersalesDealTime()).getTime())/1000/3600/24;
 					}
 					if(d < this.noSignDates4Refund) {
 						jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-						jsonRet.put("errmsg", "还未到最后收货时间限制，您不可申请退款！");
+						jsonRet.put("errmsg", "还未到最后收货时间限制，您不可申请退款，您可与卖家联系要求作出处理！");
 						return jsonRet.toJSONString();
 					}
-					type = "2";
+					type = "2";  //发货未收到
 				}
 			}else {//签收后退货
 				//订单状态检查
 				if(!"31".equals(order.getStatus()) && !order.getStatus().startsWith("4") &&
 						!"55".equals(order.getStatus()) && !"56".equals(order.getStatus()) ) {
 					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-					jsonRet.put("errmsg", "您当前不可执行退款申请操作！");
+					jsonRet.put("errmsg", "您当前不可执行退货退款申请操作！");
 					return jsonRet.toJSONString();
 				}
 			}
 			
-			//退款处理
-			if("1".equals(type) || "2".equals(type)) { //直接退款
-				jsonRet = this.orderService.execRefund(false, order, payFlow, userVip.getVipId(), partner.getVipId(), type, reason);
-			}else {  //提交申请至卖家处理
+//			//退款处理
+//			if("1".equals(type) || "2".equals(type)) { //直接退款
+//				jsonRet = this.orderService.execRefund(false, order, payFlow, userVip.getVipId(), partner.getVipId(), type, reason);
+//			}else {  //提交申请至卖家处理
 				//更新订单信息
-				Date currTime = new Date();
-				Order updOdr = new Order();
-				updOdr.setStatus("61"); //61:退款受理中、等待退货
-				updOdr.setOrderId(order.getOrderId());
-				updOdr.setAftersalesApplyTime(currTime);
-				JSONObject asr = new JSONObject();
-				asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
-				asr.put("type", "申请退款");
-				asr.put("content", reason);
-				String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
-				JSONArray asrArr = JSONArray.parseArray(oldAsr);
-				asrArr.add(asr);
-				updOdr.setAftersalesReason(asrArr.toJSONString());
-				int cnt = this.orderService.update(updOdr);
-				if(cnt >0) {
-					jsonRet.put("errcode", 0);
-					jsonRet.put("errmsg", "ok");
-				}else {
-					jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-					jsonRet.put("errmsg", "数据库保存数据出错！");
-				}
+			String typeStr = "";
+			if("1".equals(type)) {
+				typeStr = "卖家未发货，买家申请退款";
+			}else if("2".equals(type)) {
+				typeStr = "卖家已发货，买家超时未收到货申请退款";
+			}else {
+				typeStr = "买家已签收，申请退货退款";
 			}
+			Date currTime = new Date();
+			Order updOdr = new Order();
+			updOdr.setStatus("61"); //61:退款受理中
+			updOdr.setOrderId(order.getOrderId());
+			updOdr.setAftersalesApplyTime(currTime);
+			JSONObject asr = new JSONObject();
+			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
+			asr.put("type", typeStr);
+			asr.put("content", reason);
+			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
+			JSONArray asrArr = JSONArray.parseArray(oldAsr);
+			asrArr.add(asr);
+			updOdr.setAftersalesReason(asrArr.toJSONString());
+			int cnt = this.orderService.update(updOdr);
+			if(cnt >0) {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			}else {
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+				jsonRet.put("errmsg", "数据库保存数据出错！");
+			}
+			
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
@@ -1327,7 +1345,7 @@ public class OrderController {
 			}
 			if(!order.getStatus().equals("40") && !order.getStatus().equals("41") ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "该订单当前不可申请换货！");
+				jsonRet.put("errmsg", "该订单当前不可申请换货（未签收）！");
 				return jsonRet.toJSONString();
 			}
 			//更新订单信息
@@ -1427,7 +1445,8 @@ public class OrderController {
 			//时间与次数检查(天)
 			Long limitApprDaysGap = 1800l;
 			if(order.getStatus().equals("41") || order.getStatus().equals("56")) {
-				Long d = (new Date().getTime()-order.getAppraiseTime().getTime())/1000/3600/24;
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+				Long d = (new Date().getTime() - sdf.parse(order.getAppraiseTime()).getTime())/1000/3600/24;
 				if(d > limitApprDaysGap) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 					jsonRet.put("errmsg", "该订单当前不可再次进行评价，已经超过期限！");
@@ -1519,7 +1538,8 @@ public class OrderController {
 			//时间与次数检查
 			Long limitApprDaysGap = 1800l;
 			if(order.getApprUserTime() != null) {//已有评价
-				Long d = (new Date().getTime()-order.getApprUserTime().getTime())/1000/3600/24;
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+				Long d = (new Date().getTime() - sdf.parse(order.getApprUserTime()).getTime())/1000/3600/24;
 				if(d > limitApprDaysGap) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 					jsonRet.put("errmsg", "该订单当前不可再次进行评价，已经超过期限！");
@@ -1647,7 +1667,7 @@ public class OrderController {
 			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
 		}
 		return jsonRet.toString();
-	} 
+	}
 }
 
 

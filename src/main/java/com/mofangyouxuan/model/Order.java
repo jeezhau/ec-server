@@ -1,6 +1,7 @@
 package com.mofangyouxuan.model;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.validation.constraints.NotNull;
@@ -120,6 +121,8 @@ public class Order {
     private String headimgurl;
     
     private String nickname;
+    
+    private Integer mchtUId;
 
     public String getOrderId() {
         return orderId;
@@ -169,8 +172,11 @@ public class Order {
         this.amount = amount;
     }
 
-    public Date getCreateTime() {
-        return createTime;
+    public String getCreateTime() {
+    		if(createTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(createTime);
     }
 
     public void setCreateTime(Date createTime) {
@@ -281,8 +287,11 @@ public class Order {
         this.logisticsNo = logisticsNo == null ? null : logisticsNo.trim();
     }
 
-    public Date getSendTime() {
-        return sendTime;
+    public String getSendTime() {
+    		if(sendTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(sendTime);
     }
 
     public void setSendTime(Date sendTime) {
@@ -297,8 +306,11 @@ public class Order {
         this.signUser = signUser == null ? null : signUser.trim();
     }
 
-    public Date getSignTime() {
-        return signTime;
+    public String getSignTime() {
+    		if(signTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(signTime);
     }
 
     public void setSignTime(Date signTime) {
@@ -337,24 +349,33 @@ public class Order {
         this.appraiseStatus = appraiseStatus == null ? null : appraiseStatus.trim();
     }
 
-    public Date getAppraiseTime() {
-        return appraiseTime;
+    public String getAppraiseTime() {
+    		if(appraiseTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(appraiseTime);
     }
 
     public void setAppraiseTime(Date appraiseTime) {
         this.appraiseTime = appraiseTime;
     }
 
-    public Date getAftersalesApplyTime() {
-        return aftersalesApplyTime;
+    public String getAftersalesApplyTime() {
+    		if(aftersalesApplyTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(aftersalesApplyTime);
     }
 
     public void setAftersalesApplyTime(Date aftersalesApplyTime) {
         this.aftersalesApplyTime = aftersalesApplyTime;
     }
 
-    public Date getAftersalesDealTime() {
-        return aftersalesDealTime;
+    public String getAftersalesDealTime() {
+    	    if(aftersalesDealTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(aftersalesDealTime);
     }
 
     public void setAftersalesDealTime(Date aftersalesDealTime) {
@@ -404,8 +425,11 @@ public class Order {
 	}
 
 	
-	public Date getApprUserTime() {
-		return apprUserTime;
+	public String getApprUserTime() {
+		if(apprUserTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(apprUserTime);
 	}
 
 	public void setApprUserTime(Date apprUserTime) {
@@ -483,6 +507,15 @@ public class Order {
 	public void setNickname(String nickname) {
 		this.nickname = nickname;
 	}
+
+	public Integer getMchtUId() {
+		return mchtUId;
+	}
+
+	public void setMchtUId(Integer mchtUId) {
+		this.mchtUId = mchtUId;
+	}
     
+	
 	
 }
