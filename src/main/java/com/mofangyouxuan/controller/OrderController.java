@@ -402,12 +402,12 @@ public class OrderController {
 			BigDecimal lon2 = receiver.getLocationX();
 			BigDecimal lat2 = receiver.getLocationX();
 			if(lon1 != null && lat1 != null && lon2 != null && lat2 != null) {
-				double hsinX = Math.sin((lon1.doubleValue() - lon2.doubleValue()) * 0.5);
-		        double hsinY = Math.sin((lat1.doubleValue() - lat2.doubleValue()) * 0.5);
-		        double h = hsinY * hsinY +
-		                (Math.cos(lat1.doubleValue()) * Math.cos(lat2.doubleValue()) * hsinX * hsinX);
-		        distance = (int)(2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)) * 6367);
-		        
+//				double hsinX = Math.sin((lon1.doubleValue() - lon2.doubleValue()) * 0.5);
+//		        double hsinY = Math.sin((lat1.doubleValue() - lat2.doubleValue()) * 0.5);
+//		        double h = hsinY * hsinY +
+//		                (Math.cos(lat1.doubleValue()) * Math.cos(lat2.doubleValue()) * hsinX * hsinX);
+//		        distance = (int)(2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)) * 6367);
+//		        
 		        double dx = lon1.doubleValue() - lon2.doubleValue(); // 经度差值
 		        double dy = lat1.doubleValue() - lat2.doubleValue(); // 纬度差值
 		        double b = (lat1.doubleValue() + lat2.doubleValue()) / 2.0; // 平均纬度
@@ -1168,7 +1168,7 @@ public class OrderController {
 	public Object applyRefund(@PathVariable(value="orderId",required=true)String orderId,
 			@PathVariable(value="userId",required=true)Integer userId,
 			@RequestParam(value="type",required=true)String type,
-			@RequestParam(value="reason",required=true)String reason,
+			@RequestParam(value="content",required=true)String content,
 			@RequestParam(value="passwd")String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -1177,13 +1177,30 @@ public class OrderController {
 				jsonRet.put("errmsg", "退款类型取值不正确！");
 				return jsonRet.toJSONString();
 			}
-			reason = reason.trim();
-			if(reason.length()<3 || reason.length()>1000) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "内容描述3-1000字符！");
-				return jsonRet.toJSONString();
+			content = content.trim();
+			JSONObject asCtn = JSONObject.parseObject(content);
+			if("3".equals(type)) { //退货
+				if(null == asCtn.getInteger("dispatchMode") || asCtn.getInteger("dispatchMode") < 1 || asCtn.getInteger("dispatchMode") > 4) {
+					jsonRet.put("errmsg", "配送类型不正确(1-官方统一配送、2-商家自行配送、3-快递配送、4-自取)！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsComp") == null || asCtn.getString("logisticsComp").length()<1) {
+					jsonRet.put("errmsg", "配送方名称不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsNo") == null || asCtn.getString("logisticsNo").length()<1) {
+					jsonRet.put("errmsg", "物流单号不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
 			}
-			
+			if(asCtn.getString("reason") == null || asCtn.getString("reason").length()<3) {
+				jsonRet.put("errmsg", "退款理由不可少于3个字符！");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				return jsonRet.toString();
+			}
 			VipBasic userVip = this.vipBasicService.get(userId);
 			Order order = this.orderService.get(null, null, null, true, true,orderId);
 			PartnerBasic partner = this.partnerBasicService.getByID(order.getPartnerId());
@@ -1286,7 +1303,7 @@ public class OrderController {
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
 			asr.put("type", typeStr);
-			asr.put("content", reason);
+			asr.put("content", asCtn);
 			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
 			JSONArray asrArr = JSONArray.parseArray(oldAsr);
 			asrArr.add(asr);
@@ -1315,20 +1332,36 @@ public class OrderController {
 	 * 
 	 * @param orderId	订单ID
 	 * @param userId		用户ID
-	 * @param reason		换货理由，包含快递信息{reason,dispatchMode,logisticsComp,logisticsNo}
+	 * @param content		换货理由，包含快递信息{reason,dispatchMode,logisticsComp,logisticsNo}
 	 * @return {errcode,errmsg}
 	 */
 	@RequestMapping("/{userId}/exchange/{orderId}")
 	public Object exchange(@PathVariable(value="orderId",required=true)String orderId,
 			@PathVariable(value="userId",required=true)Integer userId,
-			@RequestParam(value="reason",required=true)String reason) {
+			@RequestParam(value="content",required=true)String content) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			reason = reason.trim();
-			if(reason.length()<3 || reason.length()>1000) {
+			content = content.trim();
+			JSONObject asCtn = JSONObject.parseObject(content);
+			if(null == asCtn.getInteger("dispatchMode") || asCtn.getInteger("dispatchMode") < 1 || asCtn.getInteger("dispatchMode") > 4) {
+				jsonRet.put("errmsg", "配送类型不正确(1-官方统一配送、2-商家自行配送、3-快递配送、4-自取)！");
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "内容描述3-1000字符！");
-				return jsonRet.toJSONString();
+				return jsonRet.toString();
+			}
+			if(asCtn.getString("logisticsComp") == null || asCtn.getString("logisticsComp").length()<1) {
+				jsonRet.put("errmsg", "配送方名称不可为空！");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				return jsonRet.toString();
+			}
+			if(asCtn.getString("logisticsNo") == null || asCtn.getString("logisticsNo").length()<1) {
+				jsonRet.put("errmsg", "物流单号不可为空！");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				return jsonRet.toString();
+			}
+			if(asCtn.getString("reason") == null || asCtn.getString("reason").length()<3) {
+				jsonRet.put("errmsg", "退款理由不可少于3个字符！");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				return jsonRet.toString();
 			}
 			
 			UserBasic user = this.userBasicService.get(userId);
@@ -1357,7 +1390,7 @@ public class OrderController {
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
 			asr.put("type", "申请换货");
-			asr.put("content", reason);
+			asr.put("content", asCtn);
 			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
 			JSONArray asrArr = JSONArray.parseArray(oldAsr);
 			asrArr.add(asr);

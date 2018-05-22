@@ -411,7 +411,7 @@ public class PostageAction {
 				jsonRet.put("errmsg", "系统中没有该模版信息！");
 				return jsonRet.toString();
 			}
-			if(!postage.getPartnerId().equals(partner.getPartnerId())) {
+			if(!postage.getPartnerId().equals(partner.getPartnerId()) ) {
 				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您无权执行该操作！");
 				return jsonRet.toString();

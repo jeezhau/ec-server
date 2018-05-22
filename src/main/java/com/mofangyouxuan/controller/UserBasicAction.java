@@ -230,7 +230,7 @@ public class UserBasicAction {
 	}
 	
 	/**
-	 * 根据OpenId或UnionId或Email获取用户的基本信息
+	 * 根据OpenId或UnionId、Email或Phone获取用户的基本信息
 	 * @param openId
 	 * 
 	 * @return {errcode:0,errmsg:"ok"} 或 {用户所有字段}

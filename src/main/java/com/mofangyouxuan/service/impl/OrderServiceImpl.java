@@ -315,7 +315,9 @@ public class OrderServiceImpl implements OrderService{
 			Date currTime = new Date();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
 			asr.put("type", "申请取消");
-			asr.put("content", reason);
+			JSONObject ctn = new JSONObject();
+			ctn.put("reason", reason);
+			asr.put("content", ctn);
 			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
 			JSONArray asrArr = JSONArray.parseArray(oldAsr);
 			asrArr.add(asr);
@@ -679,7 +681,9 @@ public class OrderServiceImpl implements OrderService{
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
 			asr.put("type", "申请退款");
-			asr.put("content", reason);
+			JSONObject ctn = new JSONObject();
+			ctn.put("reason", reason);
+			asr.put("content", ctn);
 			if(isMcht) { //商户申请处理退款
 				String oldAsr = order.getAftersalesResult()==null ? "[]" : order.getAftersalesResult();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);

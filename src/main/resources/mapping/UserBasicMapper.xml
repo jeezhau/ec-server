@@ -43,7 +43,8 @@
     from tb_user_basic
     where open_id = #{openId,jdbcType=VARCHAR} 
     		or union_id = #{openId,jdbcType=VARCHAR} 
-    		or email=#{openId,jdbcType=VARCHAR}
+    		or email = #{openId,jdbcType=VARCHAR}
+    		or phone = #{openId,jdbcType=VARCHAR}
   </select>
   
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">

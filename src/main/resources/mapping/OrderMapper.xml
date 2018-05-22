@@ -299,7 +299,7 @@
         and o.goods_id = #{params.goodsId,jdbcType=INTEGER}
       </if>
       <if test="params.status != null">
-        and LOCATE(o.status,#{params.status,jdbcType=VARCHAR})>0
+        and LOCATE(o.status,#{params.status,jdbcType=VARCHAR}) &gt; 0
       </if>
       <if test="params.partnerId != null">
         and g.partner_id = #{params.partnerId,jdbcType=INTEGER}

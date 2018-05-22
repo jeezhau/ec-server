@@ -220,7 +220,7 @@
         and p.area = #{params.area,jdbcType=VARCHAR}
       </if>        
       <if test="params.postageId != null">
-        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids)&gt;0
+        and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids) &gt; 0
       </if>
       <if test="params.reviewResult != null">
         and g.review_result = #{params.reviewResult,jdbcType=CHAR}
@@ -271,7 +271,7 @@
   <select id="countUsePostageCnt" parameterType="long" resultType="int">
    select count(1) cnt
    from tb_goods_info
-   where LOCATE(concat(',',#{postageId,jdbcType=INTEGER},','),postage_ids)>0
+   where LOCATE(concat(',',#{postageId,jdbcType=INTEGER},','),postage_ids) &gt; 0
   </select>
   
 </mapper>

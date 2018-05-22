@@ -228,9 +228,9 @@ public class GoodsController {
 				return jsonRet.toString();
 			}
 			Goods old = this.goodsService.get(false,goods.getGoodsId(),true);
-			if(old == null) {
-				jsonRet.put("errcode", ErrCodes.GOODS_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该商品信息！");
+			if(old == null || !goods.getPartnerId().equals(old.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权处理该商品信息！");
 				return jsonRet.toString();
 			}
 			//先同步更新库存
@@ -426,7 +426,7 @@ public class GoodsController {
 			List<Goods> list = new ArrayList<Goods>();
 			for(Long id:okSet) {
 				Goods g = this.goodsService.get(false,id,true);
-				if(g != null && g.getPartnerId().equals(partner.getPartnerId())) {
+				if(g != null && g.getPartnerId().equals(partner.getPartnerId())) {//权限验证
 					list.add(g);
 				}else {
 					errSet.add(id.toString());
