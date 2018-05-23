@@ -306,6 +306,8 @@ public class OrderServiceImpl implements OrderService{
 	 */
 	public JSONObject cancelOrder(Order order,Integer userVipId,Integer mchtVipId,String reason) {
 		JSONObject jsonRet = new JSONObject();
+		JSONObject ctn = new JSONObject();
+		ctn.put("reason", reason);
 		//未支付直接取消
 		if("10".equals(order.getStatus()) || "12".equals(order.getStatus())) {
 			Order cancelOrder = new Order();
@@ -315,8 +317,6 @@ public class OrderServiceImpl implements OrderService{
 			Date currTime = new Date();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
 			asr.put("type", "申请取消");
-			JSONObject ctn = new JSONObject();
-			ctn.put("reason", reason);
 			asr.put("content", ctn);
 			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
 			JSONArray asrArr = JSONArray.parseArray(oldAsr);
@@ -352,7 +352,7 @@ public class OrderServiceImpl implements OrderService{
 			return jsonRet;
 		}
 		//退款
-		return this.execRefund(false,order, oldFlow, userVipId, mchtVipId, "0", reason);
+		return this.execRefund(false,order, oldFlow, userVipId, mchtVipId, "0", ctn);
 	}
 	
 	/**
@@ -619,7 +619,7 @@ public class OrderServiceImpl implements OrderService{
 	 * @return
 	 */
 	@Override
-	public JSONObject execRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,String reason) {
+	public JSONObject execRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,JSONObject reason) {
 		JSONObject jsonRet = new JSONObject();
 
 		String refundFlowId = CommonUtil.genPayFlowId(payFlow.getOrderId(), payFlow.getFlowId()); //退款流水ID
@@ -680,20 +680,18 @@ public class OrderServiceImpl implements OrderService{
 			updOdr.setOrderId(order.getOrderId());
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
-			asr.put("type", "申请退款");
-			JSONObject ctn = new JSONObject();
-			ctn.put("reason", reason);
-			asr.put("content", ctn);
+			asr.put("type", "申请平台退款");
+			asr.put("content", reason);
 			if(isMcht) { //商户申请处理退款
 				String oldAsr = order.getAftersalesResult()==null ? "[]" : order.getAftersalesResult();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);
-				asrArr.add(asr);
+				asrArr.add(0,asr);
 				updOdr.setAftersalesDealTime(currTime);
 				updOdr.setAftersalesResult(asrArr.toJSONString());
 			}else { //卖家申请退款
 				String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);
-				asrArr.add(asr);
+				asrArr.add(0,asr);
 				updOdr.setAftersalesApplyTime(currTime);
 				updOdr.setAftersalesReason(asrArr.toJSONString());
 			}

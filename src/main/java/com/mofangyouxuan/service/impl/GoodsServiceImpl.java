@@ -105,7 +105,7 @@ public class GoodsServiceImpl implements GoodsService{
 	 * 变更商品规格与库存:需要确保同步
 	 * @param goodsId	商品ID
 	 * @param specDetail	变更的规格信息
-	 * @param updType	变更方式：1-覆盖，2-增加，3-减少
+	 * @param updType	变更方式：1-覆盖，2-退款增加，3-付款减少
 	 * @param updStockSum	需要变更的库存
 	 * @param updPriceLowest	需要变更的最低价（全覆盖时有用）
 	 * @return 更新记录数
@@ -125,26 +125,37 @@ public class GoodsServiceImpl implements GoodsService{
 			updG.setPriceLowest(updPriceLowest);
 			updG.setUpdateTime(new Date());
 		}else if(updType == 2) {//增加
+			int cnt = 0;
 			List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
 			for(GoodsSpec spec:sysSpec) {
-				for(GoodsSpec p : applySpec) {
+				for(GoodsSpec p : applySpec) { //变更数据
 					if(p.getName().equals(spec.getName())) {
 						spec.setStock(spec.getStock() + p.getBuyNum());//增加库存
 						updG.setStockSum(updG.getStockSum() + p.getBuyNum());
+						cnt += p.getBuyNum();
 					}
 				}
 			}
+			cnt = goods.getSaledCnt()-cnt;
+			if(cnt < 0) {
+				cnt = 0;
+			}
+			updG.setSaledCnt(cnt);
 			updG.setSpecDetail(JSONArray.toJSONString(sysSpec));
 		}else {//减少
+			int cnt = 0;
 			List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
 			for(GoodsSpec spec:sysSpec) {
 				for(GoodsSpec p : applySpec) {
 					if(p.getName().equals(spec.getName())) {
 						spec.setStock(spec.getStock() - p.getBuyNum());//减少库存
 						updG.setStockSum(updG.getStockSum() - p.getBuyNum());
+						cnt += p.getBuyNum();
 					}
 				}
 			}
+			cnt = goods.getSaledCnt()+cnt;
+			updG.setSaledCnt(cnt);
 			updG.setSpecDetail(JSONArray.toJSONString(sysSpec));
 		}
 		

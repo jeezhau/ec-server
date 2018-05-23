@@ -1613,33 +1613,50 @@ public class OrderController {
 	 * 1、首次评价得分不可为空；
 	 * 2、追加评价仅可追加内容，不可修改得分；
 	 * @param orderId	订单ID
-	 * @param partnerId		合作伙伴ID
-	 * @param nextStat		下一个状态（处理结果）
-	 * @param content	评价内容
+	 * @param partnerId	合作伙伴ID
+	 * @param nextStat	下一个状态（处理结果）
+	 * @param content	评价内容，json格式{reason,dispatchMode,logisticsComp,logisticsNo}
 	 * @return {errcode,errmsg}
 	 */
 	@RequestMapping("/{partnerId}/aftersales/{orderId}")
 	public String updAftersales(@PathVariable(value="orderId",required=true)String orderId,
 			@PathVariable(value="partnerId",required=true)Integer partnerId,
 			@RequestParam(value="nextStat",required=true)String nextStat,
-			@RequestParam(value="content",required=true)String content) {
+			@RequestParam(value="content",required=true)String content,
+			@RequestParam(value="passwd")String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据检查
+			//数合规据检查
 			StringBuilder sb = new StringBuilder();
 			if(!"52".equals(nextStat) && "53".equals(nextStat) && "54".equals(nextStat) &&
 					!"62".equals(nextStat) && "63".equals(nextStat) && "64".equals(nextStat) ) {
 				sb.append("处理结果状态不正确！");
 			}
 			content = content.trim();
-			if(content.length()<3 || content.length()>1000) {
-				sb.append("内容描述3-1000字符！");
+			JSONObject asCtn = JSONObject.parseObject(content);
+			if("54".equals(nextStat)) {
+				if(null == asCtn.getInteger("dispatchMode") || asCtn.getInteger("dispatchMode") < 1 || asCtn.getInteger("dispatchMode") > 4) {
+					jsonRet.put("errmsg", "配送类型不正确(1-官方统一配送、2-商家自行配送、3-快递配送、4-自取)！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsComp") == null || asCtn.getString("logisticsComp").length()<1) {
+					jsonRet.put("errmsg", "配送方名称不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsNo") == null || asCtn.getString("logisticsNo").length()<1) {
+					jsonRet.put("errmsg", "物流单号不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
 			}
-			if(sb.length()>0) {
+			if(asCtn.getString("reason") == null || asCtn.getString("reason").length()<3) {
+				jsonRet.put("errmsg", "处理明细不可少于3个字符！");
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", sb.toString());
-				return jsonRet.toJSONString();
+				return jsonRet.toString();
 			}
+			//权限检查
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
 			Order order = this.orderService.get(null, null, null, true, true,orderId);
 			if(partner == null || order == null ) {
@@ -1652,23 +1669,55 @@ public class OrderController {
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
-			//当前状态检查
+			//密码检查
+			VipBasic userVip = this.vipBasicService.get(partner.getVipId());
+			if("1".equals(userVip.getStatus())) {
+				if(passwd == null || passwd.length()<6) {
+					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+					jsonRet.put("errmsg", "您的会员操作密码不可小于6个字符！");
+					return jsonRet.toJSONString();
+				}
+				//密码验证
+				if(userVip.getPasswd() == null || userVip.getPasswd().length()<10) {
+					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+					jsonRet.put("errmsg", "您还未设置会员操作密码，请先到会员中心完成设置！");
+					return jsonRet.toJSONString();
+				}
+				if(!SignUtils.encodeSHA256Hex(passwd).equals(userVip.getPasswd())) {
+					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+					jsonRet.put("errmsg", "您的会员操作密码输入不正确！");
+					return jsonRet.toJSONString();
+				}
+			}
+			//当前状态与处理结果检查
 			if(!order.getStatus().equals("51") && !order.getStatus().equals("52") && !order.getStatus().equals("53") &&  
 					!order.getStatus().equals("61") && !order.getStatus().equals("62") && !order.getStatus().equals("63") ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 				jsonRet.put("errmsg", "该订单当前不可进行售后处理！");
 				return jsonRet.toJSONString();
 			}
+			if(order.getStatus().equals("51") && !"52".equals(nextStat) && !"53".equals(nextStat) && !"54".equals(nextStat) ||
+					order.getStatus().equals("52") && !"53".equals(nextStat) && !"54".equals(nextStat)) {
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg", "该订单当前的处理结果不正确！");
+				return jsonRet.toJSONString();
+			}
+			if(order.getStatus().equals("61") && !"62".equals(nextStat) && !"63".equals(nextStat) && !"64".equals(nextStat) ||
+					order.getStatus().equals("62") && !"63".equals(nextStat) && !"64".equals(nextStat)) {
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg", "该订单当前的处理结果不正确！");
+				return jsonRet.toJSONString();
+			}
+			
 			if("64".equals(nextStat)) {	//执行退款
 				//支付流水检查
 				PayFlow payFlow = this.orderService.getLastedFlow(orderId, "1");
 				if(payFlow == null || !"11".equals(payFlow.getStatus())) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您的订单没有支付成功信息（未支付到账、支付失败或已退款）！");
+					jsonRet.put("errmsg", "该订单没有支付成功信息（未支付到账、支付失败或已退款），无法退款！");
 					return jsonRet.toJSONString();
 				}
-				//VipBasic userVip = this.vipBasicService.get(order.getUserId());
-				jsonRet = this.orderService.execRefund(true,order, payFlow, order.getUserId(), partner.getVipId(), "3", content);
+				jsonRet = this.orderService.execRefund(true,order, payFlow, order.getUserId(), partner.getVipId(), "3", asCtn);
 			}else {
 				//更新订单信息
 				Date currTime = new Date();
@@ -1678,11 +1727,11 @@ public class OrderController {
 				updOdr.setAftersalesDealTime(currTime);
 				JSONObject asr = new JSONObject();
 				asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
-				asr.put("type", "售后处理");
-				asr.put("content", content);
+				asr.put("type", nextStat.startsWith("5") ? "换货处理":"退款(货)处理");
+				asr.put("content", asCtn);
 				String oldAsr = order.getAftersalesResult()==null ? "[]" : order.getAftersalesResult();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);
-				asrArr.add(asr);
+				asrArr.add(0,asr);
 				updOdr.setAftersalesResult(asrArr.toJSONString());
 				int cnt = this.orderService.update(updOdr);
 				if(cnt >0) {

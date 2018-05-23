@@ -136,7 +136,7 @@ public interface OrderService {
 	 * @param reason		退款理由，对于收货退款，其中包含退款方式与快递信息
 	 * @return
 	 */
-	public JSONObject execRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,String reason) ;
+	public JSONObject execRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,JSONObject reason) ;
 	
 	/**
 	 * 添加买家对商家的评价或者系统自动超时评价
