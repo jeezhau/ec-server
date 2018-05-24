@@ -13,6 +13,29 @@ import com.mofangyouxuan.model.VipBasic;
 public interface ChangeFlowService {
 
 	/**
+	 * 用户或商家申请退款
+	 * 1、添加商户冻结余额流水；
+	 * 2、减少商户可用余额流水；
+	 * @param amount
+	 * @param vipId
+	 * @param reason
+	 * @param oprId
+	 */
+	public void refundApply(BigDecimal amount, Integer vipId, String reason, Integer oprId);
+
+	/**
+	 * 退款失败
+	 * 1、添加增加可用余额的流水；
+	 * 2、添加减少冻结余额的流水；
+	 * @param amount
+	 * @param vipId
+	 * @param reason
+	 * @param oprId
+	 * @param mchtVipId
+	 */
+	public void refundFail(BigDecimal amount, Integer vipId, String reason, Integer oprId);
+	
+	/**
 	 * 添加客户退款成功流水
 	 * 1、买家使用余额支付，则退款时增加买家的可用余额；减少卖家的冻结余额；
 	 * 2、买家使用非余额支付，则退款时减少卖家的冻结余额；
@@ -44,11 +67,11 @@ public interface ChangeFlowService {
 	 * 交易评价完成，解冻商家
 	 * 1、减少冻结余额，增加可用余额；
 	 * @param amount	交易金额
-	 * @param vip	会员账户
+	 * @param vipId	商家会员账户
 	 * @param oprId 操作员ID
 	 * @param reason
 	 */
-	public void apprFinish(BigDecimal amount,VipBasic vip,Integer oprId,String reason);
+	public void dealFinish(BigDecimal amount,Integer vipId,Integer oprId,String reason);
 	
 	/**
 	 * 添加分润流水
@@ -97,7 +120,7 @@ public interface ChangeFlowService {
 	 * @return
 	 */
 	public ChangeFlow get(String flowId);
-	
+
 
 }
 

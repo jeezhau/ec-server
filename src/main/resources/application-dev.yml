@@ -39,11 +39,11 @@ wxmp:
 
 #微信支付参数
 wxpay:
-  mchtid: ''
-  appid: ''
-  pay-notify-url: ''
-  refund-notify-url: ''
-  KEY: ''
+  mchtid: '1503812541'
+  appid: 'wx34a58dad7a6542ca'
+  notify-server-url: 'https://pay.mofangyouxuan.com'
+  pay-notify-url: '/wxpay/notify/pay'
+  refund-notify-url: '/wxpay/notify/refund'
   wx-fee-rate: 0.007
 
 #信息管理平台

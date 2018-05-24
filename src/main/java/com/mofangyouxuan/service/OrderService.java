@@ -94,25 +94,25 @@ public interface OrderService {
 	 * @param ip		买家IP地址
 	 * @return
 	 */
-	public JSONObject createPay(UserBasic user,VipBasic userVip,Order order,Integer mchtVipId,String payType,String ip);
+	public JSONObject createPrePay(UserBasic user,VipBasic userVip,Order order,Integer mchtVipId,String payType,String ip);
 	
 	/**
-	 * 提交余额支付
+	 * 执行支付处理
+	 * @param useBal		是否使用余额支付
 	 * @param payFlow
 	 * @param userVip
 	 * @param order
 	 * @param mchtVipId
 	 */
-	public void submitBalPay(PayFlow payFlow,VipBasic userVip,Order order,Integer mchtVipId);
+	public void execPaySucc(boolean useBal,PayFlow payFlow,VipBasic userVip,Order order,Integer mchtVipId,String outFinishId);
 	
 	/**
 	 * 客户端支付完成
-	 * @param user
+	 * @param userVip
 	 * @param order
-	 * @param clientStatus
 	 * @return
 	 */
-	public JSONObject payFinish(UserBasic user,Order order,String clientStatus);
+	public JSONObject payFinish(VipBasic userVip,Order order) ;
 	
 	/**
 	 * 获取指定订单的最新支付流水
@@ -123,7 +123,7 @@ public interface OrderService {
 	public PayFlow getLastedFlow(String orderId,String flowType) ;
 	
 	/**
-	 * 订单退款执行
+	 * 订单退款申请
 	 * 1、向第三方支付申请退款，或余额退款；
 	 * 2、保存退款流水；
 	 * 3、更新订单售后信息；
@@ -136,7 +136,7 @@ public interface OrderService {
 	 * @param reason		退款理由，对于收货退款，其中包含退款方式与快递信息
 	 * @return
 	 */
-	public JSONObject execRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,JSONObject reason) ;
+	public JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,JSONObject reason) ;
 	
 	/**
 	 * 添加买家对商家的评价或者系统自动超时评价
@@ -158,6 +158,15 @@ public interface OrderService {
 	 * @return
 	 */
 	public JSONObject appraise2User(Order order,Integer score,String content);
+
+	String outPaySucc(String payFlowId, Long totalAmount, String outFinishId);
+
+	String outPayFail(String payFlowId, String outFinishId, String fail);
+
+	String outRefundSucc(String payFlowId, Long totalAmount, String outFinishId);
+
+	String outRefundFail(String payFlowId,  String outFinishId, String fail);
+
 	
 	
 }

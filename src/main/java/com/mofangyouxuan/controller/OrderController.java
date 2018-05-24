@@ -40,9 +40,7 @@ import com.mofangyouxuan.service.PostageService;
 import com.mofangyouxuan.service.ReceiverService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
-import com.mofangyouxuan.utils.NonceStrUtil;
 import com.mofangyouxuan.utils.SignUtils;
-import com.mofangyouxuan.wxapi.WXPay;
 
 /**
  * 点单管理
@@ -80,8 +78,7 @@ public class OrderController {
 	private PostageService postageService;
 	@Autowired
 	private OrderService orderService;
-	@Autowired
-	private WXPay wXPay;
+
 	/**
 	 * 创建订单
 	 * @param userId
@@ -751,10 +748,10 @@ public class OrderController {
 	 * @param userId		用户ID
 	 * @param userIp		用户IP
 	 * @param passwd		会员操作密码
-	 * @return {errcode,errmsg,payType,appId,timeStamp,nonceStr,prepay_id,paySign}
+	 * @return {errcode,errmsg,payType,outPayUrl,prepay_id}
 	 */
 	@RequestMapping("/{userId}/createpay/{orderId}")
-	public Object createPay(@PathVariable(value="orderId",required=true)String orderId,
+	public Object createPrePay(@PathVariable(value="orderId",required=true)String orderId,
 			@RequestParam(value="payType",required=true)String payType,
 			@PathVariable(value="userId",required=true)Integer userId,
 			@RequestParam(value="userIp",required=true)String userIp,
@@ -797,21 +794,7 @@ public class OrderController {
 				return jsonRet.toJSONString();
 			}
 			
-			jsonRet = this.orderService.createPay(user, userVip, order, goods.getPartner().getVipId(), payType, userIp);
-			if(payType.equals("2") && jsonRet.getIntValue("errcode") == 0) {
-				Map<String,String> signMap = new HashMap<String,String>();
-				Long timeStamp = System.currentTimeMillis()/1000;
-				String nonceStr = NonceStrUtil.getNonceStr(20);
-				signMap.put("appId", this.wXPay.appId);
-				signMap.put("timeStamp", timeStamp+"");
-				signMap.put("package", "prepay_id=" + jsonRet.getString("prepay_id"));
-				signMap.put("nonceStr", nonceStr);
-				
-				jsonRet.put("nonceStr", nonceStr);
-				jsonRet.put("timeStamp", timeStamp+"");
-				jsonRet.put("appId", this.wXPay.appId);
-				jsonRet.put("paySign", this.wXPay.signMap(signMap));
-			}
+			jsonRet = this.orderService.createPrePay(user, userVip, order, goods.getPartner().getVipId(), payType, userIp);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
@@ -864,7 +847,7 @@ public class OrderController {
 				jsonRet.put("errmsg", "您的资金操作密码输入不正确！");
 				return jsonRet.toJSONString();
 			}
-			this.orderService.submitBalPay(payFlow, userVip,order, goods.getPartner().getVipId());
+			this.orderService.execPaySucc(true,payFlow, userVip,order, goods.getPartner().getVipId(),"");
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
 		}catch(Exception e) {
@@ -980,38 +963,29 @@ public class OrderController {
 	}
 	
 	/**
-	 * 创建支付订单
+	 * 买家支付完成
 	 * @param orderId	订单ID
-	 * @param status		支付状态，客户端发送的
 	 * @param userId		用户ID
 	 * @return {errcode,errmsg,payType,payTime,amount,fee}
 	 */
-	@RequestMapping("/{userId}/payfinish/{orderId}/{status}")
+	@RequestMapping("/{userId}/payfinish/{orderId}")
 	public Object payFinish(@PathVariable(value="orderId",required=true)String orderId,
-			@PathVariable(value="status",required=true)String status,
 			@PathVariable(value="userId",required=true)Integer userId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			UserBasic user = this.userBasicService.get(userId);
 			VipBasic userVip = this.vipBasicService.get(userId);
 			Order order = this.orderService.get(null, null, null, null, true,orderId);
-			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
-			if(user == null || userVip == null || order == null || goods == null) {
+			if(userVip == null || order == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
 				return jsonRet.toJSONString();
 			}
-			if(!user.getUserId().equals(order.getUserId())) {
+			if(!userVip.getVipId().equals(order.getUserId())) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
-			if(!"success".equals(status) && !"fail".equals(status)) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "支付状态取值不正确！");
-				return jsonRet.toJSONString();
-			}
-			jsonRet = this.orderService.payFinish(user, order, status);
+			jsonRet = this.orderService.payFinish(userVip, order);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
@@ -1214,6 +1188,7 @@ public class OrderController {
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
+			
 			//密码检查
 			if("1".equals(userVip.getStatus())) {
 				if(passwd == null || passwd.length()<6) {
@@ -1240,6 +1215,7 @@ public class OrderController {
 				jsonRet.put("errmsg", "您的订单没有支付成功信息（未支付到账、支付失败或已退款）！");
 				return jsonRet.toJSONString();
 			}
+			
 			//订单与退款类型检查
 			if("1".equals(type)) {//买家未收到货
 				//订单状态检查
@@ -1282,11 +1258,15 @@ public class OrderController {
 				}
 			}
 			
-//			//退款处理
-//			if("1".equals(type) || "2".equals(type)) { //直接退款
-//				jsonRet = this.orderService.execRefund(false, order, payFlow, userVip.getVipId(), partner.getVipId(), type, reason);
-//			}else {  //提交申请至卖家处理
-				//更新订单信息
+			//卖家账户检查
+			VipBasic mchtVip = this.vipBasicService.get(partner.getVipId());
+			if(mchtVip == null || 
+					mchtVip.getBalance().multiply(new BigDecimal(100)).longValue() < payFlow.getPayAmount() ) {
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg", "您当前不可执行退货退款申请操作，账户可用余额不足！");
+				return jsonRet.toJSONString();
+			}
+			
 			String typeStr = "";
 			if("1".equals(type)) {
 				typeStr = "卖家未发货，买家申请退款";
@@ -1717,7 +1697,7 @@ public class OrderController {
 					jsonRet.put("errmsg", "该订单没有支付成功信息（未支付到账、支付失败或已退款），无法退款！");
 					return jsonRet.toJSONString();
 				}
-				jsonRet = this.orderService.execRefund(true,order, payFlow, order.getUserId(), partner.getVipId(), "3", asCtn);
+				jsonRet = this.orderService.applyRefund(true,order, payFlow, order.getUserId(), partner.getVipId(), "3", asCtn);
 			}else {
 				//更新订单信息
 				Date currTime = new Date();
@@ -1742,7 +1722,6 @@ public class OrderController {
 					jsonRet.put("errmsg", "数据库保存数据出错！");
 				}
 			}
-			
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);

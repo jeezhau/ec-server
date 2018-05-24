@@ -27,6 +27,7 @@ import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.ChangeFlowService;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.OrderService;
+import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.CommonUtil;
 import com.mofangyouxuan.wxapi.WXPay;
 
@@ -45,7 +46,8 @@ public class OrderServiceImpl implements OrderService{
 	private ChangeFlowService changeFlowService;
 	@Autowired
 	private WXPay wXPay;
-	
+	@Autowired
+	private VipBasicService vipBasicService;
 	/**
 	 * 新增订单
 	 * @param order
@@ -351,8 +353,8 @@ public class OrderServiceImpl implements OrderService{
 			jsonRet.put("errmsg","您的订单没有支付成功信息（未支付到账、支付失败或已退款）！");
 			return jsonRet;
 		}
-		//退款
-		return this.execRefund(false,order, oldFlow, userVipId, mchtVipId, "0", ctn);
+		//退款申请
+		return this.applyRefund(false,order, oldFlow, userVipId, mchtVipId, "0", ctn);
 	}
 	
 	/**
@@ -364,17 +366,18 @@ public class OrderServiceImpl implements OrderService{
 	 * @param mchtVipId	卖家会员ID
 	 * @param payType	支付方式
 	 * @param ip		买家IP地址
-	 * @return {errcode,errmsg,payType,prepay_id,total}
+	 * @return {errcode,errmsg,payType,prepay_id,outPayUrl,total}
 	 */
-	public JSONObject createPay(UserBasic user,VipBasic userVip,Order order,Integer mchtVipId,String payType,String ip) {
+	public JSONObject createPrePay(UserBasic user,VipBasic userVip,Order order,Integer mchtVipId,String payType,String ip) {
 		JSONObject jsonRet = new JSONObject();
 		//查询已有最新支付流水单
 		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),"1");
 		BigDecimal amount = order.getAmount().multiply(new BigDecimal(100)).setScale(0);//订单金额，分
 		BigDecimal fee = new BigDecimal(0);
-		String outTradeNo = null;
-		String payAccount = null;
-		String flowId = null;
+		String outTradeNo = null;	//外部系统的预付单号
+		String outPayUrl = null;		//外部支付须调起的支付页面
+		String payAccount = null;	//支付账户
+		String flowId = null;		//支付流水ID
 		Long totalAmount = null; //总实付金额
 		if(oldFlow != null) {
 			if(!"00".equals(oldFlow.getStatus()) && !"01".equals(oldFlow.getStatus()) && !"F1".equals(oldFlow.getStatus())) {//非待支付或支付失败
@@ -383,10 +386,11 @@ public class OrderServiceImpl implements OrderService{
 				return jsonRet;
 			}else if("00".equals(oldFlow.getStatus())) {//待支付
 				Long t = (new Date().getTime()-oldFlow.getCreateTime().getTime())/1000/3600;
-				if(t<=1) {//支付未超时
+				if(t<=1) {//支付未超时1h
 					jsonRet.put("errcode", 0);
 					jsonRet.put("payType", payType);
 					jsonRet.put("prepay_id", oldFlow.getOutTradeNo());
+					jsonRet.put("outPayUrl", oldFlow.getOutTradeUrl());
 					jsonRet.put("errmsg", "ok");
 					return jsonRet;
 				}else {//超时未支付关闭
@@ -397,52 +401,21 @@ public class OrderServiceImpl implements OrderService{
 		}
 		//新申请预付单
 		String oldFlowId = oldFlow == null ? null : oldFlow.getFlowId();
-		flowId = CommonUtil.genPayFlowId(order.getOrderId(), oldFlowId); //新消费流水单号
+		flowId = CommonUtil.genPayFlowId(order.getOrderId(), oldFlowId); //支付流水单号
 		//向微信申请预付单
 		if("2".equals(payType)) {
 			fee = amount.multiply(new BigDecimal(wXPay.wxFeeRate)).setScale(0, BigDecimal.ROUND_CEILING);
 			totalAmount = amount.longValue() + fee.longValue();//支付金额
-			JSONObject wxRet = wXPay.unifiedOrder(order,flowId, totalAmount, user, ip);
+			JSONObject wxRet = wXPay.createPrePay(order,flowId, totalAmount, user.getOpenId(), ip);
 			if(wxRet.containsKey("prepay_id")) {//成功
 				payAccount = user.getOpenId();
 				outTradeNo = wxRet.getString("prepay_id");
-			}else {//失败
-				if("ORDERCLOSED".equals(jsonRet.getString("errcode"))) {//已关闭
-					//再次申请
-					flowId = CommonUtil.genPayFlowId(order.getOrderId(), flowId);
-					wxRet = wXPay.unifiedOrder(order, flowId,totalAmount, user, ip);
-					if(wxRet.containsKey("prepay_id")) {//成功
-						payAccount = user.getOpenId();
-						outTradeNo = wxRet.getString("prepay_id");
-					}else {
-						jsonRet.put("errcode", -1);
-						jsonRet.put("errmsg", "微信支付预付单生成失败，" + wxRet.getString("errmsg"));
-						return jsonRet;
-					}
-				}else if("OUT_TRADE_NO_USED".equals(jsonRet.getString("errcode"))) {//微信有，系统无
-					wxRet = wXPay.closeOrder(flowId, user);
-					if(wxRet.getIntValue("errcode") == 0) {
-						//再次申请
-						flowId = CommonUtil.genPayFlowId(order.getOrderId(), flowId);
-						wxRet = wXPay.unifiedOrder(order, flowId,totalAmount, user, ip);
-						if(wxRet.containsKey("prepay_id")) {//成功
-							payAccount = user.getOpenId();
-							outTradeNo = wxRet.getString("prepay_id");
-						}else {
-							jsonRet.put("errcode", -1);
-							jsonRet.put("errmsg", "微信支付预付单生成失败，" + wxRet.getString("errmsg"));
-							return jsonRet;
-						}
-					}else {
-						jsonRet.put("errcode", -1);
-						jsonRet.put("errmsg", "微信支付预付单生成失败，" + wxRet.getString("errmsg"));
-						return jsonRet;
-					}
-				}else {
-					jsonRet.put("errcode", -1);
-					jsonRet.put("errmsg", "微信支付预付单生成失败，" + wxRet.getString("errmsg"));
-					return jsonRet;
+				if(wxRet.getString("mweb_url") != null) {
+					outPayUrl = wxRet.getString("mweb_url");
 				}
+				flowId = wxRet.getString("payFlowId");
+			}else {//失败
+				return wxRet;
 			}
 		}else if("1".equals(payType)){
 			if(userVip.getBalance().multiply(new BigDecimal(100)).compareTo(amount)<0) {
@@ -466,6 +439,7 @@ public class OrderServiceImpl implements OrderService{
 		newFlow.setFlowType("1");
 		newFlow.setGoodsId(order.getGoodsId());
 		newFlow.setOutTradeNo(outTradeNo);
+		newFlow.setOutTradeUrl(outPayUrl);
 		newFlow.setOrderId(order.getOrderId());
 		newFlow.setPayType(payType);
 		newFlow.setPayAccount(payAccount);
@@ -478,6 +452,7 @@ public class OrderServiceImpl implements OrderService{
 			jsonRet.put("errmsg", "ok");
 			jsonRet.put("prepay_id", newFlow.getOutTradeNo());
 			jsonRet.put("payType", payType);
+			jsonRet.put("outPayUrl", outPayUrl);
 			jsonRet.put("total", totalAmount); //实付：分
 		}else {
 			jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
@@ -487,27 +462,31 @@ public class OrderServiceImpl implements OrderService{
 	}
 	
 	/**
-	 * 提交余额支付
+	 * 执行支付成功
+	 * @param useBal
 	 * @param payFlow
 	 * @param userVip
 	 * @param order
 	 * @param mchtVipId
 	 */
 	@Override
-	public void submitBalPay(PayFlow payFlow,VipBasic userVip,Order order,Integer mchtVipId) {
-		Long totalAmount = payFlow.getPayAmount() + payFlow.getFeeAmount();
+	public void execPaySucc(boolean useBal,PayFlow oldPayFlow,VipBasic userVip,Order order,Integer mchtVipId,String outFinishId) {
+		Long totalAmount = oldPayFlow.getPayAmount() + oldPayFlow.getFeeAmount();
 		//添加现金余额流水
 		this.changeFlowService.paySuccess(true, new BigDecimal(totalAmount/100), userVip, 
-				"商品购买【订单号:" + payFlow.getOrderId() + "】", 
-				payFlow.getUserId(), mchtVipId);
+				"商品购买【订单号:" + oldPayFlow.getOrderId() + "】", 
+				oldPayFlow.getUserId(), mchtVipId);
 		//更新支付流水
-		payFlow.setStatus("11");	//支付完成
-		payFlow.setIncomeAmount(totalAmount);//入账金额，分
-		payFlow.setIncomeTime(new Date());
-		this.payFlowMapper.updateByPrimaryKeySelective(payFlow);
+		PayFlow updPayFow = new PayFlow();
+		updPayFow.setFlowId(oldPayFlow.getFlowId());
+		updPayFow.setStatus("11");	//支付完成
+		updPayFow.setIncomeAmount(totalAmount);//入账金额，分
+		updPayFow.setIncomeTime(new Date());
+		updPayFow.setOutFinishId(outFinishId);
+		this.payFlowMapper.updateByPrimaryKeySelective(updPayFow);
 		//更新订单
 		Order newO = new Order();
-		newO.setOrderId(payFlow.getOrderId());
+		newO.setOrderId(oldPayFlow.getOrderId());
 		newO.setStatus("20"); //支付成功，待发货
 		this.orderMapper.updateByPrimaryKeySelective(newO);
 		
@@ -517,36 +496,146 @@ public class OrderServiceImpl implements OrderService{
 		this.goodsService.changeSpec(order.getGoodsId(), buySpec, 3, null, null);
 	}
 	
-	/**
-	 * 更新支付结果信息
-	 * @param flow
-	 * @return
-	 */
-	public int updPayResut(PayFlow flow) {
-		return this.payFlowMapper.updateByPrimaryKeySelective(flow);
-	}
 	
 	/**
-	 * 更新退款结果信息
-	 * @param flow
+	 * 外部支付成功
+	 * 1、判断支付入账信息是否正确;
+	 * 2、判断是否已经完成支付；
+	 * @param payFlowId		支付流水号
+	 * @param totalAmount	入账金额
+	 * @param accountId		付款人账户
+	 * @param outFinishId	外部支付单号
 	 * @return
 	 */
-	public int updRefundResutl(PayFlow flow) {
-		return this.payFlowMapper.updateByPrimaryKeySelective(flow);
+	@Override
+	public synchronized String outPaySucc(String payFlowId,Long totalAmount,String outFinishId) {
+		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(payFlowId);
+		if(payFlow == null) {
+			return "系统中没有该支付流水信息！";
+		}
+		Long oldTotal = payFlow.getFeeAmount() + payFlow.getPayAmount();
+		if(oldTotal != totalAmount) {
+			return "付款金额不正确！";
+		}
+		String stat = payFlow.getStatus();
+		if("10".equals(stat)) {
+			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+			VipBasic vip = this.vipBasicService.get(payFlow.getUserId());
+			this.execPaySucc(false, payFlow,vip, order, order.getMchtUId(),outFinishId);
+		}else if(!"11".equals(stat)) {
+			return "订单支付状态有误！";
+		}
+		return "00";
+	}
+
+	/**
+	 * 外部支付失败
+	 * @param payFlowId		支付流水号
+	 * @param accountId		付款人账户
+	 * @param fail			失败信息
+	 * @return
+	 */
+	@Override
+	public synchronized String outPayFail(String payFlowId,String outFinishId,String fail) {
+		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(payFlowId);
+		if(payFlow == null) {
+			return "系统中没有该支付流水信息！";
+		}
+		String stat = payFlow.getStatus();
+		if("10".equals(stat)) {
+			PayFlow failFlow = new PayFlow();
+			failFlow.setFlowId(payFlowId);
+			failFlow.setStatus("F1");
+			failFlow.setMemo(fail);
+			this.payFlowMapper.updateByPrimaryKeySelective(failFlow);
+			
+			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+			Order updOrder = new Order();
+			updOrder.setOrderId(order.getOrderId());
+			updOrder.setStatus("12");
+			this.orderMapper.updateByPrimaryKeySelective(updOrder);
+			
+			return "00";
+		}
+		return "订单支付状态有误！";
+	}
+	
+	
+	/**
+	 * 外部退款成功
+	 * 1、判断支付入账信息是否正确;
+	 * 2、判断是否已经完成支付；
+	 * @param payFlowId		退款流水号
+	 * @param totalAmount	退款金额
+	 * @param outFinishId	外部退款单号
+	 * @return
+	 */
+	@Override
+	public synchronized String outRefundSucc(String payFlowId,Long totalAmount,String outFinishId) {
+		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(payFlowId);
+		if(payFlow == null) {
+			return "系统中没有该退款流水信息！";
+		}
+		Long oldTotal = payFlow.getFeeAmount() + payFlow.getPayAmount();
+		if(oldTotal != totalAmount) {
+			return "退款金额不正确！";
+		}
+		String stat = payFlow.getStatus();
+		if("20".equals(stat)) {
+			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+			this.execRefundSucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), "退款成功", outFinishId);
+		}else if(!"21".equals(stat)) {
+			return "订单退款状态有误！";
+		}
+		return "00";
+	}
+
+	/**
+	 * 外部退款失败
+	 * 
+	 * @param payFlowId		退款流水号
+	 * @param accountId		退款人账户
+	 * @param fail			失败信息
+	 * @return
+	 */
+	@Override
+	public synchronized String outRefundFail(String payFlowId,String outFinishId,String fail) {
+		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(payFlowId);
+		if(payFlow == null) {
+			return "系统中没有该退款流水信息！";
+		}
+		String stat = payFlow.getStatus();
+		if("20".equals(stat)) {
+			//更新支付流水
+			PayFlow failFlow = new PayFlow();
+			failFlow.setFlowId(payFlowId);
+			failFlow.setStatus("F2");
+			failFlow.setMemo(fail);
+			this.payFlowMapper.updateByPrimaryKeySelective(failFlow);
+			//更新订单
+			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+			Order updOrder = new Order();
+			updOrder.setOrderId(order.getOrderId());
+			updOrder.setStatus("66");
+			this.orderMapper.updateByPrimaryKeySelective(updOrder);
+			//更新资金流水
+			this.changeFlowService.refundFail(new BigDecimal(payFlow.getPayAmount()), order.getMchtUId(), fail, order.getMchtUId());
+			return "00";
+		}
+		return "订单退款状态有误！";
 	}
 	
 	/**
 	 * 客户端支付完成
-	 * @param user
+	 * @param userVip
 	 * @param order
-	 * @param clientStatus 支付结果：success，fail
 	 * @return {errcode,errmsg,payType,payTime,amount,fee}
 	 */
 	@Override
-	public JSONObject payFinish(UserBasic user,Order order,String clientStatus) {
+	public JSONObject payFinish(VipBasic userVip,Order order) {
 		JSONObject jsonRet = new JSONObject();
-		//查询已有最新支付流水单
-		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),"1");
+		//查询已有最新支付、退款流水单
+		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),null);
 		if(oldFlow == null) {
 			jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 			jsonRet.put("errmsg", "系统中没有您的支付记录！");
@@ -556,39 +645,39 @@ public class OrderServiceImpl implements OrderService{
 		jsonRet.put("payTime", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(oldFlow.getCreateTime()));
 		jsonRet.put("amount", oldFlow.getPayAmount()/100.0);
 		jsonRet.put("fee", oldFlow.getFeeAmount()/100.0);
-		String sysStat = oldFlow.getStatus();
-		
-		if("11".equals(sysStat)) {//后端成功
-			//更新订单
-			if(!"20".equals(order.getStatus())) {
-				Order newO = new Order();
-				newO.setOrderId(order.getOrderId());
-				newO.setStatus("20"); //支付成功，待发货
-				this.orderMapper.updateByPrimaryKeySelective(newO);
-				//更新库存:减少
-				List<GoodsSpec> buySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
-				this.goodsService.changeSpec(order.getGoodsId(), buySpec, 
-						3, null, null);
+		String sysStat = oldFlow.getStatus();  //系统状态
+		String payType = oldFlow.getPayType();	//支付方式
+		if("00".equals(sysStat) || "10".equals(sysStat)){
+			if("2".equals(payType)) {	//微信支付，执行订单查询
+				JSONObject queryRet = this.wXPay.queryOrder(oldFlow.getFlowId());
+				if(queryRet.containsKey("total_fee")) { //已经成功
+					this.execPaySucc(false, oldFlow, userVip, order, order.getMchtUId(), queryRet.getString("transaction_id"));
+					jsonRet.put("errcode", 0);
+					jsonRet.put("errmsg", "支付成功！");
+				}else {
+					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+					jsonRet.put("errmsg", "我们还未收到第三方支付平台给出的您的支付成功通知，请稍后再查看！！");
+				}
 			}
+		}else if("11".equals(sysStat)) {//后端成功
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "支付成功！");
-		}else if("00".equals(sysStat) || "10".equals(sysStat)){
-			if( "success".equals(clientStatus)) {//前端成功，
-				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-				jsonRet.put("errmsg", "我们还未收到第三方支付平台给出的您的支付结果通知，如果您确定已完成支付，请稍后再查看！！");
+		}else if("20".equals(sysStat)){
+			JSONObject queryRet = this.wXPay.queryRefund(oldFlow.getFlowId());
+			if(queryRet.containsKey("settlement_refund_fee")) { //已经成功
+				this.execRefundSucc(false, oldFlow, userVip.getVipId(), order, order.getMchtUId(), "退款成功", queryRet.getString("settlement_refund_fee"));
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "退款成功！");
 			}else {
-				oldFlow.setStatus("01");//支付失败
-				this.payFlowMapper.updateByPrimaryKeySelective(oldFlow);
-				Order newO = new Order();
-				newO.setOrderId(order.getOrderId());
-				newO.setStatus("12"); //支付失败
-				this.orderMapper.updateByPrimaryKeySelective(newO);
-				jsonRet.put("errcode", ErrCodes.ORDER_PAY_ERROR);
-				jsonRet.put("errmsg", "订单支付失败，您可重新支付！");
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg", "我们还未收到第三方支付平台给出的您的退款成功通知，请稍后再查看！！");
 			}
+		}else if("21".equals(payType)) {	//退款成功
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "退款成功！");
 		}else {
 			jsonRet.put("errcode", ErrCodes.ORDER_PAY_ERROR);
-			jsonRet.put("errmsg", "该订单当前状态不在支付流程中！");
+			jsonRet.put("errmsg", "该订单当前状态不在正常支付流程中(可能已经失败)！");
 		}
 		return jsonRet;
 	}
@@ -602,6 +691,40 @@ public class OrderServiceImpl implements OrderService{
 	@Override
 	public PayFlow getLastedFlow(String orderId,String flowType) {
 		return this.payFlowMapper.selectLastestFlow(orderId,flowType);
+	}
+	
+	
+	/**
+	 * 执行退款成功
+	 * @param useBal		是否使用余额支付
+	 * @param refundFlow	退款流水
+	 * @param userVip	用户VIP
+	 * @param order		订单信息
+	 * @param mchtVipId	商家VIP
+	 * @param outFinishId 外部系统的退款单号
+	 */
+	public void execRefundSucc(boolean useBal,PayFlow refundFlow,Integer userVipId,Order order,Integer mchtVipId,String changeReason,String outFinishId) {
+		Long total = refundFlow.getPayAmount() + refundFlow.getFeeAmount();
+		//账户退款：更新用户与商家余额
+		Date currTime = new Date();
+		this.changeFlowService.refundSuccess(useBal, new BigDecimal(total/100), 
+				userVipId, changeReason + "【订单号:" + order.getOrderId() +"】", mchtVipId, mchtVipId);
+		//更新退款流水
+		PayFlow updFlow = new PayFlow();
+		updFlow.setStatus("21");		//退款成功
+		updFlow.setIncomeAmount(total);	//入账金额，分
+		updFlow.setIncomeTime(currTime);
+		updFlow.setOutFinishId(outFinishId);
+		this.payFlowMapper.updateByPrimaryKeySelective(updFlow);
+		//更新订单
+		Order newO = new Order();
+		newO.setOrderId(refundFlow.getOrderId());
+		newO.setStatus("65"); //退款成功
+		this.orderMapper.updateByPrimaryKeySelective(newO);
+		//更新库存:增加
+		List<GoodsSpec> buySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
+		this.goodsService.changeSpec(order.getGoodsId(), buySpec, 2, null, null);
+		
 	}
 	
 	/**
@@ -619,45 +742,30 @@ public class OrderServiceImpl implements OrderService{
 	 * @return
 	 */
 	@Override
-	public JSONObject execRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,JSONObject reason) {
+	public JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,JSONObject reason) {
 		JSONObject jsonRet = new JSONObject();
 
 		String refundFlowId = CommonUtil.genPayFlowId(payFlow.getOrderId(), payFlow.getFlowId()); //退款流水ID
 		Long totalAmount = payFlow.getPayAmount() + payFlow.getFeeAmount();//退款金额，分
 		PayFlow refundFlow = null;
-		Order updOdr = new Order();
 		Date currTime = new Date();
 		String changeReason = ""; //资金变更流水理由前缀
-		if("1".equals(payFlow.getPayType())) {//余额支付
-			updOdr.setStatus("65"); //65 退款完成
-			if("0".equals(type)) {
-				changeReason = "买家取消全额退款";
-			}else { //3-收货后退款
-				changeReason = "卖家申请全额退款";
-			}
-			//账户余额退款
-			this.changeFlowService.refundSuccess(true, new BigDecimal(totalAmount/100), 
-					userVipId, changeReason + "【订单号:" + order.getOrderId() +"】", isMcht?mchtVipId:userVipId, mchtVipId);
+		if("0".equals(type)) {
+			changeReason = "买家取消全额退款";
+		}else { //3-收货后退款
+			changeReason = "卖家申请全额退款";
+		}
+		if("1".equals(payFlow.getPayType())) {
+			//余额支付
 			refundFlow = new PayFlow();
 			refundFlow.setPayType("1");
-			refundFlow.setStatus("21");//退款成功
-			refundFlow.setIncomeAmount(totalAmount);//入账金额，分
-			refundFlow.setIncomeTime(currTime);
-			
-			//更新库存:增加
-			List<GoodsSpec> buySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
-			this.goodsService.changeSpec(order.getGoodsId(), buySpec, 2, null, null);
-			
 		}else if("2".equals(payFlow.getPayType())){
 			//微信退款
 			JSONObject wxRet = this.wXPay.applyRefund(refundFlowId, totalAmount, payFlow.getOutFinishId());
 			if(wxRet.containsKey("refund_id")) {//申请成功
 				refundFlow = new PayFlow();
 				refundFlow.setPayType("2");
-				refundFlow.setOutFinishId(wxRet.getString("refund_id"));
-				refundFlow.setStatus("20");
-				
-				updOdr.setStatus("64"); //64:同意退款，申请资金回退，
+				refundFlow.setOutTradeNo(wxRet.getString("refund_id"));
 			}else {
 				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 				jsonRet.put("errmsg","您的退款申请发送至微信退款失败，请稍后再试！");
@@ -666,6 +774,7 @@ public class OrderServiceImpl implements OrderService{
 		}
 		
 		if(refundFlow != null) {//退款流水
+			refundFlow.setStatus("20");
 			refundFlow.setCreateTime(currTime);
 			refundFlow.setCurrencyType("CNY");
 			refundFlow.setFeeAmount(0L);
@@ -676,36 +785,39 @@ public class OrderServiceImpl implements OrderService{
 			refundFlow.setPayAccount(payFlow.getPayAccount());
 			refundFlow.setPayAmount(totalAmount);
 			refundFlow.setUserId(payFlow.getUserId());
+			this.payFlowMapper.insert(refundFlow);
 			
-			updOdr.setOrderId(order.getOrderId());
+			Order updOrder = new Order();
+			updOrder.setStatus("64"); //64:同意退款，申请资金回退，
+			updOrder.setOrderId(order.getOrderId());
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
-			asr.put("type", "申请平台退款");
+			asr.put("type", changeReason);
 			asr.put("content", reason);
 			if(isMcht) { //商户申请处理退款
 				String oldAsr = order.getAftersalesResult()==null ? "[]" : order.getAftersalesResult();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);
 				asrArr.add(0,asr);
-				updOdr.setAftersalesDealTime(currTime);
-				updOdr.setAftersalesResult(asrArr.toJSONString());
+				updOrder.setAftersalesDealTime(currTime);
+				updOrder.setAftersalesResult(asrArr.toJSONString());
 			}else { //卖家申请退款
 				String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);
 				asrArr.add(0,asr);
-				updOdr.setAftersalesApplyTime(currTime);
-				updOdr.setAftersalesReason(asrArr.toJSONString());
+				updOrder.setAftersalesApplyTime(currTime);
+				updOrder.setAftersalesReason(asrArr.toJSONString());
 			}
-			this.orderMapper.updateByPrimaryKeySelective(updOdr);
+			this.orderMapper.updateByPrimaryKeySelective(updOrder);
+			//冻结卖家
+			this.changeFlowService.refundApply(new BigDecimal(payFlow.getPayAmount()/100), mchtVipId, changeReason, mchtVipId);
+			if("1".equals(payFlow.getPayType())) {//余额支付，执行退款成功
+				this.execRefundSucc(true, refundFlow, userVipId, updOrder, mchtVipId, changeReason, null);
+			}
 		}
-		//保存退款流水
-		int cnt = this.payFlowMapper.insert(refundFlow);
-		if(cnt>0) {
-			jsonRet.put("errcode", 0);
-			jsonRet.put("errmsg", "ok");
-		}else {
-			jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-			jsonRet.put("errmsg", "数据保存出错！");
-		}
+		
+		jsonRet.put("errcode", 0);
+		jsonRet.put("errmsg", "ok");
+		
 		return jsonRet;
 	}
 	
