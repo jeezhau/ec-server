@@ -62,17 +62,19 @@ public class VipBasicServiceImpl implements VipBasicService{
 	
 	/**
 	 * 更新会员积分
-	 * @param vipBasic
+	 * @param vipId
 	 * @param subScore 需要增加的积分
 	 * @return
 	 */
-	public int updScore(VipBasic vipBasic,Integer subScore) {
-		int cnt = this.vipBasicMapper.updateScores(vipBasic.getVipId(), subScore);
+	public int updScore(Integer vipId,Integer subScore) {
+		int cnt = this.vipBasicMapper.updateScores(vipId, subScore);
 		return cnt;
 	}
 	
 	/**
-	 * 累积账户信息 1000 条流水
+	 * 
+	 * 累积账户余额与积分信息 1000 条流水
+	 * 
 	 * @param id
 	 * @return
 	 */

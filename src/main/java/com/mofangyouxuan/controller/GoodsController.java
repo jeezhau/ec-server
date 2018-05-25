@@ -368,7 +368,7 @@ public class GoodsController {
 	
 	/**
 	 * 获取所有商品：不包含合作伙伴信息
-	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,isCityWide,postageId,currUserLocX,currUserLocY}
+	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,city,postageId,currUserLocX,currUserLocY}
 	 * @param jsonSortParams  排序条件 {time:"N#0/1",dist:"N#0",sale:"N"#0/1}；time 表示按更新上架时间排序，N为排序位置，0为升序，1为降序；dist表示按距离排序，仅对有同城条件使用;sale 为按销量
 	 * @param pageCond 分页条件 
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
@@ -380,7 +380,7 @@ public class GoodsController {
 
 	/**
 	 * 获取所有商品：包含合作伙伴信息
-	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,isCityWide,postageId,currUserLocX,currUserLocY}
+	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,city,postageId,currUserLocX,currUserLocY}
 	 * @param jsonSortParams  排序条件 {time:"N#0/1",dist:"N#0",sale:"N"#0/1}；time 表示按更新上架时间排序，N为排序位置，0为升序，1为降序；dist表示按距离排序，仅对有同城条件使用;sale 为按销量
 	 * @param pageCond 分页条件 
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 

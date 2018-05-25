@@ -88,7 +88,7 @@ public class PartnerBasic {
     @Null
     private Date reviewTime;
     
-    private Integer distance;//商户距离合作伙伴的距离
+    private Double distance;//商户距离合作伙伴的距离
 
     public Integer getPartnerId() {
 		return partnerId;
@@ -274,11 +274,11 @@ public class PartnerBasic {
         this.reviewTime = reviewTime;
     }
 
-	public Integer getDistance() {
+	public Double getDistance() {
 		return distance;
 	}
 
-	public void setDistance(Integer distance) {
+	public void setDistance(Double distance) {
 		this.distance = distance;
 	}
     

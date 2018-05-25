@@ -476,6 +476,8 @@ public class OrderServiceImpl implements OrderService{
 		this.changeFlowService.paySuccess(true, new BigDecimal(totalAmount/100), userVip, 
 				"商品购买【订单号:" + oldPayFlow.getOrderId() + "】", 
 				oldPayFlow.getUserId(), mchtVipId);
+		//更新会员积分
+		this.vipBasicService.updScore(userVip.getVipId(), (int)(totalAmount/100));
 		//更新支付流水
 		PayFlow updPayFow = new PayFlow();
 		updPayFow.setFlowId(oldPayFlow.getFlowId());
@@ -543,12 +545,13 @@ public class OrderServiceImpl implements OrderService{
 		}
 		String stat = payFlow.getStatus();
 		if("10".equals(stat)) {
+			//更新支付流水
 			PayFlow failFlow = new PayFlow();
 			failFlow.setFlowId(payFlowId);
 			failFlow.setStatus("F1");
 			failFlow.setMemo(fail);
 			this.payFlowMapper.updateByPrimaryKeySelective(failFlow);
-			
+			//更新订单
 			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
 			Order updOrder = new Order();
 			updOrder.setOrderId(order.getOrderId());
@@ -709,6 +712,8 @@ public class OrderServiceImpl implements OrderService{
 		Date currTime = new Date();
 		this.changeFlowService.refundSuccess(useBal, new BigDecimal(total/100), 
 				userVipId, changeReason + "【订单号:" + order.getOrderId() +"】", mchtVipId, mchtVipId);
+		//更新会员积分
+		this.vipBasicService.updScore(userVipId, (int)(total/100));
 		//更新退款流水
 		PayFlow updFlow = new PayFlow();
 		updFlow.setStatus("21");		//退款成功

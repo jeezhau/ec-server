@@ -41,10 +41,10 @@ public class UserBasicServiceImpl implements UserBasicService{
 			vipBasic.setVipId(id);
 			vipBasicService.add(vipBasic);
 		}
-		if(userBasic.getSenceId() != null) { //有介绍人员
+		if(userBasic.getSenceId() != null) { //有介绍人员，积分处理
 			VipBasic vip = this.vipBasicService.get(userBasic.getSenceId());
 			if(vip != null) {
-				this.vipBasicService.updScore(vip, spreadPerUserScore);
+				this.vipBasicService.updScore(vip.getVipId(), spreadPerUserScore);
 			}
 		}
 		return id;

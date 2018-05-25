@@ -1,14 +1,18 @@
 package com.mofangyouxuan.wxapi;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.commons.io.FileUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -53,6 +57,8 @@ public class WXPay {
 	public String refundNotifyUrl;		//微信退款回调地址
 	
 	public String SecretKEY;			//微信支付商户密钥,保存于服务器本地
+	@Value("${wxpay.cert-key-dir}")
+	public String certKeyDir;
 	
 	@Value("${wxpay.wx-fee-rate}")
 	public Double wxFeeRate;		//微信手续费费率
@@ -60,9 +66,22 @@ public class WXPay {
 	@Autowired
 	private OrderService orderService;
 	
-	public WXPay() {
+	public String  getSecretKey() {
+		if(SecretKEY != null && SecretKEY.length()>0) {
+			return SecretKEY;
+		}
+		File  file = new File(this.certKeyDir + "SecretKey.data");
+		List<String> list = null;
+		try {
+			list = FileUtils.readLines(file, "utf8");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		//获取密钥
-		SecretKEY = "";
+		if(list != null && list.size()>0) {
+			SecretKEY = list.get(0).trim();
+		}
+		return SecretKEY;
 	}
 	
 	/**
@@ -750,7 +769,7 @@ public class WXPay {
 	
 	/**
 	 * 生成签名
-	 * @param map
+	 * @param map	待签名数据
 	 * @return
 	 * @throws NoSuchAlgorithmException
 	 * @throws UnsupportedEncodingException
@@ -761,7 +780,7 @@ public class WXPay {
 		for(String key:paramKeySet) {
 			sb.append("&" + key + "=" + map.get(key));
 		}
-		String strings = sb.substring(1) + "&key=" + SecretKEY;
+		String strings = sb.substring(1) + "&key=" + getSecretKey();
 		//获取签名
 		String sign = SignUtils.encodeMD5Hex(strings).toUpperCase();
 		return sign;

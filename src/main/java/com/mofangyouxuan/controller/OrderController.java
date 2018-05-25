@@ -394,10 +394,10 @@ public class OrderController {
 		
 		Integer distance = null;	//同城计算距离
 		if(receiver_city.equals(partner_city)) {//同城须计算距离，单位：km
-			BigDecimal lon1 = partner.getLocationX();
-			BigDecimal lat1 = partner.getLocationY();
-			BigDecimal lon2 = receiver.getLocationX();
-			BigDecimal lat2 = receiver.getLocationX();
+			BigDecimal lon1 = partner.getLocationX(); //商户经度
+			BigDecimal lat1 = partner.getLocationY();  //商户纬度
+			BigDecimal lon2 = receiver.getLocationX(); //收货人经度
+			BigDecimal lat2 = receiver.getLocationX(); //收货人纬度
 			if(lon1 != null && lat1 != null && lon2 != null && lat2 != null) {
 //				double hsinX = Math.sin((lon1.doubleValue() - lon2.doubleValue()) * 0.5);
 //		        double hsinY = Math.sin((lat1.doubleValue() - lat2.doubleValue()) * 0.5);

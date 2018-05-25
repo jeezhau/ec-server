@@ -45,6 +45,7 @@ wxpay:
   pay-notify-url: '/wxpay/notify/pay'
   refund-notify-url: '/wxpay/notify/refund'
   wx-fee-rate: 0.007
+  cert-key-dir: '/Users/jeekhan/wxpay/'
 
 #信息管理平台
 messmp:

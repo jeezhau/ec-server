@@ -72,7 +72,7 @@
 	    <result column="location_y" jdbcType="DECIMAL" property="locationY" />
 	    <result column="introduce" jdbcType="VARCHAR" property="introduce" />
 	    <result column="partner_status" jdbcType="CHAR" property="status" />
-	    <result column="distance" jdbcType="INTEGER" property="distance"/>
+	    <result column="distance" jdbcType="DECIMAL" property="distance"/>
 	</association>
   </resultMap>
   <sql id="Base_Column_List">
@@ -249,7 +249,7 @@
 	     ,<include refid="Base_Column_Partner" />
 	     <if test="params.city != null">
 	       <if test="params.currUserLocX != null and params.currUserLocY != null ">
-	        , ROUND(sqrt(pow((#{params.currUserLocX,jdbcType=DECIMAL}-p.location_x),2) + pow((#{params.currUserLocY,jdbcType=DECIMAL}-p.location_y),2))*6367000.0)  distance
+	        , getdistance(#{params.currUserLocX,jdbcType=DECIMAL}, #{params.currUserLocY,jdbcType=DECIMAL}, p.location_x, p.location_y) distance 
 	       </if>
 	       <if test="params.currUserLocX == null and params.currUserLocY == null ">
 	        , '' distance

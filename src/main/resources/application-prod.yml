@@ -26,7 +26,7 @@ mybatis:
  
 logging:
   level:
-    com.mofangyouxuan: DEBUG
+    com.mofangyouxuan: INFO
 
   
 ######业务参数############
@@ -36,10 +36,27 @@ wxmp:
   qrcode-apply-url: '/qrcode/createTmp'
   qrcode-get-url: '/qrcode/getqrcode'
   qrcode-show-url: '/qrcode/show/'
-  
+
+#微信支付参数
+wxpay:
+  mchtid: '1503812541'
+  appid: 'wx34a58dad7a6542ca'
+  notify-server-url: 'https://pay.mofangyouxuan.com'
+  pay-notify-url: '/wxpay/notify/pay'
+  refund-notify-url: '/wxpay/notify/refund'
+  wx-fee-rate: 0.007  
+
+#信息管理平台
+messmp:
+  messmp-server-url: 'http://172.18.235.107:8888'
+  verify-phone-vericode: '/sms/vericode/verify'
+  verify-email-vericode: '/email/vericode/verify'
+  send-phone-resetpwd: '/sms/resetpwd/send'
+  send-email-resetpwd: '/email/resetpwd/send' 
   
 ######系统参数############  
 sys:
+  cert-key-dir: '/var/mfyx/syscert/'
   tmp-file-dir: '/tmp/mfyx/'  #系统临时目录
   partner-cert-dir: '/var/mfyx/partner-cert/'   #合作伙伴证件照片主目录
   image-gallery-dir: '/var/mfyx/image-gallery/' #系统图库主目录
@@ -47,11 +64,16 @@ sys:
   image-file-all-limit: 100     #每个会员最多可有100个文件（普通文件和目录）
   image-folder-file-limit: 100   #每个文件夹下最多可有100个文件（普通文件和目录）
   
+  activate-vip-need-score: 1000 #激活会员需要多少积分
+  spread-per-user-score: 100 #每推广一个用户可获得多少积分
+  
   postage-cnt-limit: 20 #每个合作伙伴可添加的运费模版数量限制
   goods-cnt-limit: 30 #每个合作伙伴可添加的商品数量限制
 
   receiver-cnt-limit: 5 #每个用户可添加的收货人信息数量限制
   
-  order-4pay-cnt-all-limit: 5 #每个用户可持有的所有待付款订单数
-  order-4pay-cnt-goods-limit: 1 #每个用户可持有的单个商品待付款订单数
+  order-4pay-cnt-all-limit: 30   #每个用户可持有的所有待付款订单数
+  order-4pay-cnt-goods-limit: 1   #每个用户可持有的单个商品待付款订单数
+  order-nodelivery-days-4refund: 3   #超过3天卖家未发货买家可申请退款
+  order-nosign-days-4refund: 10   #至卖家发货之后超过10天买家没有获得签收可申请退款
   

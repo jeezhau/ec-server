@@ -83,10 +83,10 @@ public interface VipBasicService {
 	
 	/**
 	 * 更新会员积分
-	 * @param vipBasic
+	 * @param vipId
 	 * @param subScore 需要增加的积分
 	 * @return
 	 */
-	public int updScore(VipBasic vipBasic,Integer subScore);
+	public int updScore(Integer vipId,Integer subScore);
 	
 }
