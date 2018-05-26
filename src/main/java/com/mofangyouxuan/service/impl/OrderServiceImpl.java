@@ -371,7 +371,7 @@ public class OrderServiceImpl implements OrderService{
 	public JSONObject createPrePay(UserBasic user,VipBasic userVip,Order order,Integer mchtVipId,String payType,String ip) {
 		JSONObject jsonRet = new JSONObject();
 		//查询已有最新支付流水单
-		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),"1");
+		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),null);
 		BigDecimal amount = order.getAmount().multiply(new BigDecimal(100)).setScale(0);//订单金额，分
 		BigDecimal fee = new BigDecimal(0);
 		String outTradeNo = null;	//外部系统的预付单号
@@ -386,7 +386,7 @@ public class OrderServiceImpl implements OrderService{
 				return jsonRet;
 			}else if("00".equals(oldFlow.getStatus())) {//待支付
 				Long t = (new Date().getTime()-oldFlow.getCreateTime().getTime())/1000/3600;
-				if(t<=1) {//支付未超时1h
+				if(t<=1 && payType.equals(oldFlow.getPayType())) {//支付未超时1h
 					jsonRet.put("errcode", 0);
 					jsonRet.put("payType", payType);
 					jsonRet.put("prepay_id", oldFlow.getOutTradeNo());
@@ -413,7 +413,9 @@ public class OrderServiceImpl implements OrderService{
 				if(wxRet.getString("mweb_url") != null) {
 					outPayUrl = wxRet.getString("mweb_url");
 				}
-				flowId = wxRet.getString("payFlowId");
+				if(wxRet.containsKey("payFlowId")) {
+					flowId = wxRet.getString("payFlowId");
+				}
 			}else {//失败
 				return wxRet;
 			}

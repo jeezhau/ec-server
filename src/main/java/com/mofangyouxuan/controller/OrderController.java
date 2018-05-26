@@ -40,7 +40,9 @@ import com.mofangyouxuan.service.PostageService;
 import com.mofangyouxuan.service.ReceiverService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.utils.NonceStrUtil;
 import com.mofangyouxuan.utils.SignUtils;
+import com.mofangyouxuan.wxapi.WXPay;
 
 /**
  * 点单管理
@@ -63,6 +65,8 @@ public class OrderController {
 	private int noDeliveryDates4Refund;
 	@Value("${sys.order-nosign-days-4refund}")
 	private int noSignDates4Refund;
+	@Autowired
+	private WXPay wXPay;
 	
 	@Autowired
 	private UserBasicService userBasicService;
@@ -793,8 +797,23 @@ public class OrderController {
 				jsonRet.put("errmsg", errmsg);
 				return jsonRet.toJSONString();
 			}
-			
+			//outPayUrl,prepay_id
 			jsonRet = this.orderService.createPrePay(user, userVip, order, goods.getPartner().getVipId(), payType, userIp);
+			if(jsonRet.containsKey("prepay_id")) {
+				Long timestamp = System.currentTimeMillis()/1000;
+				String nonceStr = NonceStrUtil.getNonceStr(20);
+				Map<String,String> signMap = new HashMap<String,String>();
+				signMap.put("appId", this.wXPay.appId);
+				signMap.put("timeStamp", timestamp+"");
+				signMap.put("nonceStr", nonceStr);
+				signMap.put("package", "prepay_id=" + jsonRet.getString("prepay_id"));
+				signMap.put("signType", "MD5");
+				String sign = this.wXPay.signJSAPI(signMap);  
+				jsonRet.put("paySign", sign);
+				jsonRet.put("appId", this.wXPay.appId);
+				jsonRet.put("timeStamp", timestamp);
+				jsonRet.put("nonceStr", nonceStr);
+			}
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.CollectionMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Collection">
+    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="coll_type" jdbcType="CHAR" property="collType" />
+    <result column="rel_id" jdbcType="INTEGER" property="relId" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="vip_id" jdbcType="INTEGER" property="goodsVipId" />
+    <result column="partner_id" jdbcType="INTEGER" property="goodsPartnerId" />
+    <result column="main_img_path" jdbcType="VARCHAR" property="goodsMainImg" />
+    <result column="goods_name" jdbcType="VARCHAR" property="goodsName" />
+    <result column="busi_name" jdbcType="VARCHAR" property="partnerBusiName" />
+    <result column="introduce" jdbcType="VARCHAR" property="partnerIntroduce" />
+  </resultMap>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Collection">
+    insert into tb_collection (user_id, coll_type, rel_id, 
+      create_time)
+    values (#{userId,jdbcType=INTEGER}, #{collType,jdbcType=CHAR}, #{relId,jdbcType=INTEGER}, 
+      #{createTime,jdbcType=TIMESTAMP})
+  </insert>
+  
+  <delete id="delete" parameterType="map">
+   delete from tb_collection
+   where user_id = #{userId,jdbcType=INTEGER} and coll_type=#{collType,jdbcType=CHAR} and rel_id=#{relId,jdbcType=INTEGER}
+  </delete>
+  
+  <select id="selectUsersAll" parameterType="int" resultMap="BaseResultMap">
+  select c.*,g.main_img_path,g.goods_name,p.partner_id,p.vip_id,p.busi_name,p.introduce
+  from tb_collection c
+  left join tb_goods_info g on c.coll_type='2' and c.rel_id = g.goods_id 
+  left join tb_partner_basic p on (c.coll_type='1' and c.rel_id = p.partner_id) or (g.partner_id = p.partner_id)
+  where user_id = #{userId,jdbcType=INTEGER} 
+  </select>
+  
+  <select id="countUsersAll" parameterType="int" resultType="int">
+  select count(1) cnt
+   from tb_collection
+  where user_id = #{userId,jdbcType=INTEGER} 
+  </select>
+   
+  
+  
+</mapper>

@@ -39,6 +39,7 @@ public class UserBasicServiceImpl implements UserBasicService{
 		if(id != null) {//初始化会员信息
 			VipBasic vipBasic = new VipBasic();
 			vipBasic.setVipId(id);
+			vipBasic.setUpdateTime(new Date());
 			vipBasicService.add(vipBasic);
 		}
 		if(userBasic.getSenceId() != null) { //有介绍人员，积分处理

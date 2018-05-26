@@ -17,6 +17,6 @@ public interface PayFlowMapper {
 
     int updateByPrimaryKey(PayFlow record);
     
-    PayFlow selectLastestFlow(@Param("orderId")String orderId,@Param("payType")String payType);
+    PayFlow selectLastestFlow(@Param("orderId")String orderId,@Param("flowType")String flowType);
     
 }

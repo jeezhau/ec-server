@@ -204,9 +204,15 @@ public class WXPay {
 	 */
 	public JSONObject createPrePay(Order order,String payFlowId,Long totalAmount,String openId,String userIP) {
 		JSONObject jsonRet = new JSONObject();
-		String tradeType = "MWEB";	//H5支付
+		String tradeType;
+		if(openId != null) {
+			tradeType = "JSAPI";
+		}else {
+			tradeType = "MWEB";	//H5支付
+		}
 		JSONObject wxRet = unifiedOrder(tradeType,order,payFlowId, totalAmount, openId, userIP);
 		if(wxRet.containsKey("prepay_id")) {//成功
+			wxRet.put("payFlowId", payFlowId);
 			return wxRet;
 		}else {//失败
 			if("ORDERCLOSED".equals(jsonRet.getString("errcode"))) {//已关闭
@@ -781,6 +787,18 @@ public class WXPay {
 			sb.append("&" + key + "=" + map.get(key));
 		}
 		String strings = sb.substring(1) + "&key=" + getSecretKey();
+		//获取签名
+		String sign = SignUtils.encodeMD5Hex(strings).toUpperCase();
+		return sign;
+	}
+	
+	public String signJSAPI(Map<String,String> map) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		Set<String> paramKeySet = new TreeSet<String>(map.keySet());
+		StringBuilder sb = new StringBuilder();
+		for(String key:paramKeySet) {
+			sb.append("&" + key + "=" + map.get(key));
+		}
+		String strings = sb.substring(1) ;
 		//获取签名
 		String sign = SignUtils.encodeMD5Hex(strings).toUpperCase();
 		return sign;

@@ -12,7 +12,7 @@ public class ErrCodes {
 	public static int COMMON_EXCEPTION = -100001; //出现系统异常
 	public static int COMMON_DB_ERROR = -100002;	//数据库处理失败
 	public static int COMMON_PARAM_ERROR = -100003;	//参数格式不正确
-	
+	public static int COMMON_PRIVILEGE_ERROR = -100004;	//权限不正确
 	
 	//用户管理功能码：101
 	public static int USER_PARAM_ERROR = -101001;	//参数格式不正确
@@ -77,7 +77,9 @@ public class ErrCodes {
 	public static int ORDER_STATUS_ERROR = -109011;	//状态不正确
 	public static int ORDER_PAY_ERROR = -109012;	//支付失败
 	
-	
+	//订单管理功能码：110
+	public static int COLLECTION_OVER_LIMIT= -110001;	//超出限制
+		
 }
 
 

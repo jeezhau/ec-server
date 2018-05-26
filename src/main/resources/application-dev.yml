@@ -78,4 +78,5 @@ sys:
   order-nodelivery-days-4refund: 3   #超过3天卖家未发货买家可申请退款
   order-nosign-days-4refund: 10   #至卖家发货之后超过10天买家没有获得签收可申请退款
   
+  user-collection-limit: 20 #每个用户可有的收藏数量
   
