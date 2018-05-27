@@ -84,12 +84,12 @@ public class UserBasicAction {
 				String passwd = userBasic.getPasswd();
 				if(email == null || email.length()<6 || email.length()>100) {
 					jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
-					jsonRet.put("errmsg", " email: not null and length range is 6-100. ");
+					jsonRet.put("errmsg", " email: 长度范围 is 6-100. ");
 					return jsonRet.toString();
 				}
 				if(passwd == null || passwd.length()<6 || passwd.length()>20) {
 					jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
-					jsonRet.put("errmsg", " passwd: not null and length range is 6-20. ");
+					jsonRet.put("errmsg", " passwd: 长度范围 is 6-20. ");
 					return jsonRet.toString();
 				}else {
 					userBasic.setPasswd(SignUtils.encodeSHAHex(passwd));//加密明文密码
@@ -98,7 +98,7 @@ public class UserBasicAction {
 				String openid = userBasic.getOpenId();
 				if(openid == null || openid.length()<6) {
 					jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
-					jsonRet.put("errmsg", " openid: not null and length range is 6-100. ");
+					jsonRet.put("errmsg", " openid: 长度范围 6-100字符. ");
 					return jsonRet.toString();
 				}
 			}
@@ -112,6 +112,9 @@ public class UserBasicAction {
 			if(unique != null && unique.length()>0) {
 				UserBasic old = this.userBasicService.get(unique);
 				if( old != null) {	//已有该用户，直接返回成功
+					if("2".equals(registType)) {//微信再次关注
+						return this.update(userBasic, result);
+					}
 					jsonRet.put("errcode", 0);
 					jsonRet.put("userId", old.getUserId());
 					jsonRet.put("errmsg", "系统中已有该用户，如果需要修改信息请使用修改功能！");
@@ -143,7 +146,7 @@ public class UserBasicAction {
 	 * 
 	 * @param userBasic
 	 * @param result
-	 * 
+	 * @param isReCreate 是否再次注册
 	 * @return {errcode:0,errmsg:"ok"}
 	 * @throws JSONException 
 	 */
@@ -208,8 +211,8 @@ public class UserBasicAction {
 			}
 			//数据处理
 			userBasic.setStatus("1"); //用户正常
-			userBasic.setPasswd(old.getPasswd());
 			userBasic.setUserId(old.getUserId());
+			userBasic.setPasswd(old.getPasswd());
 			userBasic.setRegistTime(null);
 			userBasic.setRegistType(old.getRegistType());
 			userBasic.setSenceId(old.getSenceId());

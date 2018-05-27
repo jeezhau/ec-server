@@ -56,7 +56,7 @@ public class QrCodeSenceAction {
 	public Object getSpreadInfo(String openId,String create) {
 		JSONObject jsonRet = new JSONObject();
 		UserBasic user = this.userBasicService.get(openId);
-		if(user == null || !"0".equals(user.getStatus())) {
+		if(user == null || !"1".equals(user.getStatus())) {
 			jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 			jsonRet.put("errmsg", "系统中没有该用户！");
 			return jsonRet.toString();

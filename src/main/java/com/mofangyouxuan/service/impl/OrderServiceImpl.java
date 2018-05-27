@@ -342,7 +342,7 @@ public class OrderServiceImpl implements OrderService{
 		}
 		
 		//查询已有最新支付流水单
-		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),"1");
+		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),null);
 		if(oldFlow == null) {
 			jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 			jsonRet.put("errmsg","系统没有您的支付流水信息！");
@@ -718,6 +718,7 @@ public class OrderServiceImpl implements OrderService{
 		this.vipBasicService.updScore(userVipId, (int)(total/100));
 		//更新退款流水
 		PayFlow updFlow = new PayFlow();
+		updFlow.setFlowId(refundFlow.getFlowId());
 		updFlow.setStatus("21");		//退款成功
 		updFlow.setIncomeAmount(total);	//入账金额，分
 		updFlow.setIncomeTime(currTime);

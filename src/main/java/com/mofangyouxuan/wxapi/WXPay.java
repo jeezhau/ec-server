@@ -1,8 +1,10 @@
 package com.mofangyouxuan.wxapi;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,7 +14,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.SSLContext;
+
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -317,59 +329,7 @@ public class WXPay {
 				String value = ((Node)ele).getText();
 				retMap.put(name, value);
 			}
-//			Node return_code = xmlElement.selectSingleNode("return_code");
-//			if(return_code != null) {
-//				retMap.put("return_code", return_code.getText());
-//			}
-//			Node return_msg = xmlElement.selectSingleNode("return_msg");
-//			if(return_msg != null) {
-//				retMap.put("return_msg", return_msg.getText());
-//			}
-//			Node appid = xmlElement.selectSingleNode("appid");
-//			if(appid != null) {
-//				retMap.put("appid", appid.getText());
-//			}
-//			Node mch_id = xmlElement.selectSingleNode("mch_id");
-//			if(mch_id != null) {
-//				retMap.put("mch_id", mch_id.getText());
-//			}
-//			Node device_info = xmlElement.selectSingleNode("device_info");
-//			if(device_info != null) {
-//				retMap.put("device_info", device_info.getText());
-//			}
-//			Node nonce_str = xmlElement.selectSingleNode("nonce_str");
-//			if(nonce_str != null) {
-//				retMap.put("nonce_str", nonce_str.getText());
-//			}
-//			Node signNode = xmlElement.selectSingleNode("sign");
-//	//		if(signNode != null) {
-//	//			retMap.put("sign", signNode.getText());
-//	//		}
-//			Node result_code = xmlElement.selectSingleNode("result_code");
-//			if(result_code != null) {
-//				retMap.put("result_code", result_code.getText());
-//			}
-//			Node err_code = xmlElement.selectSingleNode("err_code");
-//			if(err_code != null) {
-//				retMap.put("err_code", err_code.getText());
-//			}
-//			Node err_code_des = xmlElement.selectSingleNode("err_code_des");
-//			if(err_code_des != null) {
-//				retMap.put("err_code_des", err_code_des.getText());
-//			}
-//			Node trade_type = xmlElement.selectSingleNode("trade_type");
-//			if(trade_type != null) {
-//				retMap.put("trade_type", trade_type.getText());
-//			}
-//			Node prepay_id = xmlElement.selectSingleNode("prepay_id");
-//			if(prepay_id != null) {
-//				retMap.put("prepay_id", prepay_id.getText());
-//			}
-//			Node code_url = xmlElement.selectSingleNode("code_url");
-//			if(code_url != null) {
-//				retMap.put("code_url", code_url.getText());
-//			}
-//			 
+		 
 			String retSign = retMap.remove("sign");
 			if("SUCCESS".equals(retMap.get("return_code"))) {//接口返回成功
 				//获取签名
@@ -378,6 +338,7 @@ public class WXPay {
 					jsonRet.put("errcode", -1);
 					jsonRet.put("errmsg", retMap.get("签名验证比匹配！"));
 					logger.info("微信统一下单：签名验证失败！");
+					return jsonRet;
 				}
 				//业务判断
 				if("SUCCESS".equals(retMap.get("result_code"))) {//业务成功
@@ -441,7 +402,7 @@ public class WXPay {
 			
 			logger.info("微信申请退款，发送请求：" + root.asXML());
 			String url = "https://api.mch.weixin.qq.com/secapi/pay/refund";
-			String strRet = HttpUtils.doPostTextSSL(url, root.asXML());
+			String strRet = HttpUtils.doPostTextSSL(this.getWXSSLClient(),url, root.asXML());
 			logger.info("微信申请退款，接口返回：" + strRet);
 			
 			//解析应答
@@ -455,6 +416,7 @@ public class WXPay {
 			}
 		 
 			String retSign = retMap.remove("sign");
+		 
 			if("SUCCESS".equals(retMap.get("return_code"))) {//接口返回成功
 				//获取签名
 				String sign2 = signMap(retMap);
@@ -462,6 +424,7 @@ public class WXPay {
 					jsonRet.put("errcode", -1);
 					jsonRet.put("errmsg", retMap.get("签名验证比匹配！"));
 					logger.info("微信申请退款：签名验证失败！");
+					return jsonRet;
 				}
 				//业务判断
 				if("SUCCESS".equals(retMap.get("result_code"))) {//业务成功
@@ -535,6 +498,7 @@ public class WXPay {
 					jsonRet.put("errcode", -1);
 					jsonRet.put("errmsg", retMap.get("签名验证比匹配！"));
 					logger.info("微信订单查询：签名验证失败！");
+					return jsonRet;
 				}
 				//业务判断
 				if("SUCCESS".equals(retMap.get("result_code"))) {//业务成功
@@ -615,18 +579,19 @@ public class WXPay {
 					jsonRet.put("errcode", -1);
 					jsonRet.put("errmsg", retMap.get("签名验证比匹配！"));
 					logger.info("微信退款查询：签名验证失败！");
+					return jsonRet;
 				}
 				//业务判断
-				if("SUCCESS".equals(retMap.get("result_code"))) {//业务成功
-					if("SUCCESS".equals(retMap.get("refund_status_$0"))) {//已退款成功
+				else if("SUCCESS".equals(retMap.get("result_code"))) {//业务成功
+					if("SUCCESS".equals(retMap.get("refund_status_0"))) {//已退款成功
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "ok");
-						jsonRet.put("settlement_refund_fee", retMap.get("settlement_refund_fee_$0"));
-						jsonRet.put("refund_fee_apply", retMap.get("refund_fee_$0"));
-						jsonRet.put("refund_id", retMap.get("refund_id_$0"));
+						jsonRet.put("settlement_refund_fee", retMap.get("settlement_refund_fee_0"));
+						jsonRet.put("refund_fee_apply", retMap.get("refund_fee_0"));
+						jsonRet.put("refund_id", retMap.get("refund_id_0"));
 					}else {
 						jsonRet.put("errcode", -1);
-						jsonRet.put("errmsg", retMap.get("refund_status_$0"));
+						jsonRet.put("errmsg", retMap.get("refund_status_0"));
 					}
 				}else {//业务失败
 					jsonRet.put("errcode", -1);
@@ -670,6 +635,7 @@ public class WXPay {
 					jsonRet.put("errcode", -1);
 					jsonRet.put("errmsg", retMap.get("签名验证失败！"));
 					logger.info("微信支付通知：签名验证失败！");
+					return jsonRet;
 				}
 				//业务判断
 				if("SUCCESS".equals(retMap.get("result_code"))) {//业务成功
@@ -730,6 +696,7 @@ public class WXPay {
 						jsonRet.put("errcode", -1);
 						jsonRet.put("errmsg", retMap.get("签名验证失败！"));
 						logger.info("微信退款通知：签名验证失败！");
+						return jsonRet;
 					}
 				}
 				//业务判断
@@ -738,10 +705,20 @@ public class WXPay {
 				//（2）对商户key做md5，得到32位小写key* ( key设置路径：微信商户平台(pay.weixin.qq.com)-->账户设置-->API安全-->密钥设置 )
 				//（3）用key*对加密串B做AES-256-ECB解密（PKCS7Padding）
 				//解密
-				
-				
+				byte[] desecInfo = Base64.decodeBase64(secrectReqInfo.getBytes("utf8"));
+				String signKey = SignUtils.encodeMD5Hex(this.getSecretKey()).toLowerCase();
+				byte[] byteDesecInfo = this.decryptAES(signKey.getBytes("utf8"), desecInfo);
+				String retStr = new String(byteDesecInfo,"utf8");
+				retStr = "<xml>" + retStr + "</xml>";
+				System.out.println("退款通知解析结果：" + retStr);
+				Document doc = DocumentHelper.parseText(retStr);
+				Element element = doc.getRootElement();
 				retMap = new HashMap<String,String>();
-				
+				for(Object ele : element.elements()){
+					String name = ((Node)ele).getName();
+					String value = ((Node)ele).getText();
+					retMap.put(name, value);
+				}
 				if("SUCCESS".equals(retMap.get("refund_status"))) {//退款成功
 					String payFlowId = retMap.get("out_refund_no"); //支付订单号
 					String refund_fee = retMap.get("settlement_refund_fee"); //退款金额
@@ -784,7 +761,10 @@ public class WXPay {
 		Set<String> paramKeySet = new TreeSet<String>(map.keySet());
 		StringBuilder sb = new StringBuilder();
 		for(String key:paramKeySet) {
-			sb.append("&" + key + "=" + map.get(key));
+			String val = map.get(key);
+			if(val != null && val.length()>0) {
+				sb.append("&" + key + "=" + val);
+			}
 		}
 		String strings = sb.substring(1) + "&key=" + getSecretKey();
 		//获取签名
@@ -803,6 +783,53 @@ public class WXPay {
 		String sign = SignUtils.encodeMD5Hex(strings).toUpperCase();
 		return sign;
 	}
+	
+	
+    
+	private CloseableHttpClient wxSSLHttpClient = null;
+    /**
+     * 获取微信访问的SSL链接客户端，附带证书
+     * @return
+     * @throws Exception 
+     */
+	public CloseableHttpClient getWXSSLClient() throws Exception{
+		if(wxSSLHttpClient != null) {
+			return wxSSLHttpClient;
+		}
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(new FileInputStream(new File("/Users/jeekhan/wxpay/apiclient_cert.p12")), "1503812541".toCharArray());
+        SSLContext sslcontext = SSLContexts.custom()
+                //加载服务端提供的truststore(如果服务器提供truststore的话就不用忽略对服务器端证书的校验了)
+                //.loadTrustMaterial(new File("D:\\truststore.jks"), "123456".toCharArray(),
+                //        new TrustSelfSignedStrategy())
+                .loadKeyMaterial(keyStore, "1503812541".toCharArray())
+                .build();
+        SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
+                sslcontext,
+                new String[] { "TLSv1"}, 
+                null,
+                SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+        CloseableHttpClient wxSSLHttpClient = HttpClients.custom()
+                .setSSLSocketFactory(sslConnectionSocketFactory)
+                .build();
+
+        return wxSSLHttpClient;
+	}
+	
+
+    public static final String CIPHER_ALGORITHM = "AES/ECB/PKCS7Padding";
+	/**
+	 * 解密
+	 * @param content  待解密内容
+	 * @return
+	 */
+	public byte[] decryptAES(byte[] key,byte[] data) throws Exception {
+		SecretKey secretKey = new SecretKeySpec(key, "AES");
+	    Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+	    cipher.init(Cipher.DECRYPT_MODE, secretKey);
+	    return cipher.doFinal(data);
+	}
+
 }
 
 

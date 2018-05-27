@@ -1,5 +1,7 @@
 package com.mofangyouxuan.utils;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -60,8 +62,9 @@ public class CommonUtil {
 	}
 	
 
-	public static void main(String[] args) {
-		System.out.println(genOrderId(100002));
+	public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		//System.out.println(genOrderId(100002));
+		System.out.println(SignUtils.encodeSHA256Hex("123456"));
 	}
 
 }
