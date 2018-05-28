@@ -17,6 +17,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.PayFlowMapper;
 import com.mofangyouxuan.mapper.OrderMapper;
 import com.mofangyouxuan.model.PayFlow;
@@ -48,6 +49,8 @@ public class OrderServiceImpl implements OrderService{
 	private WXPay wXPay;
 	@Autowired
 	private VipBasicService vipBasicService;
+	@Autowired
+	private SysParamUtil sysParamUtil;
 	/**
 	 * 新增订单
 	 * @param order
@@ -404,7 +407,8 @@ public class OrderServiceImpl implements OrderService{
 		flowId = CommonUtil.genPayFlowId(order.getOrderId(), oldFlowId); //支付流水单号
 		//向微信申请预付单
 		if("2".equals(payType)) {
-			fee = amount.multiply(new BigDecimal(wXPay.wxFeeRate)).setScale(0, BigDecimal.ROUND_CEILING);
+			BigDecimal feeRate = sysParamUtil.getWxFeeRate();
+			fee = amount.multiply(feeRate).setScale(0, BigDecimal.ROUND_CEILING); //计算手续费
 			totalAmount = amount.longValue() + fee.longValue();//支付金额
 			JSONObject wxRet = wXPay.createPrePay(order,flowId, totalAmount, user.getOpenId(), ip);
 			if(wxRet.containsKey("prepay_id")) {//成功
@@ -522,7 +526,7 @@ public class OrderServiceImpl implements OrderService{
 			return "付款金额不正确！";
 		}
 		String stat = payFlow.getStatus();
-		if("10".equals(stat)) {
+		if("00".equals(stat) || "10".equals(stat)) {
 			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
 			VipBasic vip = this.vipBasicService.get(payFlow.getUserId());
 			this.execPaySucc(false, payFlow,vip, order, order.getMchtUId(),outFinishId);
@@ -546,7 +550,7 @@ public class OrderServiceImpl implements OrderService{
 			return "系统中没有该支付流水信息！";
 		}
 		String stat = payFlow.getStatus();
-		if("10".equals(stat)) {
+		if("00".equals(stat) ||"10".equals(stat)) {
 			//更新支付流水
 			PayFlow failFlow = new PayFlow();
 			failFlow.setFlowId(payFlowId);
@@ -654,29 +658,41 @@ public class OrderServiceImpl implements OrderService{
 		String payType = oldFlow.getPayType();	//支付方式
 		if("00".equals(sysStat) || "10".equals(sysStat)){
 			if("2".equals(payType)) {	//微信支付，执行订单查询
-				JSONObject queryRet = this.wXPay.queryOrder(oldFlow.getFlowId());
-				if(queryRet.containsKey("total_fee")) { //已经成功
-					this.execPaySucc(false, oldFlow, userVip, order, order.getMchtUId(), queryRet.getString("transaction_id"));
-					jsonRet.put("errcode", 0);
-					jsonRet.put("errmsg", "支付成功！");
-				}else {
-					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-					jsonRet.put("errmsg", "我们还未收到第三方支付平台给出的您的支付成功通知，请稍后再查看！！");
+				Long curr = System.currentTimeMillis()/1000/60;
+				if(curr - oldFlow.getCreateTime().getTime()/1000/60 > 10) {
+					JSONObject queryRet = this.wXPay.queryOrder(oldFlow.getFlowId());
+					if(queryRet.containsKey("total_fee")) { //已经成功
+						if(queryRet.getLong("total_fee") == oldFlow.getPayAmount() + oldFlow.getFeeAmount()) {
+							this.execPaySucc(false, oldFlow, userVip, order, order.getMchtUId(), queryRet.getString("transaction_id"));
+							jsonRet.put("errcode", 0);
+							jsonRet.put("errmsg", "支付成功！");
+							return jsonRet;
+						}
+					}
 				}
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg", "我们还未收到第三方支付平台给出的您的支付成功通知，请稍后再查看！！");
+				return jsonRet;
 			}
 		}else if("11".equals(sysStat)) {//后端成功
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "支付成功！");
 		}else if("20".equals(sysStat)){
-			JSONObject queryRet = this.wXPay.queryRefund(oldFlow.getFlowId());
-			if(queryRet.containsKey("settlement_refund_fee")) { //已经成功
-				this.execRefundSucc(false, oldFlow, userVip.getVipId(), order, order.getMchtUId(), "退款成功", queryRet.getString("settlement_refund_fee"));
-				jsonRet.put("errcode", 0);
-				jsonRet.put("errmsg", "退款成功！");
-			}else {
-				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-				jsonRet.put("errmsg", "我们还未收到第三方支付平台给出的您的退款成功通知，请稍后再查看！！");
+			Long curr = System.currentTimeMillis()/1000/60;
+			if(curr - oldFlow.getCreateTime().getTime()/1000/60 > 10) {
+				JSONObject queryRet = this.wXPay.queryRefund(oldFlow.getFlowId());
+				if(queryRet.containsKey("refund_fee")) { //已经成功
+					if(queryRet.getLong("refund_fee") == oldFlow.getPayAmount() + oldFlow.getFeeAmount()) {
+						this.execRefundSucc(false, oldFlow, userVip.getVipId(), order, order.getMchtUId(), "退款成功", queryRet.getString("settlement_refund_fee"));
+						jsonRet.put("errcode", 0);
+						jsonRet.put("errmsg", "退款成功！");
+						return jsonRet;
+					}
+				}
 			}
+			jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+			jsonRet.put("errmsg", "我们还未收到第三方支付平台给出的您的退款成功通知，请稍后再查看！！");
+			return jsonRet;
 		}else if("21".equals(payType)) {	//退款成功
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "退款成功！");

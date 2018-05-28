@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.VipBasicService;
 
@@ -35,19 +35,12 @@ import com.mofangyouxuan.service.VipBasicService;
 @RestController
 @RequestMapping("/image")
 public class ImageGalleryAction {
-	
-	@Value("${sys.image-gallery-dir}")
-	private String imageGalleryDir;
-	@Value("${sys.image-folder-level-limit}")
-	private int imageFolderLevelLimit;
-	@Value("${sys.image-file-all-limit}")
-	private int imageFileAllLimit;
-	@Value("${sys.image-folder-file-limit}")
-	private int imageFolderFileLimit;
-	
 
 	@Autowired
 	private VipBasicService vipBasicService ;
+	
+	@Autowired
+	private SysParamUtil sysParamUtil;
 	
 	/**
 	 * 图片上传
@@ -93,7 +86,7 @@ public class ImageGalleryAction {
 			}
 			
 			//目录检查
-			File fileDir = new File(this.imageGalleryDir + "VIPID_" + currUserId + folderPath);
+			File fileDir = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId + folderPath);
 			if(!fileDir.exists()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_DIR_NO_EXISTS);
 				jsonRet.put("errmsg", "该文件归属目录不存在！");
@@ -109,16 +102,16 @@ public class ImageGalleryAction {
 					return true;
 				}
 			}).length;
-			if(cnt >= this.imageFolderFileLimit) {
+			if(cnt >= sysParamUtil.getImageFolderFileLimit()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_FOLDER_FILE_LIMIT);
-				jsonRet.put("errmsg", "该文件夹下的文件数量已经达到上限" + this.imageFolderFileLimit +"个！");
+				jsonRet.put("errmsg", "该文件夹下的文件数量已经达到上限" + sysParamUtil.getImageFolderFileLimit() +"个！");
 				return jsonRet.toString();
 			}
-			File userFolder = new File(this.imageGalleryDir + "VIPID_" + currUserId);
+			File userFolder = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId);
 			int cntAll = countFileCnt(userFolder)-1;
-			if(cntAll>= this.imageFileAllLimit) {
+			if(cntAll>= sysParamUtil.getImageFileAllLimit()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_FOLDER_FILE_LIMIT);
-				jsonRet.put("errmsg", "您的文件数量已经达到上限" + this.imageFileAllLimit +"个！");
+				jsonRet.put("errmsg", "您的文件数量已经达到上限" + sysParamUtil.getImageFileAllLimit() +"个！");
 				return jsonRet.toString();
 			}
 			String filename = System.currentTimeMillis() + "." + imgType.toLowerCase();
@@ -178,7 +171,7 @@ public class ImageGalleryAction {
 				return jsonRet.toString();
 			}
 			//目录检查
-			File upDir = new File(this.imageGalleryDir + "VIPID_" + currUserId + "/" + upFolderPath);
+			File upDir = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId + "/" + upFolderPath);
 			if(upFolderPath.length() == 0) {
 				upDir.mkdirs();
 			}else {
@@ -196,9 +189,9 @@ public class ImageGalleryAction {
 			}
 			//文件数量检查
 			int level = upFolderPath.split("/").length;
-			if(level >= this.imageFolderLevelLimit) {
+			if(level >= sysParamUtil.getImageFolderLevelLimit()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_FOLDER_LEVEL_LIMIT);
-				jsonRet.put("errmsg", "该上级文件夹的层级已经达到上限" + this.imageFolderLevelLimit +"层！");
+				jsonRet.put("errmsg", "该上级文件夹的层级已经达到上限" + sysParamUtil.getImageFolderLevelLimit() +"层！");
 				return jsonRet.toString();
 			}
 			int cnt = upDir.listFiles(new FilenameFilter() {
@@ -210,16 +203,16 @@ public class ImageGalleryAction {
 					return true;
 				}
 			}).length;
-			if(cnt >= this.imageFolderFileLimit) {
+			if(cnt >= sysParamUtil.getImageFolderFileLimit()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_FOLDER_FILE_LIMIT);
-				jsonRet.put("errmsg", "该文件夹下的文件数量已经达到上限" + this.imageFolderFileLimit +"个！");
+				jsonRet.put("errmsg", "该文件夹下的文件数量已经达到上限" + sysParamUtil.getImageFolderFileLimit() +"个！");
 				return jsonRet.toString();
 			}
-			File userFolder = new File(this.imageGalleryDir + "VIPID_" + currUserId);
+			File userFolder = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId);
 			int cntAll = countFileCnt(userFolder)-1;
-			if(cntAll>= this.imageFileAllLimit) {
+			if(cntAll>= sysParamUtil.getImageFileAllLimit()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_FOLDER_FILE_LIMIT);
-				jsonRet.put("errmsg", "您的文件数量已经达到上限" + this.imageFileAllLimit +"个！");
+				jsonRet.put("errmsg", "您的文件数量已经达到上限" + sysParamUtil.getImageFileAllLimit() +"个！");
 				return jsonRet.toString();
 			}
 			File newFolder = new File(upDir,folderName);
@@ -265,7 +258,7 @@ public class ImageGalleryAction {
 				return jsonRet.toString();
 			}
 			//目录检查
-			File fileDir = new File(this.imageGalleryDir + "VIPID_" + currUserId + folderPath);
+			File fileDir = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId + folderPath);
 			if(!fileDir.exists()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_DIR_NO_EXISTS);
 				jsonRet.put("errmsg", "该文件目录不存在！");
@@ -310,7 +303,7 @@ public class ImageGalleryAction {
 				return;
 			}
 			//文件查找
-			File fileDir = new File(this.imageGalleryDir + "VIPID_" + currUserId);
+			File fileDir = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId);
 			if(!fileDir.exists()) {
 				return;
 			}

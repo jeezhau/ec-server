@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.PageCond;
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.ChangeFlowMapper;
 import com.mofangyouxuan.mapper.VipBasicMapper;
 import com.mofangyouxuan.model.ChangeFlow;
@@ -27,8 +28,9 @@ public class VipBasicServiceImpl implements VipBasicService{
 	private VipBasicMapper vipBasicMapper;
 	@Autowired
 	private ChangeFlowMapper changeFlowMapper;
-	@Value("${sys.activate-vip-need-score}")
-	private Integer activateVipNeedScore;
+	
+	@Autowired
+	private SysParamUtil sysParamUtil;
 	
 	/**
 	 * 添加新会员
@@ -72,9 +74,9 @@ public class VipBasicServiceImpl implements VipBasicService{
 	}
 	
 	/**
-	 * 
-	 * 累积账户余额与积分信息 1000 条流水
-	 * 
+	 * 更新会员开通与余额信息
+	 * 1、累积账户余额与积分信息 1000 条流水
+	 * 2、检查会员开通状态；
 	 * @param id
 	 * @return
 	 */
@@ -147,7 +149,7 @@ public class VipBasicServiceImpl implements VipBasicService{
 		vip.setFreeze(freeze);
 		vip.setUpdateTime(sumTime);
 		if("0".endsWith(vip.getStatus())){
-			if(vip.getScores() >= this.activateVipNeedScore) {
+			if(vip.getScores() >= sysParamUtil.getActivateVipNeedScore()) {
 				vip.setStatus("1"); //激活会员
 			}
 		}

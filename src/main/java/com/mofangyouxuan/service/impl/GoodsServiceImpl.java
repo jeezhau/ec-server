@@ -26,7 +26,7 @@ import com.mofangyouxuan.service.GoodsService;
 public class GoodsServiceImpl implements GoodsService{
 	
 	@Value("${sys.goods-cnt-limit}")
-	private int goodsCntLimit;
+	private int goodsCntLimit; //合作伙伴的商户数量限制
 	@Autowired
 	private GoodsMapper goodsMapper;
 	@Autowired

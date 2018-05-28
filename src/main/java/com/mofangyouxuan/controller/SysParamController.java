@@ -13,29 +13,29 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
-import com.mofangyouxuan.model.Collection;
+import com.mofangyouxuan.model.SysParam;
 import com.mofangyouxuan.model.UserBasic;
-import com.mofangyouxuan.service.CollectionService;
+import com.mofangyouxuan.service.SysParamService;
 import com.mofangyouxuan.service.UserBasicService;
 
 @RestController
-@RequestMapping("/collection")
-public class CollectionController {
+@RequestMapping("/sysparam")
+public class SysParamController {
 	@Autowired
-	private CollectionService collectionService;
+	private SysParamService sysParamService;
+	
 	@Autowired
 	private UserBasicService userBasicService;
 	
 	/**
-	 * 添加收藏
-	 * @param collection
+	 * 新增数据
+	 * @param sysParam
 	 * @param result
 	 * @param userId
-	 * @return
+	 * @return {errcode,errmsg}
 	 */
 	@RequestMapping("/{userId}/add")
-	public Object add(@Valid Collection collection,BindingResult result,
-			@PathVariable("userId")Integer userId) {
+	public Object save(@Valid SysParam sysParam,BindingResult result,@PathVariable("userId")Integer userId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			UserBasic userBasic = this.userBasicService.get(userId);
@@ -44,7 +44,7 @@ public class CollectionController {
 				jsonRet.put("errmsg", "系统中没有该用户！");
 				return jsonRet.toString();
 			}
-			if(!collection.getUserId().equals(userId)) {
+			if(!sysParam.getUpdateOpr().equals(userId) || userId<1000) {//超级管理员才可执行
 				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您无权执行该操作！");
 				return jsonRet.toString();
@@ -60,7 +60,7 @@ public class CollectionController {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-			jsonRet = this.collectionService.add(collection);
+			jsonRet = this.sysParamService.add(sysParam, userId);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
@@ -70,15 +70,14 @@ public class CollectionController {
 	}
 	
 	/**
-	 * 删除收藏
-	 * @param collection
+	 * 更新数据
+	 * @param sysParam
 	 * @param result
 	 * @param userId
-	 * @return
+	 * @return {errcode,errmsg}
 	 */
-	@RequestMapping("/{userId}/delete")
-	public Object delete(Collection collection,BindingResult result,
-			@PathVariable("userId")Integer userId) {
+	@RequestMapping("/{userId}/update")
+	public Object update(@Valid SysParam sysParam,BindingResult result,@PathVariable("userId")Integer userId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			UserBasic userBasic = this.userBasicService.get(userId);
@@ -87,7 +86,7 @@ public class CollectionController {
 				jsonRet.put("errmsg", "系统中没有该用户！");
 				return jsonRet.toString();
 			}
-			if(!collection.getUserId().equals(userId)) {
+			if(!sysParam.getUpdateOpr().equals(userId) || userId<1000) {//超级管理员才可执行
 				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您无权执行该操作！");
 				return jsonRet.toString();
@@ -103,14 +102,7 @@ public class CollectionController {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-			int cnt = this.collectionService.delete(collection);
-			if(cnt >0) {
-				jsonRet.put("errcode", 0);
-				jsonRet.put("errmsg", "ok");
-			}else {
-				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-				jsonRet.put("errmsg", "数据库数据保存错误！");
-			}
+			jsonRet = this.sysParamService.update(sysParam, userId);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
@@ -120,48 +112,15 @@ public class CollectionController {
 	}
 	
 	/**
-	 * 统计所有收藏收藏
+	 * 获取所有系统参数
 	 * @param userId
-	 * @return
+	 * @return {errcode,errmsg,datas:[{...},...]}
 	 */
-	@RequestMapping("/{userId}/count")
-	public Object countAll(@PathVariable("userId")Integer userId) {
+	@RequestMapping("/sys/getall")
+	public Object getAll() {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			UserBasic userBasic = this.userBasicService.get(userId);
-			if(userBasic == null || !"1".equals(userBasic.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该用户！");
-				return jsonRet.toString();
-			}
-			int cnt = this.collectionService.countUsersAll(userId);
-			jsonRet.put("errcode", 0);
-			jsonRet.put("errmsg", "ok");
-			jsonRet.put("cnt", cnt);
-		}catch(Exception e) {
-			e.printStackTrace();
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet;
-	}
-	
-	/**
-	 * 获取用户所有
-	 * @param userId
-	 * @return
-	 */
-	@RequestMapping("/{userId}/getall")
-	public Object getAll(@PathVariable("userId")Integer userId) {
-		JSONObject jsonRet = new JSONObject();
-		try {
-			UserBasic userBasic = this.userBasicService.get(userId);
-			if(userBasic == null || !"1".equals(userBasic.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该用户！");
-				return jsonRet.toString();
-			}
-			List<Collection > list = this.collectionService.getUsersAll(userId);
+			List<SysParam > list = this.sysParamService.getAll();
 			if(list != null && list.size() >0) {
 				jsonRet.put("errcode", 0);
 				jsonRet.put("errmsg", "ok");
@@ -177,5 +136,6 @@ public class CollectionController {
 		}
 		return jsonRet;
 	}
+	
 
 }

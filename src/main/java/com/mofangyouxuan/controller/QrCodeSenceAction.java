@@ -29,6 +29,9 @@ public class QrCodeSenceAction {
 	@Value("${wxmp.wxmp-server-url}")
 	private String wxmpServerUrl;//微信管理平台服务器路径
 	
+	@Value("${wxmp.wxmp-server-url-4user}")
+	private String wxmpServerUrl4User;//微信管理平台服务器路径
+	
 	@Value("${wxmp.qrcode-apply-url}")
 	private String qrCodeApplyUrl;
 	
@@ -97,7 +100,7 @@ public class QrCodeSenceAction {
 						//返回显示路径
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "ok");
-						jsonRet.put("showurl", this.wxmpServerUrl + this.qrCodeShowUrl + qrcode.getWxmpPicnane());
+						jsonRet.put("showurl", this.wxmpServerUrl4User + this.qrCodeShowUrl + qrcode.getWxmpPicnane());
 						jsonRet.put("count", cnt);
 						return jsonRet.toString();
 					}
@@ -109,7 +112,7 @@ public class QrCodeSenceAction {
 				//返回显示路径
 				jsonRet.put("errcode", 0);
 				jsonRet.put("errmsg", "ok");
-				jsonRet.put("showurl", this.wxmpServerUrl + this.qrCodeShowUrl + qrcode.getWxmpPicnane());
+				jsonRet.put("showurl", this.wxmpServerUrl4User + this.qrCodeShowUrl + qrcode.getWxmpPicnane());
 				jsonRet.put("count", cnt);
 				return jsonRet.toString();
 			}

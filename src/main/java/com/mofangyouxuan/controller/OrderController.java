@@ -11,7 +11,6 @@ import java.util.Map;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +23,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.Order;
@@ -57,14 +57,7 @@ import com.mofangyouxuan.wxapi.WXPay;
 @RestController
 @RequestMapping("/order")
 public class OrderController {
-	@Value("${sys.order-4pay-cnt-all-limit}")
-	private int orderForPayCntAllLimit;
-	@Value("${sys.order-4pay-cnt-goods-limit}")
-	private int orderForPayCntGoodsLimit;
-	@Value("${sys.order-nodelivery-days-4refund}")
-	private int noDeliveryDates4Refund;
-	@Value("${sys.order-nosign-days-4refund}")
-	private int noSignDates4Refund;
+	
 	@Autowired
 	private WXPay wXPay;
 	
@@ -83,6 +76,9 @@ public class OrderController {
 	@Autowired
 	private OrderService orderService;
 
+	@Autowired
+	private SysParamUtil sysParamUtil;
+	
 	/**
 	 * 创建订单
 	 * @param userId
@@ -491,7 +487,7 @@ public class OrderController {
 		jsonParams.put("status", foPayStatus);
 		jsonParams.put("userId", userId);
 		int cntAll = this.orderService.countAll(jsonParams);
-		if(cntAll>=this.orderForPayCntAllLimit) {
+		if(cntAll>=sysParamUtil.getOrderForPayCntAllLimit()) {
 			jsonRet = new JSONObject();
 			jsonRet.put("errcode", ErrCodes.ORDER_FOR_PAY_CNT_ALL_LIMIT);
 			jsonRet.put("errmsg", "您已有多个订单还未支付，请先完成才可再次下单！");
@@ -499,7 +495,7 @@ public class OrderController {
 		}
 		jsonParams.put("goodsId", goods.getGoodsId());
 		int cntPer =  this.orderService.countAll(jsonParams);
-		if(cntPer >= this.orderForPayCntGoodsLimit) {
+		if(cntPer >= sysParamUtil.getOrderForPayCntAllLimit()) {
 			jsonRet = new JSONObject();
 			jsonRet.put("errcode", ErrCodes.ORDER_FOR_PAY_CNT_GOODS_LIMIT);
 			jsonRet.put("errmsg", "您已有该商品订单还未支付，请先完成才可再次下单！");
@@ -808,7 +804,7 @@ public class OrderController {
 				signMap.put("nonceStr", nonceStr);
 				signMap.put("package", "prepay_id=" + jsonRet.getString("prepay_id"));
 				signMap.put("signType", "MD5");
-				String sign = this.wXPay.signJSAPI(signMap);  
+				String sign = this.wXPay.signMap(signMap);
 				jsonRet.put("paySign", sign);
 				jsonRet.put("appId", this.wXPay.appId);
 				jsonRet.put("timeStamp", timestamp);
@@ -1247,7 +1243,7 @@ public class OrderController {
 				if("20".equals(order.getStatus()) || "21".equals(order.getStatus())) {//未发货
 					Date payTime = payFlow.getIncomeTime();
 					Long d = (new Date().getTime()-payTime.getTime())/1000/3600/24;
-					if(d < this.noDeliveryDates4Refund) {
+					if(d < sysParamUtil.getNoDeliveryDates4Refund()) {
 						jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
 						jsonRet.put("errmsg", "还未到最后发货时间限制，您可与卖家联系，然后执行订单取消！");
 						return jsonRet.toJSONString();
@@ -1260,7 +1256,7 @@ public class OrderController {
 					}else {
 						d = (new Date().getTime() - sdf.parse(order.getAftersalesDealTime()).getTime())/1000/3600/24;
 					}
-					if(d < this.noSignDates4Refund) {
+					if(d < sysParamUtil.getNoSignDates4Refund()) {
 						jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
 						jsonRet.put("errmsg", "还未到最后收货时间限制，您不可申请退款，您可与卖家联系要求作出处理！");
 						return jsonRet.toJSONString();

@@ -4,12 +4,12 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.CollectionMapper;
 import com.mofangyouxuan.model.Collection;
 import com.mofangyouxuan.service.CollectionService;
@@ -20,8 +20,9 @@ public class CollectionServiceImpl implements CollectionService{
 
 	@Autowired
 	private CollectionMapper collectionMapper;
-	@Value("${sys.user-collection-limit}")
-	private int collectionLimit;
+
+	@Autowired
+	private SysParamUtil sysParamUtil;
 	
 	/**
 	 * 添加用户的收藏
@@ -31,7 +32,7 @@ public class CollectionServiceImpl implements CollectionService{
 	public JSONObject add(Collection collection) {
 		JSONObject jsonRet = new JSONObject();
 		int hasCnt = this.collectionMapper.countUsersAll(collection.getUserId());
-		if(hasCnt >= this.collectionLimit) {
+		if(hasCnt >= sysParamUtil.getCollectionLimit()) {
 			jsonRet.put("errcode", ErrCodes.COLLECTION_OVER_LIMIT);
 			jsonRet.put("errmsg", "您已经拥有达到最大数量限制的收藏！");
 		}

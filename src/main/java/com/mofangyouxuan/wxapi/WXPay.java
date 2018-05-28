@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -54,7 +56,7 @@ import com.mofangyouxuan.utils.SignUtils;
 public class WXPay {
 	private static Logger logger = LoggerFactory.getLogger(WXPay.class);
 	@Value("${wxpay.notify-server-url}")
-	public String notifyServerUrl;
+	public String notifyServerUrl; //本地接收通知的服务器：给外网使用
 	
 	@Value("${wxpay.mchtid}")
 	public String wxMchtId;	//微信支付商户号
@@ -72,8 +74,6 @@ public class WXPay {
 	@Value("${wxpay.cert-key-dir}")
 	public String certKeyDir;
 	
-	@Value("${wxpay.wx-fee-rate}")
-	public Double wxFeeRate;		//微信手续费费率
 	
 	@Autowired
 	private OrderService orderService;
@@ -491,10 +491,8 @@ public class WXPay {
 		 
 			String retSign = retMap.remove("sign");
 			if("SUCCESS".equals(retMap.get("return_code"))) {//接口返回成功
-				String strings2 = signMap(retMap);
-				//获取签名
-				String sign2 = SignUtils.encodeMD5Hex(strings2).toUpperCase();
-				if(!sign2.equals(retSign) ){
+				String genSign = signMap(retMap);//生成签名
+				if(!genSign.equals(retSign) ){
 					jsonRet.put("errcode", -1);
 					jsonRet.put("errmsg", retMap.get("签名验证比匹配！"));
 					logger.info("微信订单查询：签名验证失败！");
@@ -533,7 +531,7 @@ public class WXPay {
 	 * 微信退款结果查询
 	 * 退款有一定延时，用零钱支付的退款20分钟内到账，银行卡支付的退款3个工作日后重新查询退款状态。
 	 * @param flowId		系统退款单号
-	 * @return {errcode,errmsg,refund_id,settlement_refund_fee}
+	 * @return {errcode,errmsg,refund_id,refund_fee}
 	 */
 	public JSONObject queryRefund(String flowId) {
 		JSONObject jsonRet = new JSONObject();
@@ -586,8 +584,7 @@ public class WXPay {
 					if("SUCCESS".equals(retMap.get("refund_status_0"))) {//已退款成功
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "ok");
-						jsonRet.put("settlement_refund_fee", retMap.get("settlement_refund_fee_0"));
-						jsonRet.put("refund_fee_apply", retMap.get("refund_fee_0"));
+						jsonRet.put("refund_fee", retMap.get("refund_fee_0"));
 						jsonRet.put("refund_id", retMap.get("refund_id_0"));
 					}else {
 						jsonRet.put("errcode", -1);
@@ -636,6 +633,8 @@ public class WXPay {
 					jsonRet.put("errmsg", retMap.get("签名验证失败！"));
 					logger.info("微信支付通知：签名验证失败！");
 					return jsonRet;
+				}else {
+					logger.info("微信支付通知：签名验证成功！");
 				}
 				//业务判断
 				if("SUCCESS".equals(retMap.get("result_code"))) {//业务成功
@@ -707,10 +706,9 @@ public class WXPay {
 				//解密
 				byte[] desecInfo = Base64.decodeBase64(secrectReqInfo.getBytes("utf8"));
 				String signKey = SignUtils.encodeMD5Hex(this.getSecretKey()).toLowerCase();
-				byte[] byteDesecInfo = this.decryptAES(signKey.getBytes("utf8"), desecInfo);
+				byte[] byteDesecInfo = decryptAES(signKey.getBytes("utf8"), desecInfo);
 				String retStr = new String(byteDesecInfo,"utf8");
-				retStr = "<xml>" + retStr + "</xml>";
-				System.out.println("退款通知解析结果：" + retStr);
+				logger.info("退款通知解析结果：" + retStr);
 				Document doc = DocumentHelper.parseText(retStr);
 				Element element = doc.getRootElement();
 				retMap = new HashMap<String,String>();
@@ -772,19 +770,6 @@ public class WXPay {
 		return sign;
 	}
 	
-	public String signJSAPI(Map<String,String> map) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		Set<String> paramKeySet = new TreeSet<String>(map.keySet());
-		StringBuilder sb = new StringBuilder();
-		for(String key:paramKeySet) {
-			sb.append("&" + key + "=" + map.get(key));
-		}
-		String strings = sb.substring(1) ;
-		//获取签名
-		String sign = SignUtils.encodeMD5Hex(strings).toUpperCase();
-		return sign;
-	}
-	
-	
     
 	private CloseableHttpClient wxSSLHttpClient = null;
     /**
@@ -797,12 +782,12 @@ public class WXPay {
 			return wxSSLHttpClient;
 		}
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(new FileInputStream(new File("/Users/jeekhan/wxpay/apiclient_cert.p12")), "1503812541".toCharArray());
+        keyStore.load(new FileInputStream(new File(this.certKeyDir + "/apiclient_cert.p12")), this.wxMchtId.toCharArray());
         SSLContext sslcontext = SSLContexts.custom()
                 //加载服务端提供的truststore(如果服务器提供truststore的话就不用忽略对服务器端证书的校验了)
                 //.loadTrustMaterial(new File("D:\\truststore.jks"), "123456".toCharArray(),
                 //        new TrustSelfSignedStrategy())
-                .loadKeyMaterial(keyStore, "1503812541".toCharArray())
+                .loadKeyMaterial(keyStore, wxMchtId.toCharArray())
                 .build();
         SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
                 sslcontext,
@@ -823,13 +808,33 @@ public class WXPay {
 	 * @param content  待解密内容
 	 * @return
 	 */
-	public byte[] decryptAES(byte[] key,byte[] data) throws Exception {
+	public static byte[] decryptAES(byte[] key,byte[] data) throws Exception {
 		SecretKey secretKey = new SecretKeySpec(key, "AES");
-	    Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+	    Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM,"BC");
 	    cipher.init(Cipher.DECRYPT_MODE, secretKey);
 	    return cipher.doFinal(data);
 	}
-
+	static {  
+		Security.addProvider(new BouncyCastleProvider()); 
+	}
+	
+	public static void main(String[] args) throws Exception {
+		String str = "<xml><return_code>SUCCESS</return_code><appid><![CDATA[wx34a58dad7a6542ca]]></appid><mch_id><![CDATA[1503812541]]></mch_id><nonce_str><![CDATA[b57912754356f8a562c2f550b5a3a195]]></nonce_str><req_info><![CDATA[L6QuVIicbZ8WmxteS6/ITA3a7jUzchfHeT8reXQov+8NrG6kxC4AUi1edErJOzwbqSE8T8QMY8Ua8KqkHKzIBimWvLKT3/dbum1UaicL9IJW+xRQ0Ut5PsJR0Iki8j+5LA5zusOfxQFMl4WkeZSseUG4WuhBCXACTLE8R2BXUufyrpoaFGkTQt7hXJD1I08JfaxliN3h9TbpT7f59dbrVQHDHXh1DPZVGzJdbUaTTa+6k8MRHeaT2nDz7gqPUkHqkcy86GEdzYcUift4SMRoh2cuX3T1oaczFsY9wHPKr3NOfdK7KVmDgv9T1S4r6TyCuZscyq/PNwAc0VQuJnesZrbHIsFuF5h6T/qcTMfTxuRjchp1axOmkur8WlpilLsmPp2r6+ZjyvTCkSJJXCxbiNFoz6R40qXxeC/ReYxrIqLZHuuoTruDGdXcXq+SQ4gFhuaKudeslhHX+Sf9WmEec233AiVKPDMq/3JxmHMHj7QR8nm/EX0NVo8bIQkTpYQ0cF8ukvPzV1/TmVEyvrPoYgRFVDOW2G9oNuAmKW+jzX7A9l9ky0OvQOSHT6IkhO8hyP2jAer4oK/+KbCah6RJFslsjJJap2mqI3fFUxsFdI30HF5txxYoCLGfF53wz2e1rQaC7QVKSYbK+/Keinfj5DOyUlZqbuTdvyy/eAjUsiX/aNK2FyfeajZvFjQ5JZYz+tzbzp8B31h+1xImB5kJgHUa6qpAHrAUmU8kEm73LQ34dwkYciQfv3etU/mHABYw2G9iF3CcH93AtvHnI/m3dG79Y92FKDbHVqMpMH9Hjmg4S4l9XaZDflRfGo3Mc+gEAGE0zNEiybV2rCVzdU4KQvXLbRNTYSXy7kdneACZKmJqh2QcMaKorEOx3+Yfw1BgiU89dLXrBtLSlWJlRD22+XuJHL/ZwaM0wRpgoxySmBeoR4b5qFjvV7fJXH/tjov8x6BllsMDNpIfNrvS0YjUliieKmgUQgan8n4ZbSOzO+uPcpu3TrLRnPRl6+DUbE9k0od50PmOpwXWx84XUa6CX4EVUtf5pFs7FLOvcUgPU/JVVqu8igMnXH8SBrNqNuQ7iwcXkhG1Ls13qyuwwMUUJg==]]></req_info></xml>";
+		Document doc = DocumentHelper.parseText(str);
+		Element xml = doc.getRootElement();
+		Map<String,String> retMap = new HashMap<String,String>();
+		for(Object ele : xml.elements()){
+			String name = ((Node)ele).getName();
+			String value = ((Node)ele).getText();
+			retMap.put(name, value);
+		}
+		String secrectReqInfo = retMap.remove("req_info");  //加密信息
+		byte[] desecInfo = Base64.decodeBase64(secrectReqInfo.getBytes("utf8"));
+		String signKey = SignUtils.encodeMD5Hex("qerwseqsDRTdg455656564cxgxgggddd").toLowerCase();
+		byte[] byteDesecInfo = decryptAES(signKey.getBytes("utf8"), desecInfo);
+		String retStr = new String(byteDesecInfo,"utf8");
+		System.out.println("退款通知解析结果：" + retStr);
+	}
 }
 
 

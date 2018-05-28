@@ -51,6 +51,7 @@ public class VipBasicController {
 	
 	/**
 	 * 获取用户的VIP信息
+	 * 更新会员开通与余额信息
 	 * @param vipId 会员ID
 	 * 
 	 * @return {errcode:0,errmsg:"ok"} 或 {用户所有VIP字段}

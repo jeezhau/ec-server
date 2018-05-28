@@ -60,7 +60,9 @@ public class WXPayNotice {
 			retXml.addElement("return_code").add(DocumentHelper.createCDATA("FAIL"));
     			retXml.addElement("return_msg").add(DocumentHelper.createCDATA("系统异常"));
 		}
-		return retXml.asXML();
+		String retStr = retXml.asXML();
+		log.info("返回微信支付通知：" + retStr);
+		return retStr;
 	}
 	
 	/**
@@ -96,6 +98,8 @@ public class WXPayNotice {
 			retXml.addElement("return_code").add(DocumentHelper.createCDATA("FAIL"));
     			retXml.addElement("return_msg").add(DocumentHelper.createCDATA("系统异常"));
 		}
-		return retXml.asXML();
+		String retStr = retXml.asXML();
+		log.info("返回微信退款通知：" + retStr);
+		return retStr;
 	}
 }

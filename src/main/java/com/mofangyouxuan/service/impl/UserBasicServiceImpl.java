@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.UserBasicMapper;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
@@ -21,8 +22,12 @@ public class UserBasicServiceImpl implements UserBasicService{
 	private UserBasicMapper userBasicMapper;
 	@Autowired
 	private VipBasicService vipBasicService;
+	
 	@Value("${sys.spread-per-user-score}")
 	private Integer spreadPerUserScore;
+	
+	@Autowired
+	private SysParamUtil sysParamUtil;
 	
 	/**
 	 * 添加新用户
@@ -43,10 +48,19 @@ public class UserBasicServiceImpl implements UserBasicService{
 			vipBasicService.add(vipBasic);
 		}
 		if(userBasic.getSenceId() != null) { //有介绍人员，积分处理
+			Integer spread_per_user_score = this.spreadPerUserScore;
+			try {
+				if(this.sysParamUtil.getSysParam("spread_per_user_score") != null) {
+					spread_per_user_score = new Integer(this.sysParamUtil.getSysParam("spread_per_user_score"));
+				}
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
 			VipBasic vip = this.vipBasicService.get(userBasic.getSenceId());
 			if(vip != null) {
-				this.vipBasicService.updScore(vip.getVipId(), spreadPerUserScore);
+				this.vipBasicService.updScore(vip.getVipId(), spread_per_user_score);
 			}
+			
 		}
 		return id;
 	}
