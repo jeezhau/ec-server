@@ -12,144 +12,35 @@
     <result column="phone" jdbcType="VARCHAR" property="phone" />
     <result column="email" jdbcType="VARCHAR" property="email" />
     <result column="passwd" jdbcType="VARCHAR" property="passwd" />
-    <result column="account_type" jdbcType="CHAR" property="accountType" />
-    <result column="cash_type" jdbcType="CHAR" property="cashType" />
-    <result column="id_no" jdbcType="VARCHAR" property="idNo" />
-    <result column="account_name" jdbcType="VARCHAR" property="accountName" />
-    <result column="account_no" jdbcType="VARCHAR" property="accountNo" />
-    <result column="account_bank" jdbcType="VARCHAR" property="accountBank" />
   </resultMap>
   <sql id="Base_Column_List">
     vip_id, scores, balance, freeze, create_time, status, update_time, phone, email, 
-    passwd, account_type, cash_type, id_no, account_name, account_no, account_bank
+    passwd
   </sql>
+  
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
     from tb_vip_basic
     where vip_id = #{vipId,jdbcType=INTEGER}
   </select>
+  
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from tb_vip_basic
     where vip_id = #{vipId,jdbcType=INTEGER}
   </delete>
+  
   <insert id="insert" parameterType="com.mofangyouxuan.model.VipBasic">
     insert into tb_vip_basic (vip_id, scores, balance, 
       freeze, create_time, status, 
       update_time, phone, email, 
-      passwd, account_type, cash_type, 
-      id_no, account_name, account_no, 
-      account_bank)
+      passwd)
     values (#{vipId,jdbcType=INTEGER}, #{scores,jdbcType=INTEGER}, #{balance,jdbcType=DECIMAL}, 
       #{freeze,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR}, 
       #{updateTime,jdbcType=TIMESTAMP}, #{phone,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
-      #{passwd,jdbcType=VARCHAR}, #{accountType,jdbcType=CHAR}, #{cashType,jdbcType=CHAR}, 
-      #{idNo,jdbcType=VARCHAR}, #{accountName,jdbcType=VARCHAR}, #{accountNo,jdbcType=VARCHAR}, 
-      #{accountBank,jdbcType=VARCHAR})
+      #{passwd,jdbcType=VARCHAR})
   </insert>
-  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.VipBasic">
-    insert into tb_vip_basic
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      <if test="vipId != null">
-        vip_id,
-      </if>
-      <if test="scores != null">
-        scores,
-      </if>
-      <if test="balance != null">
-        balance,
-      </if>
-      <if test="freeze != null">
-        freeze,
-      </if>
-      <if test="createTime != null">
-        create_time,
-      </if>
-      <if test="status != null">
-        status,
-      </if>
-      <if test="updateTime != null">
-        update_time,
-      </if>
-      <if test="phone != null">
-        phone,
-      </if>
-      <if test="email != null">
-        email,
-      </if>
-      <if test="passwd != null">
-        passwd,
-      </if>
-      <if test="accountType != null">
-        account_type,
-      </if>
-      <if test="cashType != null">
-        cash_type,
-      </if>
-      <if test="idNo != null">
-        id_no,
-      </if>
-      <if test="accountName != null">
-        account_name,
-      </if>
-      <if test="accountNo != null">
-        account_no,
-      </if>
-      <if test="accountBank != null">
-        account_bank,
-      </if>
-    </trim>
-    <trim prefix="values (" suffix=")" suffixOverrides=",">
-      <if test="vipId != null">
-        #{vipId,jdbcType=INTEGER},
-      </if>
-      <if test="scores != null">
-        #{scores,jdbcType=INTEGER},
-      </if>
-      <if test="balance != null">
-        #{balance,jdbcType=DECIMAL},
-      </if>
-      <if test="freeze != null">
-        #{freeze,jdbcType=DECIMAL},
-      </if>
-      <if test="createTime != null">
-        #{createTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="status != null">
-        #{status,jdbcType=CHAR},
-      </if>
-      <if test="updateTime != null">
-        #{updateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="phone != null">
-        #{phone,jdbcType=VARCHAR},
-      </if>
-      <if test="email != null">
-        #{email,jdbcType=VARCHAR},
-      </if>
-      <if test="passwd != null">
-        #{passwd,jdbcType=VARCHAR},
-      </if>
-      <if test="accountType != null">
-        #{accountType,jdbcType=CHAR},
-      </if>
-      <if test="cashType != null">
-        #{cashType,jdbcType=CHAR},
-      </if>
-      <if test="idNo != null">
-        #{idNo,jdbcType=VARCHAR},
-      </if>
-      <if test="accountName != null">
-        #{accountName,jdbcType=VARCHAR},
-      </if>
-      <if test="accountNo != null">
-        #{accountNo,jdbcType=VARCHAR},
-      </if>
-      <if test="accountBank != null">
-        #{accountBank,jdbcType=VARCHAR},
-      </if>
-    </trim>
-  </insert>
+  
   <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.VipBasic">
     update tb_vip_basic
     <set>
@@ -180,27 +71,10 @@
       <if test="passwd != null">
         passwd = #{passwd,jdbcType=VARCHAR},
       </if>
-      <if test="accountType != null">
-        account_type = #{accountType,jdbcType=CHAR},
-      </if>
-      <if test="cashType != null">
-        cash_type = #{cashType,jdbcType=CHAR},
-      </if>
-      <if test="idNo != null">
-        id_no = #{idNo,jdbcType=VARCHAR},
-      </if>
-      <if test="accountName != null">
-        account_name = #{accountName,jdbcType=VARCHAR},
-      </if>
-      <if test="accountNo != null">
-        account_no = #{accountNo,jdbcType=VARCHAR},
-      </if>
-      <if test="accountBank != null">
-        account_bank = #{accountBank,jdbcType=VARCHAR},
-      </if>
     </set>
     where vip_id = #{vipId,jdbcType=INTEGER}
   </update>
+  
   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.VipBasic">
     update tb_vip_basic
     set scores = #{scores,jdbcType=INTEGER},
@@ -211,13 +85,7 @@
       update_time = #{updateTime,jdbcType=TIMESTAMP},
       phone = #{phone,jdbcType=VARCHAR},
       email = #{email,jdbcType=VARCHAR},
-      passwd = #{passwd,jdbcType=VARCHAR},
-      account_type = #{accountType,jdbcType=CHAR},
-      cash_type = #{cashType,jdbcType=CHAR},
-      id_no = #{idNo,jdbcType=VARCHAR},
-      account_name = #{accountName,jdbcType=VARCHAR},
-      account_no = #{accountNo,jdbcType=VARCHAR},
-      account_bank = #{accountBank,jdbcType=VARCHAR}
+      passwd = #{passwd,jdbcType=VARCHAR}
     where vip_id = #{vipId,jdbcType=INTEGER}
   </update>
   

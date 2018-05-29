@@ -52,20 +52,6 @@ public interface VipBasicService {
 	public int updPwd(Integer vipId,String passwd);
 	
 	/**
-	 * 更新提现账户信息
-	 * 
-	 * @param vipId
-	 * @param cashType
-	 * @param accountType
-	 * @param idNo
-	 * @param accountName
-	 * @param accountNo
-	 * @param accountBank
-	 * @return
-	 */
-	public int updAccount(Integer vipId,String cashType,String accountType,String idNo,String accountName,String accountNo,String accountBank);
-	
-	/**
 	 * 更新手机号
 	 * @param vipId
 	 * @param phone

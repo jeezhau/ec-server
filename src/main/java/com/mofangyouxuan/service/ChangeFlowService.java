@@ -1,7 +1,5 @@
 package com.mofangyouxuan.service;
 
-import java.math.BigDecimal;
-
 import com.mofangyouxuan.model.ChangeFlow;
 import com.mofangyouxuan.model.VipBasic;
 
@@ -21,7 +19,7 @@ public interface ChangeFlowService {
 	 * @param reason
 	 * @param oprId
 	 */
-	public void refundApply(BigDecimal amount, Integer vipId, String reason, Integer oprId);
+	public void refundApply(Long amount, Integer vipId, String reason, Integer oprId);
 
 	/**
 	 * 退款失败
@@ -33,7 +31,7 @@ public interface ChangeFlowService {
 	 * @param oprId
 	 * @param mchtVipId
 	 */
-	public void refundFail(BigDecimal amount, Integer vipId, String reason, Integer oprId);
+	public void refundFail(Long amount, Integer vipId, String reason, Integer oprId);
 	
 	/**
 	 * 添加客户退款成功流水
@@ -47,7 +45,7 @@ public interface ChangeFlowService {
 	 * @param oprId		操作员ID
 	 * @param mchtVipId	卖家会员账户Id
 	 */
-	public void refundSuccess(boolean useVip,BigDecimal amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId);
+	public void refundSuccess(boolean useVip,Long amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId);
 	
 	/**
 	 * 添加客户支付成功流水(买商家的商品)
@@ -61,7 +59,7 @@ public interface ChangeFlowService {
 	 * @param oprId		操作员ID
 	 * @param mchtVipId	卖家会员账户ID
 	 */
-	public void paySuccess(boolean useVip,BigDecimal amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId);
+	public void paySuccess(boolean useVip,Long amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId);
 	
 	/**
 	 * 交易评价完成，解冻商家
@@ -71,7 +69,7 @@ public interface ChangeFlowService {
 	 * @param oprId 操作员ID
 	 * @param reason
 	 */
-	public void dealFinish(BigDecimal amount,Integer vipId,Integer oprId,String reason);
+	public void dealFinish(Long amount,Integer vipId,Integer oprId,String reason);
 	
 	/**
 	 * 添加分润流水
@@ -82,7 +80,7 @@ public interface ChangeFlowService {
 	 * @param reason
 	 * @return
 	 */
-	public int shareProfit(BigDecimal amount,VipBasic vip,Integer oprId,String reason);
+	public int shareProfit(Long amount,VipBasic vip,Integer oprId,String reason);
 	
 	/**
 	 * 添加用户提现申请流水
@@ -93,7 +91,7 @@ public interface ChangeFlowService {
 	 * @param oprId 操作人ID
 	 * @param reason
 	 */
-	public void cashApply(BigDecimal amount,VipBasic vip,Integer oprId,String reason);
+	public void cashApply(Long amount,VipBasic vip,Integer oprId,String reason);
 	
 	/**
 	 * 添加用户提现结束流水

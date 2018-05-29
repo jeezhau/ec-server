@@ -1,13 +1,11 @@
 package com.mofangyouxuan.service.impl;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +38,8 @@ public class VipBasicServiceImpl implements VipBasicService{
 	@Override
 	public Integer add(VipBasic vipBasic) {
 		vipBasic.setCreateTime(new Date());
-		vipBasic.setBalance(new BigDecimal("0"));
-		vipBasic.setFreeze(new BigDecimal("0"));
+		vipBasic.setBalance(0L);
+		vipBasic.setFreeze(0L);
 		vipBasic.setScores(0);
 		vipBasic.setStatus("0");//未开通
 		int cnt = this.vipBasicMapper.insert(vipBasic);
@@ -91,17 +89,17 @@ public class VipBasicServiceImpl implements VipBasicService{
 		PageCond pageCond = new PageCond(0,1000);
 		String sorts = " order by create_time ";
 		Date sumTime = new Date();
-		BigDecimal addBal = new BigDecimal(0);
-		BigDecimal subBal = new BigDecimal(0);
-		BigDecimal addFreeze = new BigDecimal(0);
-		BigDecimal subFreeze = new BigDecimal(0);
+		Long addBal = 0l;
+		Long subBal = 0l;
+		Long addFreeze = 0l;
+		Long subFreeze = 0l;
 		List<ChangeFlow> list = null; 
 		
 		params.put("changeType", "1"); //增加可用余额
 		list = this.changeFlowMapper.selectAll(params, pageCond, sorts);
 		if(list != null) {
 			for(ChangeFlow flow:list) {
-				addBal = addBal.add(flow.getAmount());
+				addBal += flow.getAmount();
 				flow.setSumFlag("1");
 				flow.setSumTime(sumTime);
 				this.changeFlowMapper.updateByPrimaryKeySelective(flow);
@@ -112,7 +110,7 @@ public class VipBasicServiceImpl implements VipBasicService{
 		list = this.changeFlowMapper.selectAll(params, pageCond, sorts);
 		if(list != null) {
 			for(ChangeFlow flow:list) {
-				subBal = subBal.add(flow.getAmount());
+				subBal += flow.getAmount();
 				flow.setSumFlag("1");
 				flow.setSumTime(sumTime);
 				this.changeFlowMapper.updateByPrimaryKeySelective(flow);
@@ -123,7 +121,7 @@ public class VipBasicServiceImpl implements VipBasicService{
 		list = this.changeFlowMapper.selectAll(params, pageCond, sorts);
 		if(list != null) {
 			for(ChangeFlow flow:list) {
-				addFreeze = addFreeze.add(flow.getAmount());
+				addFreeze += flow.getAmount();
 				flow.setSumFlag("1");
 				flow.setSumTime(sumTime);
 				this.changeFlowMapper.updateByPrimaryKeySelective(flow);
@@ -134,17 +132,17 @@ public class VipBasicServiceImpl implements VipBasicService{
 		list = this.changeFlowMapper.selectAll(params, pageCond, sorts);
 		if(list != null) {
 			for(ChangeFlow flow:list) {
-				subFreeze = subFreeze.add(flow.getAmount());
+				subFreeze += flow.getAmount();
 				flow.setSumFlag("1");
 				flow.setSumTime(sumTime);
 				this.changeFlowMapper.updateByPrimaryKeySelective(flow);
 			}
 		}
 		
-		BigDecimal balance = vip.getBalance();
-		balance = balance.add(addBal).subtract(subBal);
-		BigDecimal freeze = vip.getFreeze();
-		freeze = freeze.add(addFreeze).subtract(subFreeze);
+		Long balance = vip.getBalance();
+		balance = balance + addBal - subBal;
+		Long freeze = vip.getFreeze();
+		freeze = freeze + addFreeze - subFreeze;
 		vip.setBalance(balance);
 		vip.setFreeze(freeze);
 		vip.setUpdateTime(sumTime);
@@ -245,31 +243,6 @@ public class VipBasicServiceImpl implements VipBasicService{
 		VipBasic vip = new VipBasic();
 		vip.setVipId(vipId);
 		vip.setPasswd(passwd);
-		int cnt = this.vipBasicMapper.updateByPrimaryKeySelective(vip);
-		return cnt;
-	}
-	
-	/**
-	 * 更新提现账户信息
-	 * 
-	 * @param vipId
-	 * @param cashType
-	 * @param accountType
-	 * @param idNo
-	 * @param accountName
-	 * @param accountNo
-	 * @param accountBank
-	 * @return
-	 */
-	public int updAccount(Integer vipId,String cashType,String accountType,String idNo,String accountName,String accountNo,String accountBank) {
-		VipBasic vip = new VipBasic();
-		vip.setVipId(vipId);
-		vip.setCashType(cashType);
-		vip.setAccountType(accountType);
-		vip.setIdNo(idNo);
-		vip.setAccountName(accountName);
-		vip.setAccountNo(accountNo);
-		vip.setAccountBank(accountBank);
 		int cnt = this.vipBasicMapper.updateByPrimaryKeySelective(vip);
 		return cnt;
 	}

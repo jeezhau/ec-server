@@ -26,6 +26,9 @@ public class ErrCodes {
 	
 	//会员管理功能码：103
 	public static int VIP_NO_USER = -103001;		//系统中没有该会员或未激活
+	public static int VIP_ACCOUNT_CNT_LIMIT = -103002;		//账户数量限制
+	public static int VIP_ACCOUNT_NOT_EXISTS = -103003;		//账户不存在
+	public static int VIP_ACCOUNT_SAME_NO = -103004;		//存在同账户账户
 	
 	//合作伙伴管理功能码：104
 	public static int PARTNER_NO_EXISTS = -104001;	//合作伙伴不存在

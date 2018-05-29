@@ -772,7 +772,7 @@ public class OrderController {
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
-			if(!"1".equals(payType) && !"2".equals(payType)) {
+			if(!"1".equals(payType) && !"21".equals(payType) && !"22".equals(payType)) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "支付方式取值不正确！");
 				return jsonRet.toJSONString();
@@ -795,7 +795,7 @@ public class OrderController {
 			}
 			//outPayUrl,prepay_id
 			jsonRet = this.orderService.createPrePay(user, userVip, order, goods.getPartner().getVipId(), payType, userIp);
-			if(jsonRet.containsKey("prepay_id")) {
+			if(jsonRet.containsKey("prepay_id") && "21".equals(payType)) { //公众号支付
 				Long timestamp = System.currentTimeMillis()/1000;
 				String nonceStr = NonceStrUtil.getNonceStr(20);
 				Map<String,String> signMap = new HashMap<String,String>();
@@ -1276,7 +1276,7 @@ public class OrderController {
 			//卖家账户检查
 			VipBasic mchtVip = this.vipBasicService.get(partner.getVipId());
 			if(mchtVip == null || 
-					mchtVip.getBalance().multiply(new BigDecimal(100)).longValue() < payFlow.getPayAmount() ) {
+					mchtVip.getBalance() < payFlow.getPayAmount() ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 				jsonRet.put("errmsg", "您当前不可执行退货退款申请操作，账户可用余额不足！");
 				return jsonRet.toJSONString();
@@ -1710,6 +1710,14 @@ public class OrderController {
 				if(payFlow == null || !"11".equals(payFlow.getStatus())) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
 					jsonRet.put("errmsg", "该订单没有支付成功信息（未支付到账、支付失败或已退款），无法退款！");
+					return jsonRet.toJSONString();
+				}
+				//卖家账户检查
+				VipBasic mchtVip = this.vipBasicService.get(partner.getVipId());
+				if(mchtVip == null || 
+						mchtVip.getBalance() < payFlow.getPayAmount() ) {
+					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+					jsonRet.put("errmsg", "您当前不可执行退货退款申请操作，账户可用余额不足！");
 					return jsonRet.toJSONString();
 				}
 				jsonRet = this.orderService.applyRefund(true,order, payFlow, order.getUserId(), partner.getVipId(), "3", asCtn);

@@ -11,7 +11,7 @@ public class ChangeFlow {
 
     private String changeType;
 
-    private BigDecimal amount;
+    private Long amount;
 
     private Date createTime;
 
@@ -47,11 +47,11 @@ public class ChangeFlow {
         this.changeType = changeType == null ? null : changeType.trim();
     }
     
-    public BigDecimal getAmount() {
+    public Long getAmount() {
         return amount;
     }
 
-    public void setAmount(BigDecimal amount) {
+    public void setAmount(Long amount) {
         this.amount = amount;
     }
 

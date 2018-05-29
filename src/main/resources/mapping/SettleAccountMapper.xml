@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.SettleAccountMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.SettleAccount">
+    <id column="settle_id" jdbcType="INTEGER" property="settleId" />
+    <result column="vip_id" jdbcType="INTEGER" property="vipId" />
+    <result column="cash_type" jdbcType="CHAR" property="cashType" />
+    <result column="account_type" jdbcType="CHAR" property="accountType" />
+    <result column="channel_type" jdbcType="CHAR" property="channelType" />
+    <result column="id_no" jdbcType="VARCHAR" property="idNo" />
+    <result column="account_name" jdbcType="VARCHAR" property="accountName" />
+    <result column="account_no" jdbcType="VARCHAR" property="accountNo" />
+    <result column="account_bank" jdbcType="VARCHAR" property="accountBank" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="status" jdbcType="CHAR" property="status" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    settle_id, vip_id, cash_type, account_type, channel_type, id_no, account_name, account_no, 
+    account_bank, update_time, status
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_settle_account
+    where settle_id = #{settleId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from tb_settle_account
+    where settle_id = #{settleId,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.SettleAccount">
+    insert into tb_settle_account (settle_id, vip_id, cash_type, 
+      account_type, channel_type, id_no, 
+      account_name, account_no, account_bank, 
+      update_time, status)
+    values (#{settleId,jdbcType=INTEGER}, #{vipId,jdbcType=INTEGER}, #{cashType,jdbcType=CHAR}, 
+      #{accountType,jdbcType=CHAR}, #{channelType,jdbcType=CHAR}, #{idNo,jdbcType=VARCHAR}, 
+      #{accountName,jdbcType=VARCHAR}, #{accountNo,jdbcType=VARCHAR}, #{accountBank,jdbcType=VARCHAR}, 
+      #{updateTime,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR})
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.SettleAccount">
+    update tb_settle_account
+    <set>
+      <if test="vipId != null">
+        vip_id = #{vipId,jdbcType=INTEGER},
+      </if>
+      <if test="cashType != null">
+        cash_type = #{cashType,jdbcType=CHAR},
+      </if>
+      <if test="accountType != null">
+        account_type = #{accountType,jdbcType=CHAR},
+      </if>
+      <if test="channelType != null">
+        channel_type = #{channelType,jdbcType=CHAR},
+      </if>
+      <if test="idNo != null">
+        id_no = #{idNo,jdbcType=VARCHAR},
+      </if>
+      <if test="accountName != null">
+        account_name = #{accountName,jdbcType=VARCHAR},
+      </if>
+      <if test="accountNo != null">
+        account_no = #{accountNo,jdbcType=VARCHAR},
+      </if>
+      <if test="accountBank != null">
+        account_bank = #{accountBank,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=CHAR},
+      </if>
+    </set>
+    where settle_id = #{settleId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.SettleAccount">
+    update tb_settle_account
+    set vip_id = #{vipId,jdbcType=INTEGER},
+      cash_type = #{cashType,jdbcType=CHAR},
+      account_type = #{accountType,jdbcType=CHAR},
+      channel_type = #{channelType,jdbcType=CHAR},
+      id_no = #{idNo,jdbcType=VARCHAR},
+      account_name = #{accountName,jdbcType=VARCHAR},
+      account_no = #{accountNo,jdbcType=VARCHAR},
+      account_bank = #{accountBank,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      status = #{status,jdbcType=CHAR}
+    where settle_id = #{settleId,jdbcType=INTEGER}
+  </update>
+  
+  <sql id="whereSql">
+  <where>
+     <if test="params.vipId != null">
+      and vip_id = #{params.vipId,jdbcType=INTEGER}
+     </if>
+     <if test="params.cashType != null">
+      and cash_type = #{params.cashType,jdbcType=CHAR}
+     </if> 
+     <if test="params.accountType != null">
+      and account_type = #{params.accountType,jdbcType=CHAR}
+     </if> 
+     <if test="params.channelType != null">
+      and channel_type = #{params.channelType,jdbcType=CHAR}
+     </if> 
+     <if test="params.idNo != null">
+      and id_no = #{params.idNo,jdbcType=VARCHAR}
+     </if>
+     <if test="params.accountName != null">
+      and account_name = #{params.accountName,jdbcType=VARCHAR}
+     </if>
+     <if test="params.accountNo != null">
+      and account_no = #{params.accountNo,jdbcType=VARCHAR}
+     </if>
+     <if test="params.accountBank != null">
+      and account_bank = #{params.accountBank,jdbcType=VARCHAR}
+     </if>
+     <if test="params.beginUpdateTime != null">
+      and update_time &gt;= concat(#{params.beginUpdateTime,jdbcType=VARCHAR},' 00:00:00')
+     </if> 
+     <if test="params.endUpdateTime != null">
+      and update_time &lt;= concat(#{params.endUpdateTime,jdbcType=VARCHAR},' 23:59:59')
+     </if> 
+     <if test="params.status != null">
+      and LOCATE(status,#{params.status,jdbcType=VARCHAR}) &gt; 0
+     </if>
+    </where>
+  </sql>
+  
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+   select 
+    <include refid="Base_Column_List" />
+    from tb_settle_account
+    <include refid="whereSql" />
+    order by update_time desc
+  </select>
+  
+   <select id="countAll" parameterType="map" resultType="int">
+   select count(1)
+    from tb_settle_account
+    <include refid="whereSql" />
+   
+  </select>
+  
+</mapper>
+

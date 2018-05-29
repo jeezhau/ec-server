@@ -7,7 +7,7 @@
     <result column="goods_id" jdbcType="INTEGER" property="goodsId" />
     <result column="order_id" jdbcType="VARCHAR" property="orderId" />
     <result column="flow_type" jdbcType="CHAR" property="flowType" />
-    <result column="pay_type" jdbcType="CHAR" property="payType" />
+    <result column="pay_type" jdbcType="VARCHAR" property="payType" />
     <result column="pay_account" jdbcType="VARCHAR" property="payAccount" />
     <result column="currency_type" jdbcType="VARCHAR" property="currencyType" />
     <result column="pay_amount" jdbcType="DECIMAL" property="payAmount" />
@@ -47,7 +47,7 @@
       out_trade_url, out_finish_id, memo
       )
     values (#{flowId,jdbcType=VARCHAR}, #{userId,jdbcType=INTEGER}, #{goodsId,jdbcType=INTEGER}, 
-      #{orderId,jdbcType=VARCHAR}, #{flowType,jdbcType=CHAR}, #{payType,jdbcType=CHAR}, 
+      #{orderId,jdbcType=VARCHAR}, #{flowType,jdbcType=CHAR}, #{payType,jdbcType=VARCHAR}, 
       #{payAccount,jdbcType=VARCHAR}, #{currencyType,jdbcType=VARCHAR}, #{payAmount,jdbcType=DECIMAL}, 
       #{feeAmount,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{incomeAmount,jdbcType=DECIMAL}, 
       #{incomeTime,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR}, #{outTradeNo,jdbcType=VARCHAR}, 
@@ -130,7 +130,7 @@
         #{flowType,jdbcType=CHAR},
       </if>
       <if test="payType != null">
-        #{payType,jdbcType=CHAR},
+        #{payType,jdbcType=VARCHAR},
       </if>
       <if test="payAccount != null">
         #{payAccount,jdbcType=VARCHAR},
@@ -187,7 +187,7 @@
         flow_type = #{flowType,jdbcType=CHAR},
       </if>
       <if test="payType != null">
-        pay_type = #{payType,jdbcType=CHAR},
+        pay_type = #{payType,jdbcType=VARCHAR},
       </if>
       <if test="payAccount != null">
         pay_account = #{payAccount,jdbcType=VARCHAR},
@@ -235,7 +235,7 @@
       goods_id = #{goodsId,jdbcType=INTEGER},
       order_id = #{orderId,jdbcType=VARCHAR},
       flow_type = #{flowType,jdbcType=CHAR},
-      pay_type = #{payType,jdbcType=CHAR},
+      pay_type = #{payType,jdbcType=VARCHAR},
       pay_account = #{payAccount,jdbcType=VARCHAR},
       currency_type = #{currencyType,jdbcType=VARCHAR},
       pay_amount = #{payAmount,jdbcType=DECIMAL},

@@ -1,6 +1,5 @@
 package com.mofangyouxuan.model;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 public class VipBasic {
@@ -8,9 +7,9 @@ public class VipBasic {
 
     private Integer scores;
 
-    private BigDecimal balance;
+    private Long balance;
 
-    private BigDecimal freeze;
+    private Long freeze;
 
     private Date createTime;
 
@@ -24,17 +23,6 @@ public class VipBasic {
 
     private String passwd;
 
-    private String accountType;
-
-    private String cashType;
-
-    private String idNo;
-
-    private String accountName;
-
-    private String accountNo;
-
-    private String accountBank;
 
     public Integer getVipId() {
         return vipId;
@@ -52,19 +40,19 @@ public class VipBasic {
         this.scores = scores;
     }
 
-    public BigDecimal getBalance() {
+    public Long getBalance() {
         return balance;
     }
 
-    public void setBalance(BigDecimal balance) {
+    public void setBalance(Long balance) {
         this.balance = balance;
     }
 
-    public BigDecimal getFreeze() {
+    public Long getFreeze() {
         return freeze;
     }
 
-    public void setFreeze(BigDecimal freeze) {
+    public void setFreeze(Long freeze) {
         this.freeze = freeze;
     }
 
@@ -115,52 +103,5 @@ public class VipBasic {
     public void setPasswd(String passwd) {
         this.passwd = passwd == null ? null : passwd.trim();
     }
-
-    public String getAccountType() {
-        return accountType;
-    }
-
-    public void setAccountType(String accountType) {
-        this.accountType = accountType == null ? null : accountType.trim();
-    }
-
-    public String getCashType() {
-        return cashType;
-    }
-
-    public void setCashType(String cashType) {
-        this.cashType = cashType == null ? null : cashType.trim();
-    }
-
-    public String getIdNo() {
-        return idNo;
-    }
-
-    public void setIdNo(String idNo) {
-        this.idNo = idNo == null ? null : idNo.trim();
-    }
-
-    public String getAccountName() {
-        return accountName;
-    }
-
-    public void setAccountName(String accountName) {
-        this.accountName = accountName == null ? null : accountName.trim();
-    }
-
-    public String getAccountNo() {
-        return accountNo;
-    }
-
-    public void setAccountNo(String accountNo) {
-        this.accountNo = accountNo == null ? null : accountNo.trim();
-    }
-
-    public String getAccountBank() {
-        return accountBank;
-    }
-
-    public void setAccountBank(String accountBank) {
-        this.accountBank = accountBank == null ? null : accountBank.trim();
-    }
+    
 }

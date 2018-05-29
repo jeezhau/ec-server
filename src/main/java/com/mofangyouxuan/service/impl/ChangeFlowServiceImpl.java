@@ -1,6 +1,5 @@
 package com.mofangyouxuan.service.impl;
 
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -31,7 +30,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param oprId
 	 */
 	@Override
-	public void refundApply(BigDecimal amount,Integer vipId,String reason,Integer oprId) {
+	public void refundApply(Long amount,Integer vipId,String reason,Integer oprId) {
 		this.doubleFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP25, reason, CashFlowTP.CFTP34);
 	}
 	
@@ -43,7 +42,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @return
 	 */
 	@Override
-	public void refundSuccess(boolean useVip,BigDecimal amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId) {
+	public void refundSuccess(boolean useVip,Long amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId) {
 		if(useVip) {//卖家使用余额支付
 			//客户退款
 			this.addBal(amount, userVipId, oprId, reason, CashFlowTP.CFTP11);
@@ -62,7 +61,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param oprId
 	 */
 	@Override
-	public void refundFail(BigDecimal amount,Integer vipId,String reason,Integer oprId) {
+	public void refundFail(Long amount,Integer vipId,String reason,Integer oprId) {
 		this.doubleUnFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP17, reason, CashFlowTP.CFTP45);
 	}
 	
@@ -74,7 +73,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @return
 	 */
 	@Override
-	public void paySuccess(boolean useBal,BigDecimal amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId) {
+	public void paySuccess(boolean useBal,Long amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId) {
 		if(useBal) {
 			//客户消费
 			this.subBal(amount, userVip, oprId, reason, CashFlowTP.CFTP22);
@@ -91,7 +90,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @return
 	 */
 	@Override
-	public void dealFinish(BigDecimal amount,Integer vipId,Integer oprId,String reason) {
+	public void dealFinish(Long amount,Integer vipId,Integer oprId,String reason) {
 		this.doubleUnFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP14, reason, CashFlowTP.CFTP43);
 	}
 	
@@ -107,7 +106,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @return
 	 */
 	@Override
-	public int shareProfit(BigDecimal amount,VipBasic vip,Integer oprId,String reason) {
+	public int shareProfit(Long amount,VipBasic vip,Integer oprId,String reason) {
 		ChangeFlow flow1 = new ChangeFlow();
 		flow1.setFlowId(this.genFlowId(vip.getVipId()));
 		flow1.setVipId(vip.getVipId());
@@ -131,7 +130,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param reason		增加可用余额的理由
 	 * @param tp			增加可用余额的流水类型
 	 */
-	private String addBal(BigDecimal amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp) {
+	private String addBal(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp) {
 		if(tp == null || tp.getValue()<10 || tp.getValue()>19) {
 			return "增加可用余额流水的类型不正确！";
 		}
@@ -157,7 +156,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param reason		减少冻结余额的理由
 	 * @param tp			减少冻结余额的流水类型
 	 */
-	private String subBal(BigDecimal amount,VipBasic vip,Integer oprId,String reason,CashFlowTP tp) {
+	private String subBal(Long amount,VipBasic vip,Integer oprId,String reason,CashFlowTP tp) {
 		if(tp == null || tp.getValue()<20 || tp.getValue()>29) {
 			return "减少可用余额流水的类型不正确！";
 		}
@@ -187,7 +186,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param frzReason	增加冻结余额流水的原因
 	 * @param frzTp		增加冻结余额流水的原因
 	 */
-	private String doubleFreeze(BigDecimal amount,Integer vipId,Integer oprId,String balReason,CashFlowTP balTp,String frzReason,CashFlowTP frzTp) {
+	private String doubleFreeze(Long amount,Integer vipId,Integer oprId,String balReason,CashFlowTP balTp,String frzReason,CashFlowTP frzTp) {
 		if(balTp == null || balTp.getValue()<20 || balTp.getValue()>29) {
 			return "减少可用余额流水的类型不正确！";
 		}
@@ -232,7 +231,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param frzReason	减少冻结余额流水的原因
 	 * @param frzTp		减少冻结余额流水的原因
 	 */
-	private String doubleUnFreeze(BigDecimal amount,Integer vipId,Integer oprId,String balReason,CashFlowTP balTp,String frzReason,CashFlowTP frzTp) {
+	private String doubleUnFreeze(Long amount,Integer vipId,Integer oprId,String balReason,CashFlowTP balTp,String frzReason,CashFlowTP frzTp) {
 		if(balTp == null || balTp.getValue()<10 || balTp.getValue()>19) {
 			return "增加可用余额流水的类型不正确！";
 		}
@@ -274,7 +273,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param reason		增加冻结余额的理由
 	 * @param tp			增加冻结余额的流水类型
 	 */
-	private String freeze(BigDecimal amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp) {
+	private String freeze(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp) {
 		if(tp == null || tp.getValue()<30 || tp.getValue()>39) {
 			return "增加冻结余额流水的类型不正确！";
 		}
@@ -301,7 +300,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param reason		减少冻结余额的理由
 	 * @param tp			减少冻结余额的流水类型
 	 */
-	private String unFreeze(BigDecimal amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp) {
+	private String unFreeze(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp) {
 		if(tp == null || tp.getValue()<40 || tp.getValue()>49) {
 			return "减少冻结余额流水的类型不正确！";
 		}
@@ -381,7 +380,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	}
 
 	@Override
-	public void cashApply(BigDecimal amount, VipBasic vip, Integer oprId, String reason) {
+	public void cashApply(Long amount, VipBasic vip, Integer oprId, String reason) {
 		// TODO Auto-generated method stub
 		
 	}

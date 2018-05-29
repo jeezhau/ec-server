@@ -178,11 +178,18 @@ public class SysParamUtil {
 		return collectionLimit;
 	}
 
-	public void setCollectionLimit(int collectionLimit) {
-		this.collectionLimit = collectionLimit;
+	//会员用户的每类通道的账户数量限制
+	@Value("${sys.vip-account-cnt-limit}")
+	private int vipAccountCntLimit;
+	public int getVipAccountCntLimit() {
+		try {
+			Integer newParam = new Integer(this.getSysParam("vip-account-cnt-limit"));
+			return newParam;
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return vipAccountCntLimit;
 	}
-
-
 
 	/**
 	 * 获取系统配置参数

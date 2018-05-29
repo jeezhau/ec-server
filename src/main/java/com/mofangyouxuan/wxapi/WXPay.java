@@ -207,6 +207,7 @@ public class WXPay {
 	
 	/**
 	 * 创建微信预先支付信息
+	 * @param payType	支付方式（21-公众号，22-H5）
 	 * @param order		订单信息
 	 * @param payFlowId		支付流水号
 	 * @param totalAmount	总金额
@@ -214,10 +215,10 @@ public class WXPay {
 	 * @param userIP			支付用户的IP
 	 * @return {errcode,errmsg,payFlowId,trade_type,prepay_id,code_url,mweb_url}
 	 */
-	public JSONObject createPrePay(Order order,String payFlowId,Long totalAmount,String openId,String userIP) {
+	public JSONObject createPrePay(String payType,Order order,String payFlowId,Long totalAmount,String openId,String userIP) {
 		JSONObject jsonRet = new JSONObject();
 		String tradeType;
-		if(openId != null) {
+		if("21".equals(payType)) {
 			tradeType = "JSAPI";
 		}else {
 			tradeType = "MWEB";	//H5支付
@@ -723,7 +724,7 @@ public class WXPay {
 					String refundId = retMap.get("refund_id");		//微信退款单号
 					Long totalAmount = Long.parseLong(refund_fee);
 					//更新订单支付
-					String ret = orderService.outPaySucc(payFlowId, totalAmount, refundId);
+					String ret = orderService.outRefundSucc(payFlowId, totalAmount, refundId);
 					if("00".equals(ret)) {//处理成功
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "ok");
