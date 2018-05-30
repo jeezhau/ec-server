@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.ComplainLogMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.ComplainLog">
+    <id column="cplan_id" jdbcType="INTEGER" property="cplanId" />
+    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="cp_type" jdbcType="CHAR" property="cpType" />
+    <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
+    <result column="goods_id" jdbcType="INTEGER" property="goodsId" />
+    <result column="order_id" jdbcType="VARCHAR" property="orderId" />
+    <result column="content" jdbcType="VARCHAR" property="content" />
+    <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="deal_time" jdbcType="TIMESTAMP" property="dealTime" />
+    <result column="deal_opr" jdbcType="INTEGER" property="dealOpr" />
+    <result column="revisit_time" jdbcType="DATE" property="revisitTime" />
+    <result column="revisit_opr" jdbcType="INTEGER" property="revisitOpr" />
+    <result column="status" jdbcType="CHAR" property="status" />
+    <result column="deal_log" jdbcType="LONGVARCHAR" property="dealLog" />
+    <result column="revisit_log" jdbcType="LONGVARCHAR" property="revisitLog" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    cplan_id, user_id, cp_type,partner_id, goods_id, order_id, content, phone, create_time, deal_time, 
+    deal_opr, revisit_time, revisit_opr, status,
+    deal_log, revisit_log
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_complain_log
+    where cplan_id = #{cplanId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from tb_complain_log
+    where cplan_id = #{cplanId,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.ComplainLog" keyProperty="cplanId" useGeneratedKeys="true">
+    insert into tb_complain_log (cplan_id, user_id, cp_type,partner_id, 
+      goods_id, order_id, content, 
+      phone, create_time, deal_time, 
+      deal_opr, revisit_time, revisit_opr, 
+      status, deal_log, revisit_log
+      )
+    values (#{cplanId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER},#{cpType,jdbcType=CHAR}, #{partnerId,jdbcType=INTEGER}, 
+      #{goodsId,jdbcType=INTEGER}, #{orderId,jdbcType=VARCHAR}, #{content,jdbcType=VARCHAR}, 
+      #{phone,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{dealTime,jdbcType=TIMESTAMP}, 
+      #{dealOpr,jdbcType=INTEGER}, #{revisitTime,jdbcType=DATE}, #{revisitOpr,jdbcType=INTEGER}, 
+      #{status,jdbcType=CHAR}, #{dealLog,jdbcType=LONGVARCHAR}, #{revisitLog,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.ComplainLog">
+    update tb_complain_log
+    <set>
+      <if test="partnerId != null">
+        partner_id = #{partnerId,jdbcType=INTEGER},
+      </if>
+      <if test="goodsId != null">
+        goods_id = #{goodsId,jdbcType=INTEGER},
+      </if>
+      <if test="orderId != null">
+        order_id = #{orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null">
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dealTime != null">
+        deal_time = #{dealTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dealOpr != null">
+        deal_opr = #{dealOpr,jdbcType=INTEGER},
+      </if>
+      <if test="revisitTime != null">
+        revisit_time = #{revisitTime,jdbcType=DATE},
+      </if>
+      <if test="revisitOpr != null">
+        revisit_opr = #{revisitOpr,jdbcType=INTEGER},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=CHAR},
+      </if>
+      <if test="dealLog != null">
+        deal_log = #{dealLog,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="revisitLog != null">
+        revisit_log = #{revisitLog,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where cplan_id = #{cplanId,jdbcType=INTEGER}
+  </update>
+
+  <sql id="whereSql">
+    <where>
+      <if test="params.cplanId != null">
+        and cplan_id = #{params.cplanId,jdbcType=INTEGER}
+      </if>
+      <if test="params.userId != null">
+        and user_id = #{params.userId,jdbcType=INTEGER}
+      </if>
+      <if test="params.cpType != null">
+        and cp_type = #{params.cpType,jdbcType=CHAR}
+      </if>      
+      <if test="params.partnerId != null">
+        and partner_id = #{params.partnerId,jdbcType=INTEGER}
+      </if>
+      <if test="params.goodsId != null">
+        and goods_id = #{params.goodsId,jdbcType=INTEGER}
+      </if>
+      <if test="params.orderId != null">
+        and order_id = #{params.orderId,jdbcType=VARCHAR}
+      </if>
+      <if test="params.phone != null">
+        and phone = #{params.phone,jdbcType=VARCHAR}
+      </if>
+       <if test="params.status != null">
+        and LOCATE(status,#{params.status,jdbcType=VARCHAR}) &gt; 0
+      </if>
+      <if test="params.beginCreateTime != null">
+        and create_time &gt;= concat(#{params.beginCreateTime,jdbcType=VARCHAR},' 00:00:00')
+      </if> 
+      <if test="params.endCreateTime != null">
+        and create_time &lt;= concat(#{params.endCreateTime,jdbcType=VARCHAR},' 23:59:59')
+      </if> 
+      <if test="params.beginDealTime != null">
+        and deal_time &gt;= concat(#{params.beginDealTime,jdbcType=VARCHAR},' 00:00:00')
+      </if> 
+      <if test="params.endDealTime != null">
+        and deal_time &lt;= concat(#{params.endDealTime,jdbcType=VARCHAR},' 23:59:59')
+      </if> 
+      <if test="params.beginRevisitTime != null">
+        and revisit_time &gt;= concat(#{params.beginRevisitTime,jdbcType=VARCHAR},' 00:00:00')
+      </if> 
+      <if test="params.endRevisitTime != null">
+        and revisit_time &lt;= concat(#{params.endRevisitTime,jdbcType=VARCHAR},' 23:59:59')
+      </if>           
+    </where>
+  </sql>
+  
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+   select 
+    <include refid="Base_Column_List" />
+    from tb_complain_log l
+     <include refid="whereSql" />
+    <if test="sorts">
+    ${sorts}
+    </if>
+    limit #{pageCond.begin},#{pageCond.pageSize} 
+  </select>
+  
+  <select id="countAll" parameterType="map" resultType="int">
+   select count(1) cnt
+    from tb_complain_log l
+     <include refid="whereSql" />
+  </select>
+    
+</mapper>
+
+

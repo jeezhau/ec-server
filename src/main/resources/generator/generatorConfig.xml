@@ -49,10 +49,11 @@
         <table tableName="tb_change_flow" domainObjectName="ChangeFlow" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
         <table tableName="tb_collection" domainObjectName="Collection" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>         
         <table tableName="tb_sys_param" domainObjectName="SysParam" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
-          --> 
-          
         <table tableName="tb_settle_account" domainObjectName="SettleAccount" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
-                              
+          --> 
+
+        <table tableName="tb_complain_log" domainObjectName="ComplainLog" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
+                                     
     </context>
     
 </generatorConfiguration>

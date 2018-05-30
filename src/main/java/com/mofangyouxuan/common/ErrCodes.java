@@ -81,7 +81,13 @@ public class ErrCodes {
 	public static int ORDER_PAY_ERROR = -109012;	//支付失败
 	
 	//订单管理功能码：110
-	public static int COLLECTION_OVER_LIMIT= -110001;	//超出限制
+	public static int COLLECTION_OVER_LIMIT = -110001;	//超出限制
+	
+	
+	//订单管理功能码：111
+	public static int COMPLAIN_HAS_EXISTS = -111001;		//已有该订单或商品
+	public static int COMPLAIN_NO_EXISTS = -111002;	//没有该记录
+	public static int COMPLAIN_STATUS_ERROR = -111011;	//状态不正确	
 		
 }
 

@@ -96,7 +96,6 @@ public class SettleAccountServiceImpl implements SettleAccountService{
 	 */
 	public JSONObject delete(SettleAccount account) {
 		JSONObject jsonRet = new JSONObject();
-		account.setUpdateTime(new Date());
 		int cnt = this.settleAccountMapper.deleteByPrimaryKey(account.getSettleId());
 		if(cnt >0) {
 			jsonRet.put("errcode", 0);
