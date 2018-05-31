@@ -41,7 +41,9 @@ import com.mofangyouxuan.utils.FileFilter;
 
 /**
  * 合作伙伴信息管理
- * 1	、合作伙伴证件照文件路径: /证件照主目录/VIPID_[vipId]/证件类型.jpg
+ * 1	、合作伙伴证件照文件路径: 
+ *  1) /证件照主目录/PARTNERID_[partnerId]/cert/证件类型.jpg
+ *  2) /证件照主临时目录/VIPID_[vipId]/cert/证件类型.jpg
  * @author jeekhan
  *
  */
@@ -49,8 +51,8 @@ import com.mofangyouxuan.utils.FileFilter;
 @RequestMapping("/partner")
 public class PartnerBasicAction {
 	
-	@Value("${sys.partner-cert-dir}")
-	private String partnerCertDir;	//合作伙伴证件照片保存目录
+	@Value("${sys.partner-img-dir}")
+	private String partnerImgDir;	//合作伙伴照片保存目录
 	
 	private String[] certTypeArr = {"logo","idcard1","idcard2","licence"}; 	//当前支持的证件类型
 	@Autowired
@@ -174,25 +176,25 @@ public class PartnerBasicAction {
 				return jsonRet.toString();
 			}
 			//证件照必填检查
-			File certDir = new File(this.partnerCertDir + "VIPID_" + basic.getVipId());
-			if(!certDir.exists() || !certDir.isDirectory()) {
+			File tempCertDir = new File(this.partnerImgDir +  "VIPID_" + basic.getVipId() + "/cert/" );  //临时目录
+			if(!tempCertDir.exists() || !tempCertDir.isDirectory()) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
 				jsonRet.put("errmsg", "您还未上传相关证书照片！");
 				return jsonRet.toString();
 			}
-			if(certDir.listFiles(new FileFilter("logo")).length<=0) {
+			if(tempCertDir.listFiles(new FileFilter("logo")).length<=0) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
 				jsonRet.put("errmsg", "您还未上传企业LOGO照片！");
 				return jsonRet.toString();
 			}
-			if(certDir.listFiles(new FileFilter("idcard1")).length<=0 || certDir.listFiles(new FileFilter("idcard2")).length<=0) {
+			if(tempCertDir.listFiles(new FileFilter("idcard1")).length<=0 || tempCertDir.listFiles(new FileFilter("idcard2")).length<=0) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
 				jsonRet.put("errmsg", "您还未上传法人身份证照片！");
 				return jsonRet.toString();
 			}
 			String compType = basic.getCompType();
 			if("2".equals(compType)) {
-				if(certDir.listFiles(new FileFilter("licence")).length<=0 ) {
+				if(tempCertDir.listFiles(new FileFilter("licence")).length<=0 ) {
 					jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
 					jsonRet.put("errmsg", "您还未上传营业执照照片！");
 					return jsonRet.toString();
@@ -203,9 +205,10 @@ public class PartnerBasicAction {
 			basic.setReviewLog("");
 			basic.setReviewOpr(null);
 			basic.setReviewTime(null);
-			basic.setCertDir(this.partnerCertDir + "VIPID_" + basic.getVipId()); //初次确立后不可变更
 			Integer id = this.partnerBasicService.add(basic);
 			if(id == null) {
+				File certDir = new File(this.partnerImgDir +  "PARTNERID_" + id + "/cert/" ); //初次确立后不可变更
+				FileUtils.moveDirectory(tempCertDir, certDir);
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
@@ -243,7 +246,7 @@ public class PartnerBasicAction {
 					sb.append(e.getDefaultMessage());
 				}
 				jsonRet.put("errmsg", sb.toString());
-				jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				return jsonRet.toString();
 			}
 
@@ -267,7 +270,7 @@ public class PartnerBasicAction {
 				return jsonRet.toString();
 			}
 			//证件照必填检查
-			File certDir = new File(this.partnerCertDir + "VIPID_" + basic.getVipId());
+			File certDir = new File(this.partnerImgDir +  "PARTNERID_" + old1.getPartnerId() + "/cert/" );
 			if(!certDir.exists() || !certDir.isDirectory()) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
 				jsonRet.put("errmsg", "您还未上传相关证书照片！");
@@ -297,7 +300,6 @@ public class PartnerBasicAction {
 			basic.setReviewLog("");
 			basic.setReviewOpr(null);
 			basic.setReviewTime(null);
-			basic.setCertDir(old1.getCertDir()); //初次确立后不可变更
 			
 			int cnt = this.partnerBasicService.update(basic);
 			if(cnt < 1) {
@@ -426,7 +428,7 @@ public class PartnerBasicAction {
 	@RequestMapping("/cert/upload")
 	public String uploadCert(@RequestParam(value="certType",required=true)String certType,
 			@RequestParam(value="image")MultipartFile image,
-			@RequestParam(value="currUserId",required=true)Integer currUserId) {
+			@RequestParam(value="currVipId",required=true)Integer currVipId) {
 		
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -456,14 +458,27 @@ public class PartnerBasicAction {
 				return jsonRet.toString();
 			}
 			//数据检查
-			VipBasic vip = this.vipBasicService.get(currUserId);
+			VipBasic vip = this.vipBasicService.get(currVipId);
 			if(vip == null || !"1".equals(vip.getStatus()) ) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
 				return jsonRet.toString();
 			}
+			File certDir = new File(this.partnerImgDir +  "VIPID_" + vip.getVipId() + "/cert/" );
+			PartnerBasic partner = this.partnerBasicService.getByBindUser(currVipId);
+			if(partner != null) {//修改已存在合作伙伴
+				String oldStatus = partner.getStatus();
+				if(!"0".equals(oldStatus) && !"S".equals(oldStatus) && !"C".equals(oldStatus)) {
+					jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+					jsonRet.put("errmsg", "您当前不可变更信息，状态不正确！");
+					return jsonRet.toString();
+				}
+				if(certDir != null) {
+					FileUtils.deleteDirectory(certDir);
+				}
+				certDir = new File(this.partnerImgDir +  "PARTNERID_" + partner.getVipId() + "/cert/" );
+			}
 			//照片保存，删除旧的
-			File certDir = new File(this.partnerCertDir,"VIPID_" + currUserId);
 			if(!certDir.exists()) {
 				certDir.mkdirs();
 			}else {
@@ -496,14 +511,14 @@ public class PartnerBasicAction {
 	 * @param response
 	 * @throws IOException
 	 */
-	@RequestMapping("/cert/show/{currUserId}/{certType}")
+	@RequestMapping("/cert/show/{partnerId}/{certType}")
 	public void showCert(@PathVariable(value="certType",required=true)String certType,
-			@PathVariable(value="currUserId",required=true)Integer currUserId,
+			@PathVariable(value="partnerId",required=true)Integer partnerId,
 			OutputStream out,HttpServletRequest request,HttpServletResponse response) throws IOException {
 		
-		File dir = new File(this.partnerCertDir + "VIPID_" + currUserId);
-		File[] files = dir.listFiles(new FileFilter(certType));
-		if(dir.exists() && dir.isDirectory() && files != null && files.length>0) {
+		File certDir = new File(this.partnerImgDir +  "PARTNERID_" + partnerId + "/cert/" );
+		File[] files = certDir.listFiles(new FileFilter(certType));
+		if(certDir.exists() && certDir.isDirectory() && files != null && files.length>0) {
 			File file = files[0];
 			BufferedImage image = ImageIO.read(file);
 			response.setContentType("image/*");

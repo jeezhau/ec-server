@@ -58,9 +58,6 @@ public class PartnerBasic {
     @Size(min=2,max=100,message=" 营业执照号/身份证号：长度范围5-50字符 ！")
     private String licenceNo;
 
-    @Null
-    private String certDir;
-
     @NotNull(message=" 联系电话：不可为空！")
     @Size(min=11,max=11,message=" 联系电话：长度11字符 ！")
     private String phone;
@@ -192,14 +189,6 @@ public class PartnerBasic {
 
     public void setLicenceNo(String licenceNo) {
         this.licenceNo = licenceNo == null ? null : licenceNo.trim();
-    }
-
-    public String getCertDir() {
-        return certDir;
-    }
-
-    public void setCertDir(String certDir) {
-        this.certDir = certDir == null ? null : certDir.trim();
     }
 
     public String getPhone() {

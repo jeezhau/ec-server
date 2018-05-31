@@ -35,7 +35,7 @@ public class ErrCodes {
 	public static int PARTNER_PARAM_ERROR = -104002;	//参数有错
 	public static int PARTNER_STATUS_ERROR = -104003;	//状态有错
 	public static int PARTNER_CERT_IMAGE = -104004;	//证书有错
-	
+	public static int PARTNER_STAFF_EXISTS = -104005; //该用户已经存在
 	
 	//商品管理功能码：105
 	public static int GOODS_NO_EXISTS = -105001;		//商品不存在

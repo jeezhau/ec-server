@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.PartnerStaffMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.PartnerStaff">
+    <id column="rec_id" jdbcType="INTEGER" property="recId" />
+    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
+    <result column="staff_id" jdbcType="INTEGER" property="staffId" />
+    <result column="nickname" jdbcType="VARCHAR" property="nickname" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="passwd" jdbcType="VARCHAR" property="passwd" />
+    <result column="introduce" jdbcType="VARCHAR" property="introduce" />
+    <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="is_kf" jdbcType="CHAR" property="isKf" />
+    <result column="tag_list" jdbcType="VARCHAR" property="tagList" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
+    <result column="status" jdbcType="CHAR" property="status" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    rec_id, user_id, partner_id, staff_id, nickname, email, passwd, introduce, 
+    phone, is_kf, tag_list, update_time, update_opr,status
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_partner_staff
+    where rec_id = #{recId,jdbcType=INTEGER}
+  </select>
+ 
+  <select id="selectByUser" parameterType="map" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_partner_staff
+    where user_id = #{recId,jdbcType=INTEGER} and partner_id = #{partnerId,jdbcType=INTEGER}
+  </select>
+   
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from tb_partner_staff
+    where rec_id = #{recId,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.PartnerStaff" keyProperty="recId" useGeneratedKeys="true">
+    insert into tb_partner_staff (rec_id, user_id, partner_id, 
+      staff_id, nickname, email, 
+      passwd, introduce, phone, is_kf, 
+      tag_list, update_time, update_opr,status
+      )
+    values (#{recId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER}, 
+      #{staffId,jdbcType=INTEGER}, #{nickname,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
+      #{passwd,jdbcType=VARCHAR}, #{introduce,jdbcType=VARCHAR},#{phone,jdbcType=VARCHAR}, #{isKf,jdbcType=CHAR}, 
+      #{tagList,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER},#{status,jdbcType=CHAR}
+      )
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.PartnerStaff">
+    update tb_partner_staff
+    <set>
+      <if test="userId != null">
+        user_id = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="staffId != null">
+        staff_id = #{staffId,jdbcType=INTEGER},
+      </if>
+      <if test="nickname != null">
+        nickname = #{nickname,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null">
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="passwd != null">
+        passwd = #{passwd,jdbcType=VARCHAR},
+      </if>
+      <if test="introduce != null">
+        introduce = #{introduce,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null">
+        phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="isKf != null">
+        is_kf = #{isKf,jdbcType=CHAR},
+      </if>
+      <if test="tagList != null">
+        tag_list = #{tagList,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateOpr != null">
+        update_opr= #{updateOpr,jdbcType=INTEGER},
+      </if>      
+      <if test="status != null">
+        status = #{status,jdbcType=CHAR},
+      </if>
+    </set>
+    where rec_id = #{recId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PartnerStaff">
+    update tb_partner_staff
+    set user_id = #{userId,jdbcType=INTEGER},
+      staff_id = #{staffId,jdbcType=INTEGER},
+      nickname = #{nickname,jdbcType=VARCHAR},
+      email = #{email,jdbcType=VARCHAR},
+      passwd = #{passwd,jdbcType=VARCHAR},
+      introduce = #{introduce,jdbcType=VARCHAR},
+      phone = #{phone,jdbcType=VARCHAR},
+      is_kf = #{isKf,jdbcType=CHAR},
+      tag_list = #{tagList,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      update_opr = #{updateOpr,jdbcType=INTEGER},
+      status = #{status,jdbcType=CHAR}
+    where rec_id = #{recId,jdbcType=INTEGER}
+  </update>
+  
+  <sql id="whereSql">
+    <where>
+      <if test="params.recId != null">
+       and rec_id = #{params.recId,jdbcType=INTEGER}
+      </if>    
+      <if test="params.userId != null">
+       and user_id = #{params.userId,jdbcType=INTEGER}
+      </if>
+      <if test="params.partnerId != null">
+       and partner_id = #{params.partnerId,jdbcType=INTEGER}
+      </if>
+      <if test="params.staffId != null">
+       and staff_id = #{params.staffId,jdbcType=INTEGER}
+      </if>
+      <if test="params.nickname != null">
+       and nickname = #{params.nickname,jdbcType=VARCHAR}
+      </if>
+      <if test="params.email != null">
+       and email = #{params.email,jdbcType=VARCHAR}
+      </if>
+      <if test="params.phone != null">
+       and phone = #{params.phone,jdbcType=VARCHAR}
+      </if>
+      <if test="params.isKf != null">
+       and is_kf = #{params.isKf,jdbcType=CHAR}
+      </if>
+      <if test="params.tagid != null">
+        and tag_list like concat('%,',#{params.tagid},',%')
+      </if>
+      <if test="params.beginUpdateTime != null">
+        and update_time &gt;= concat(#{params.beginUpdateTime,jdbcType=TIMESTAMP},' 00:00:00')
+      </if>
+      <if test="params.endUpdateTime != null">
+        and update_time &lt;= concat(#{params.endUpdateTime,jdbcType=TIMESTAMP},' 23:59:59')
+      </if> 
+      <if test="params.updateOpr != null">
+       and update_opr = #{params.updateOpr,jdbcType=INTEGER}
+      </if>           
+      <if test="params.status != null">
+        and status = #{params.status,jdbcType=CHAR}
+      </if>
+    </where>
+  </sql>
+  
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+   select 
+    <include refid="Base_Column_List" />
+    from tb_partner_staff l
+     <include refid="whereSql" />
+    <if test="sorts">
+    ${sorts}
+    </if>
+    limit #{pageCond.begin},#{pageCond.pageSize} 
+  </select>
+  
+  <select id="countAll" parameterType="map" resultType="int">
+   select count(1) cnt
+    from tb_partner_staff l
+     <include refid="whereSql" />
+  </select>
+    
+  <!-- 为用户打标签 -->
+  <update id="addTag2Staff" parameterType="map" >
+   update tb_partner_staff t
+   set t.tag_list = concat('0,',#{tagId,jdbcType=INTEGER},substring(REPLACE(t.tag_list, concat(',',#{tagId,jdbcType=INTEGER},','), ','),2)),
+   		t.update_opr = #{updateOpr,jdbcType=INTEGER},t.update_time = now()
+   where t.partner_id = #{partnerId,jdbcType=VARCHAR} and t.user_id = #{recId,jdbcType=VARCHAR}
+  </update>
+
+  <!-- 收回所有用户身上的标签 -->
+  <update id="removeTagFromAll" parameterType="map" >
+   update tb_partner_staff t
+   set t.tag_list = REPLACE(t.tag_list, concat(',',#{tagId,jdbcType=INTEGER},','), ',') ,
+   		t.update_opr = #{updateOpr,jdbcType=INTEGER},t.update_time = now()
+   where t.partner_id = #{partnerId,jdbcType=VARCHAR} and t.tag_list like concat('%,',#{tagId,jdbcType=INTEGER},',%')
+  </update>
+    
+  <!-- 收回指定员工身上的标签 -->
+  <update id="removeTagFromStaff" parameterType="map" >
+   update tb_partner_staff t
+   set t.tag_list = REPLACE(t.tag_list, concat(',',#{tagId,jdbcType=INTEGER},','), ','),
+   		t.update_opr = #{updateOpr,jdbcType=INTEGER},t.update_time = now() 
+   where t.partner_id = #{partnerId,jdbcType=VARCHAR} and t.rec_id = #{recId,jdbcType=INTEGER}
+  </update>
+  
+  
+  
+</mapper>

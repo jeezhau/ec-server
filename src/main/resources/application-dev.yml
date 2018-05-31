@@ -60,7 +60,7 @@ messmp:
 sys:
   tmp-file-dir: '/Users/jeekhan/mfyx/tmp/'  #系统临时目录
   user-img-path: '/Users/jeekhan/mfyx/user-img/' #用户图片主目录
-  partner-cert-dir: '/Users/jeekhan/mfyx/partner-cert/'   #合作伙伴证件照片主目录
+  partner-img-dir: '/Users/jeekhan/mfyx/partner-img/'   #合作伙伴照片主目录
   image-gallery-dir: '/Users/jeekhan/mfyx/image-gallery/' #系统图库主目录
   image-folder-level-limit: 3     #文件夹最多三层，后续针对用户进行付费控制
   image-file-all-limit: 100       #每个会员最多可有100个文件（普通文件和目录），后续针对用户进行付费控制
