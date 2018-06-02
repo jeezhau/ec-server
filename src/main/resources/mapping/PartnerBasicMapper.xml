@@ -4,6 +4,7 @@
   <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.PartnerBasic">
     <id column="partner_id" jdbcType="INTEGER" property="partnerId" />
     <result column="vip_id" jdbcType="INTEGER" property="vipId" />
+    <result column="pb_Tp" jdbcType="VARCHAR" property="pbTp" />
     <result column="country" jdbcType="VARCHAR" property="country" />
     <result column="province" jdbcType="VARCHAR" property="province" />
     <result column="city" jdbcType="VARCHAR" property="city" />
@@ -15,21 +16,21 @@
     <result column="comp_name" jdbcType="VARCHAR" property="compName" />
     <result column="comp_type" jdbcType="CHAR" property="compType" />
     <result column="licence_no" jdbcType="VARCHAR" property="licenceNo" />
-    <result column="cert_dir" jdbcType="VARCHAR" property="certDir" />
     <result column="phone" jdbcType="VARCHAR" property="phone" />
     <result column="location_x" jdbcType="DECIMAL" property="locationX" />
     <result column="location_y" jdbcType="DECIMAL" property="locationY" />
     <result column="introduce" jdbcType="VARCHAR" property="introduce" />
     <result column="status" jdbcType="CHAR" property="status" />
+    <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="review_log" jdbcType="VARCHAR" property="reviewLog" />
     <result column="review_opr" jdbcType="INTEGER" property="reviewOpr" />
     <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
   </resultMap>
   <sql id="Base_Column_List">
-    partner_id, vip_id, country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
-    comp_type, comp_name, licence_no, cert_dir, phone, location_x, location_y, introduce,status, 
-    update_time, review_log, review_opr, review_time
+    partner_id, vip_id, pb_tp,country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
+    comp_type, comp_name, licence_no, phone, location_x, location_y, introduce,status, 
+    update_opr, update_time, review_log, review_opr, review_time
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -52,19 +53,19 @@
   </delete>
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.PartnerBasic"  keyProperty="partnerId" useGeneratedKeys="true">
-    insert into tb_partner_basic (partner_id, vip_id, country, 
+    insert into tb_partner_basic (partner_id, vip_id, pb_tp,country, 
       province, city, area, 
       addr, busi_name, legal_pername, 
       legal_peridno, comp_type,comp_name, licence_no, 
-      cert_dir, phone, location_x, location_y, introduce,
-      status, update_time, review_log, review_opr, review_time
+      phone, location_x, location_y, introduce,
+      status, update_opr, update_time, review_log, review_opr, review_time
       )
-    values (#{partnerId,jdbcType=INTEGER}, #{vipId,jdbcType=INTEGER}, #{country,jdbcType=VARCHAR}, 
+    values (#{partnerId,jdbcType=INTEGER}, #{vipId,jdbcType=INTEGER}, #{pbTp,jdbcType=VARCHAR},#{country,jdbcType=VARCHAR}, 
       #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
       #{addr,jdbcType=VARCHAR}, #{busiName,jdbcType=VARCHAR}, #{legalPername,jdbcType=VARCHAR}, 
       #{legalPeridno,jdbcType=VARCHAR}, #{compType,jdbcType=CHAR},#{compName,jdbcType=VARCHAR}, #{licenceNo,jdbcType=VARCHAR}, 
-      #{certDir,jdbcType=VARCHAR}, #{phone,jdbcType=VARCHAR}, #{locationX,jdbcType=DECIMAL}, 
-      #{locationY,jdbcType=DECIMAL},#{introduce,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{phone,jdbcType=VARCHAR}, #{locationX,jdbcType=DECIMAL}, #{locationY,jdbcType=DECIMAL},
+      #{introduce,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, #{updateOpr,jdbcType=INTEGER},#{updateTime,jdbcType=TIMESTAMP}, 
       #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP}
       )
   </insert>
@@ -76,6 +77,9 @@
       <if test="vipId != null">
         vip_id = #{vipId,jdbcType=INTEGER},
       </if>
+      <if test="pbTp != null">
+        pb_tp = #{pbTp,jdbcType=VARCHAR},
+      </if>      
       <if test="country != null">
         country = #{country,jdbcType=VARCHAR},
       </if>
@@ -109,9 +113,6 @@
       <if test="licenceNo != null">
         licence_no = #{licenceNo,jdbcType=VARCHAR},
       </if>
-      <if test="certDir != null">
-        cert_dir = #{certDir,jdbcType=VARCHAR},
-      </if>
       <if test="phone != null">
         phone = #{phone,jdbcType=VARCHAR},
       </if>
@@ -127,6 +128,9 @@
       <if test="status != null">
         status = #{status,jdbcType=CHAR},
       </if>
+      <if test="updateOpr != null">
+        update_opr = #{updateOpr,jdbcType=INTEGER},
+      </if>      
       <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>

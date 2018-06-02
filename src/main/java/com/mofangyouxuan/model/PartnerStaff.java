@@ -51,6 +51,7 @@ public class PartnerStaff {
 
     private Date updateTime;
     
+    @NotNull(message="更新人员：不可为空！")
     private Integer updateOpr;
 
     private String status;

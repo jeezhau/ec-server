@@ -20,12 +20,17 @@ import org.springframework.web.multipart.MultipartFile;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.SysParamUtil;
+import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.VipBasic;
+import com.mofangyouxuan.service.PartnerBasicService;
+import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.utils.SignUtils;
 
 /**
  * 系统图库管理
- * 1、文件保存目录：主图目录/VIPID_[ID]/自定义目录/文件名
+ * 1、文件保存目录：主图目录/PARTNERID_[ID]/自定义目录/文件名
  * 2、每个目录最多N1层，每个目录下最多M张图片；
  * 3、每个会员最多可添加P张照片；
  * 4、文件使用UUID重命名，返回URL中不包含目录信息；
@@ -33,14 +38,19 @@ import com.mofangyouxuan.service.VipBasicService;
  *
  */
 @RestController
-@RequestMapping("/image")
-public class ImageGalleryAction {
+@RequestMapping("/pimage")
+public class PartnerImageController {
 
 	@Autowired
 	private VipBasicService vipBasicService ;
 	
 	@Autowired
 	private SysParamUtil sysParamUtil;
+	
+	@Autowired
+	private PartnerBasicService partnerBasicService;
+	@Autowired
+	private PartnerStaffService partnerStaffService;
 	
 	/**
 	 * 图片上传
@@ -49,13 +59,42 @@ public class ImageGalleryAction {
 	 * @param currUserId	当前操作会员用户
 	 * @return {errcode:0,errmsg:"",filename:''}
 	 */
-	@RequestMapping("/file/upload")
-	public String uploadFile(@RequestParam(value="folderPath",required=true)String folderPath,
+	@RequestMapping("/{partnerId}/file/upload")
+	public String uploadFile(@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="folderPath",required=true)String folderPath,
 			@RequestParam(value="image")MultipartFile image,
-			@RequestParam(value="currUserId",required=true)Integer currUserId) {
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		
 		JSONObject jsonRet = new JSONObject();
 		try {
+			//数据检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
 			if(image == null || image.isEmpty()) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "图片信息不可为空！");
@@ -77,16 +116,8 @@ public class ImageGalleryAction {
 			if("/".equals(folderPath)) {
 				folderPath = "";
 			}
-			//数据检查
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-				return jsonRet.toString();
-			}
-			
 			//目录检查
-			File fileDir = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId + folderPath);
+			File fileDir = new File(sysParamUtil.getImageGalleryDir() + "PARTNERID_" + partnerId + folderPath);
 			if(!fileDir.exists()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_DIR_NO_EXISTS);
 				jsonRet.put("errmsg", "该文件归属目录不存在！");
@@ -107,7 +138,7 @@ public class ImageGalleryAction {
 				jsonRet.put("errmsg", "该文件夹下的文件数量已经达到上限" + sysParamUtil.getImageFolderFileLimit() +"个！");
 				return jsonRet.toString();
 			}
-			File userFolder = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId);
+			File userFolder = new File(sysParamUtil.getImageGalleryDir() + "PARTNERID_" + partnerId);
 			int cntAll = countFileCnt(userFolder)-1;
 			if(cntAll>= sysParamUtil.getImageFileAllLimit()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_FOLDER_FILE_LIMIT);
@@ -137,12 +168,42 @@ public class ImageGalleryAction {
 	 * @param currUserId
 	 * @return
 	 */
-	@RequestMapping("/folder/create")
-	public Object createFolder(@RequestParam(value="upFolderPath",required=true)String upFolderPath,
+	@RequestMapping("/{partnerId}/folder/create")
+	public Object createFolder(@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="upFolderPath",required=true)String upFolderPath,
 			@RequestParam(value="folderName",required=true)String folderName,
-			@RequestParam(value="currUserId",required=true)Integer currUserId){
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd){
 		JSONObject jsonRet = new JSONObject();
 		try {
+			//数据检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			//数据处理
 			folderName = folderName.trim();
 			if(!folderName.matches("^[a-zA-Z0-9_\u4e00-\u9fa5]{2,10}$")) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_PARAM_ERROR);
@@ -163,15 +224,8 @@ public class ImageGalleryAction {
 			if("/".equals(upFolderPath)) {
 				upFolderPath = "";
 			}
-			//数据检查
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-				return jsonRet.toString();
-			}
 			//目录检查
-			File upDir = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId + "/" + upFolderPath);
+			File upDir = new File(sysParamUtil.getImageGalleryDir() + "PARTNERID_" + partnerId + "/" + upFolderPath);
 			if(upFolderPath.length() == 0) {
 				upDir.mkdirs();
 			}else {
@@ -208,7 +262,7 @@ public class ImageGalleryAction {
 				jsonRet.put("errmsg", "该文件夹下的文件数量已经达到上限" + sysParamUtil.getImageFolderFileLimit() +"个！");
 				return jsonRet.toString();
 			}
-			File userFolder = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId);
+			File userFolder = new File(sysParamUtil.getImageGalleryDir() + "PARTNERID_" + partnerId);
 			int cntAll = countFileCnt(userFolder)-1;
 			if(cntAll>= sysParamUtil.getImageFileAllLimit()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_FOLDER_FILE_LIMIT);
@@ -236,11 +290,40 @@ public class ImageGalleryAction {
 	 * @param currUserId
 	 * @return {errcode:0,errmsg:'ok',files:[]}
 	 */
-	@RequestMapping("/folder/list")
-	public Object listFiles(@RequestParam(value="folderPath",required=true)String folderPath,
-			@RequestParam(value="currUserId",required=true)Integer currUserId) {
+	@RequestMapping("/{partnerId}/folder/list")
+	public Object listFiles(@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="folderPath",required=true)String folderPath,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
+			//数据检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
 			if(!folderPath.startsWith("Home")) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_PARAM_ERROR);
 				jsonRet.put("errmsg", "文件夹目录须是 Home/.... ！");
@@ -250,15 +333,8 @@ public class ImageGalleryAction {
 			if("/".equals(folderPath)) {
 				folderPath = "";
 			}
-			//数据检查
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-				return jsonRet.toString();
-			}
 			//目录检查
-			File fileDir = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId + folderPath);
+			File fileDir = new File(sysParamUtil.getImageGalleryDir() + "PARTNERID_" + partnerId + folderPath);
 			if(!fileDir.exists()) {
 				jsonRet.put("errcode", ErrCodes.IMAGE_DIR_NO_EXISTS);
 				jsonRet.put("errmsg", "该文件目录不存在！");
@@ -292,18 +368,13 @@ public class ImageGalleryAction {
 	 * @param currUserId
 	 * @return
 	 */
-	@RequestMapping("/file/show/{currUserId}/{filename}")
+	@RequestMapping("/{partnerId}/file/show/{filename}")
 	public void showFile(@PathVariable(value="filename",required=true)String filename,
-			@PathVariable(value="currUserId",required=true)Integer currUserId,
+			@PathVariable(value="partnerId",required=true)Integer partnerId,
 			OutputStream out,HttpServletRequest request,HttpServletResponse response) {
 		try {
-			//数据检查
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				return;
-			}
 			//文件查找
-			File fileDir = new File(sysParamUtil.getImageGalleryDir() + "VIPID_" + currUserId);
+			File fileDir = new File(sysParamUtil.getImageGalleryDir() + "PARTNERID_" + partnerId);
 			if(!fileDir.exists()) {
 				return;
 			}
@@ -388,9 +459,9 @@ public class ImageGalleryAction {
 	}
 	
 	public static void main(String[] args) {
-		String path = "/Users/jeekhan/mfyx/image-gallery/VIPID_100008";
+		String path = "/Users/jeekhan/mfyx/image-gallery/PARTNERID_100008";
 		File file = new File(path);
-		int cnt = new ImageGalleryAction().countFileCnt(file);
+		int cnt = new PartnerImageController().countFileCnt(file);
 		System.out.println(cnt);
 	}
 }

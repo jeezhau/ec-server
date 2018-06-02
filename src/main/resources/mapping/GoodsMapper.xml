@@ -19,10 +19,10 @@
     <result column="begin_time" jdbcType="TIMESTAMP" property="beginTime" />
     <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
     <result column="postage_ids" jdbcType="VARCHAR" property="postageIds" />
+    <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="review_result" jdbcType="CHAR" property="reviewResult" />
     <result column="review_log" jdbcType="VARCHAR" property="reviewLog" />
-    <result column="review_opr" jdbcType="INTEGER" property="reviewOpr" />
     <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="memo" jdbcType="VARCHAR" property="memo" />
@@ -45,16 +45,17 @@
     <result column="begin_time" jdbcType="TIMESTAMP" property="beginTime" />
     <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
     <result column="postage_ids" jdbcType="VARCHAR" property="postageIds" />
+    <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="review_result" jdbcType="CHAR" property="reviewResult" />
     <result column="review_log" jdbcType="VARCHAR" property="reviewLog" />
-    <result column="review_opr" jdbcType="INTEGER" property="reviewOpr" />
     <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="memo" jdbcType="VARCHAR" property="memo" />
     	<association property="partner" column="partner_id" javaType="com.mofangyouxuan.model.PartnerBasic" >
 	    <id column="partner_id" jdbcType="INTEGER" property="partnerId" />
 	    <result column="vip_id" jdbcType="INTEGER" property="vipId" />
+	    <result column="pb_tp" jdbcType="VARCHAR" property="pbTp" />
 	    <result column="country" jdbcType="VARCHAR" property="country" />
 	    <result column="province" jdbcType="VARCHAR" property="province" />
 	    <result column="city" jdbcType="VARCHAR" property="city" />
@@ -66,7 +67,6 @@
 	    <result column="comp_name" jdbcType="VARCHAR" property="compName" />
 	    <result column="comp_type" jdbcType="CHAR" property="compType" />
 	    <result column="licence_no" jdbcType="VARCHAR" property="licenceNo" />
-	    <result column="cert_dir" jdbcType="VARCHAR" property="certDir" />
 	    <result column="phone" jdbcType="VARCHAR" property="phone" />
 	    <result column="location_x" jdbcType="DECIMAL" property="locationX" />
 	    <result column="location_y" jdbcType="DECIMAL" property="locationY" />
@@ -78,12 +78,12 @@
   <sql id="Base_Column_List">
     g.goods_id, g.partner_id, g.category_id,g.goods_name, g.goods_desc, g.main_img_path,g.carousel_img_paths,g.place,g.vender,
     g.saled_cnt, g.stock_sum, g.price_lowest, g.spec_detail,g.limited_num, g.begin_time,  g.end_time, 
-    g.postage_ids, g.update_time, 
-    g.review_result, g.review_log, g.review_opr, g.review_time, g.status, g.memo
+    g.postage_ids, g.update_opr, g.update_time, 
+    g.review_result, g.review_log, g.review_time, g.status, g.memo
   </sql>
   <sql id="Base_Column_Partner">
-    p.vip_id, p.country, p.province, p.city, p.area, p.addr, p.busi_name, p.legal_pername, p.legal_peridno, 
-    p.comp_type, p.comp_name, p.licence_no, p.cert_dir, p.phone, p.location_x, p.location_y, p.introduce,p.status partner_status
+    p.vip_id, pb_tp,p.country, p.province, p.city, p.area, p.addr, p.busi_name, p.legal_pername, p.legal_peridno, 
+    p.comp_type, p.comp_name, p.licence_no, p.phone, p.location_x, p.location_y, p.introduce,p.status partner_status
 
   </sql>
     
@@ -110,16 +110,16 @@
   <insert id="insert" parameterType="com.mofangyouxuan.model.Goods" keyProperty="goodsId" useGeneratedKeys="true">
     insert into tb_goods_info (goods_id, partner_id, category_id,goods_name, 
       goods_desc, main_img_path, carousel_img_paths,place,vender,saled_cnt, stock_sum,price_lowest,spec_detail, 
-      limited_num, begin_time, end_time, postage_ids, update_time, 
-      review_result, review_log, review_opr,review_time, 
+      limited_num, begin_time, end_time, postage_ids, update_time, update_opr,
+      review_result, review_log, review_time, 
       status, memo)
     values (#{goodsId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER},#{categoryId,jdbcType=INTEGER}, #{goodsName,jdbcType=VARCHAR}, 
       #{goodsDesc,jdbcType=VARCHAR}, #{mainImgPath,jdbcType=VARCHAR}, #{carouselImgPaths,jdbcType=VARCHAR}, 
       #{place,jdbcType=VARCHAR},#{vender,jdbcType=VARCHAR},
       #{saledCnt,jdbcType=INTEGER}, #{stockSum,jdbcType=INTEGER}, 
       #{priceLowest,jdbcType=DECIMAL},#{specDetail,jdbcType=VARCHAR},#{limitedNum,jdbcType=INTEGER}, #{beginTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
-      #{postageIds,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, 
-      #{reviewResult,jdbcType=CHAR}, #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP},
+      #{postageIds,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER},
+      #{reviewResult,jdbcType=CHAR}, #{reviewLog,jdbcType=VARCHAR},  #{reviewTime,jdbcType=TIMESTAMP},
       #{status,jdbcType=CHAR}, #{memo,jdbcType=VARCHAR})
   </insert>
   
@@ -174,6 +174,9 @@
       <if test="postageIds != null">
         postage_ids = #{postageIds,jdbcType=VARCHAR},
       </if>
+      <if test="updateOpr != null">
+        update_opr = #{updateOpr,jdbcType=INTEGER},
+      </if>      
       <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>
@@ -182,9 +185,6 @@
       </if>
       <if test="reviewLog != null">
         review_log = #{reviewLog,jdbcType=VARCHAR},
-      </if>
-      <if test="reviewOpr != null">
-        review_opr = #{reviewOpr,jdbcType=INTEGER},
       </if>
       <if test="reviewTime != null">
         review_time = #{reviewTime,jdbcType=TIMESTAMP},

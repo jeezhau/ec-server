@@ -32,12 +32,15 @@ import org.springframework.web.multipart.MultipartFile;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.PartnerBasicService;
+import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.FileFilter;
+import com.mofangyouxuan.utils.SignUtils;
 
 /**
  * 合作伙伴信息管理
@@ -49,7 +52,7 @@ import com.mofangyouxuan.utils.FileFilter;
  */
 @RestController
 @RequestMapping("/partner")
-public class PartnerBasicAction {
+public class PartnerBasicController {
 	
 	@Value("${sys.partner-img-dir}")
 	private String partnerImgDir;	//合作伙伴照片保存目录
@@ -62,6 +65,8 @@ public class PartnerBasicAction {
 	
 	@Autowired
 	private PartnerBasicService partnerBasicService;
+	@Autowired
+	private PartnerStaffService partnerStaffService;
 	
 	@InitBinder
 	protected void initBinder(WebDataBinder binder) {
@@ -138,7 +143,7 @@ public class PartnerBasicAction {
 	
 
 	/**
-	 * 开通创建合作伙伴
+	 * 会员自己开通创建合作伙伴
 	 * @param basic	合作伙伴信息
 	 * @param result 字段验证结果
 	 * 
@@ -146,7 +151,8 @@ public class PartnerBasicAction {
 	 * @throws JSONException
 	 */
 	@RequestMapping(value="/create",method=RequestMethod.POST)
-	public String create(@Valid PartnerBasic basic,BindingResult result) {
+	public String create(@Valid PartnerBasic basic,BindingResult result,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//信息验证结果处理
@@ -172,7 +178,12 @@ public class PartnerBasicAction {
 			if( old != null) {	//已有，直接返回成功
 				jsonRet.put("errcode", 0);
 				jsonRet.put("partnerId", old.getPartnerId());
-				jsonRet.put("errmsg", "系统中已有该合作伙伴，如果需要修改信息请使用修改功能！");
+				jsonRet.put("errmsg", "系统中已有该会员绑定的合作伙伴，如果需要修改信息请使用修改功能！");
+				return jsonRet.toString();
+			}
+			if(!vip.getVipId().equals(basic.getUpdateOpr())) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "会员ID与操作员ID不一致！");
 				return jsonRet.toString();
 			}
 			//证件照必填检查
@@ -192,13 +203,24 @@ public class PartnerBasicAction {
 				jsonRet.put("errmsg", "您还未上传法人身份证照片！");
 				return jsonRet.toString();
 			}
-			String compType = basic.getCompType();
-			if("2".equals(compType)) {
+			//String compType = basic.getCompType();
+			//if("2".equals(compType)) {
 				if(tempCertDir.listFiles(new FileFilter("licence")).length<=0 ) {
 					jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
-					jsonRet.put("errmsg", "您还未上传营业执照照片！");
+					jsonRet.put("errmsg", "您还未上传公司营业执照或小微商户法人手持身份证正面照片！");
 					return jsonRet.toString();
 				}
+			//}
+			//密码验证
+			if(vip.getPasswd() == null || vip.getPasswd().length()<10) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您还未设置会员密码，请先到会员中心完成设置！");
+				return jsonRet.toJSONString();
+			}
+			if(!SignUtils.encodeSHA256Hex(passwd).equals(vip.getPasswd())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您的会员密码输入不正确！");
+				return jsonRet.toJSONString();
 			}
 			//数据处理
 			basic.setStatus("0"); //待审核
@@ -226,7 +248,7 @@ public class PartnerBasicAction {
 	
 	
 	/**
-	 * 更新合作伙伴
+	 * 会员自己或员工更新合作伙伴
 	 * 
 	 * @param basic	合作伙伴信息
 	 * @param result 字段验证结果
@@ -235,7 +257,8 @@ public class PartnerBasicAction {
 	 * @throws JSONException 
 	 */
 	@RequestMapping(value="/update",method=RequestMethod.POST)
-	public String update(@Valid PartnerBasic basic,BindingResult result) {
+	public String update(@Valid PartnerBasic basic,BindingResult result,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//信息验证结果处理
@@ -249,28 +272,37 @@ public class PartnerBasicAction {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-
 			//数据检查
 			if(basic.getPartnerId() == null || basic.getVipId() == null) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "合作伙伴ID和绑定的会员ID均不可为空！");
 				return jsonRet.toString();
 			}
-			PartnerBasic old1 = this.partnerBasicService.getByID(basic.getPartnerId());
-			PartnerBasic old2 = this.partnerBasicService.getByBindUser(basic.getVipId());
-			if(old1 == null || old2 == null || !old1.getPartnerId().equals(old2.getPartnerId())) {
+			PartnerBasic old = this.partnerBasicService.getByID(basic.getPartnerId());
+			if(old == null ) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "会员不存在或合作伙伴ID和绑定的会员ID不匹配！");
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
 				return jsonRet.toString();
 			}
-			String oldStatus = old1.getStatus();
+			VipBasic vip = this.vipBasicService.get(basic.getVipId());
+			if(vip == null || !"1".equals(vip.getStatus()) ) {
+				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+				return jsonRet.toString();
+			}
+			if(!old.getVipId().equals(vip.getVipId())) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "会员ID与合作伙伴ID不匹配！");
+				return jsonRet.toString();
+			}
+			String oldStatus = old.getStatus();
 			if(!"0".equals(oldStatus) && !"S".equals(oldStatus) && !"C".equals(oldStatus)) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
 				jsonRet.put("errmsg", "您当前不可变更信息，状态不正确！");
 				return jsonRet.toString();
 			}
 			//证件照必填检查
-			File certDir = new File(this.partnerImgDir +  "PARTNERID_" + old1.getPartnerId() + "/cert/" );
+			File certDir = new File(this.partnerImgDir +  "PARTNERID_" + old.getPartnerId() + "/cert/" );
 			if(!certDir.exists() || !certDir.isDirectory()) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
 				jsonRet.put("errmsg", "您还未上传相关证书照片！");
@@ -286,15 +318,33 @@ public class PartnerBasicAction {
 				jsonRet.put("errmsg", "您还未上传法人身份证照片！");
 				return jsonRet.toString();
 			}
-			String compType = basic.getCompType();
-			if("2".equals(compType)) {
+			//String compType = basic.getCompType();
+			//if("2".equals(compType)) {
 				if(certDir.listFiles(new FileFilter("licence")).length<=0 ) {
 					jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
-					jsonRet.put("errmsg", "您还未上传营业执照照片！");
+					jsonRet.put("errmsg", "您还未上传公司营业执照或小微商户法人手持身份证正面照片！");
 					return jsonRet.toString();
 				}
+			//}
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && basic.getUpdateOpr().equals(basic.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+				}
 			}
-			
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(basic.getPartnerId(), basic.getUpdateOpr()); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("basic") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
 			//数据处理
 			basic.setStatus("0"); //待审核
 			basic.setReviewLog("");
@@ -307,11 +357,12 @@ public class PartnerBasicAction {
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
 				jsonRet.put("errcode", 0);
-				jsonRet.put("partnerId", old1.getPartnerId());
+				jsonRet.put("partnerId", old.getPartnerId());
 				jsonRet.put("errmsg", "ok");
 			}
 		}catch(Exception e) {
 			//数据处理
+			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
@@ -329,17 +380,43 @@ public class PartnerBasicAction {
 	 */
 	@RequestMapping("/changeStatus")
 	public String changeOwnStatus(@RequestParam(value="partnerId",required=true)Integer partnerId,
-			@RequestParam(value="currUserId",required=true)Integer currUserId) {
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			PartnerBasic old1 = this.partnerBasicService.getByID(partnerId);
-			PartnerBasic old2 = this.partnerBasicService.getByBindUser(currUserId);
-			if(old1 == null || old2 == null || !old1.getPartnerId().equals(old2.getPartnerId())) {
+			//数据检查
+			PartnerBasic old = this.partnerBasicService.getByID(partnerId);
+			if(old == null ) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "合作伙伴ID和绑定的会员ID不匹配！");
+				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
 				return jsonRet.toString();
 			}
-			String oldStatus = old1.getStatus();
+			VipBasic vip = this.vipBasicService.get(old.getVipId());
+			if(vip == null || !"1".equals(vip.getStatus()) ) {
+				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+				return jsonRet.toString();
+			}
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && currUserId.equals(old.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("basic") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			String oldStatus = old.getStatus();
 			if(!"S".equals(oldStatus) && !"C".equals(oldStatus)) { //正常或关闭
 				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
 				jsonRet.put("errmsg", "您不可变更当前状态！！");
@@ -422,13 +499,15 @@ public class PartnerBasicAction {
 	 * 证件照上传
 	 * @param certType	证件类型
 	 * @param image		照片,jpg格式
-	 * @param currUserId	当前操作用户
+	 * @param userId		当前操作用户
 	 * @return {errcode:0,errmsg:""}
 	 */
 	@RequestMapping("/cert/upload")
 	public String uploadCert(@RequestParam(value="certType",required=true)String certType,
 			@RequestParam(value="image")MultipartFile image,
-			@RequestParam(value="currVipId",required=true)Integer currVipId) {
+			@RequestParam(value="bindVipId",required=true)Integer bindVipId,
+			@RequestParam(value="userId",required=true)Integer userId,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -458,14 +537,33 @@ public class PartnerBasicAction {
 				return jsonRet.toString();
 			}
 			//数据检查
-			VipBasic vip = this.vipBasicService.get(currVipId);
+			VipBasic vip = this.vipBasicService.get(bindVipId);
 			if(vip == null || !"1".equals(vip.getStatus()) ) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
 				return jsonRet.toString();
 			}
+			PartnerBasic partner = this.partnerBasicService.getByBindUser(bindVipId);
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && bindVipId.equals(userId)) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+				}
+			}
+			if(isPass != true) {
+				PartnerStaff operator = this.partnerStaffService.get(partner.getPartnerId(), userId); //员工
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("basic") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
 			File certDir = new File(this.partnerImgDir +  "VIPID_" + vip.getVipId() + "/cert/" );
-			PartnerBasic partner = this.partnerBasicService.getByBindUser(currVipId);
 			if(partner != null) {//修改已存在合作伙伴
 				String oldStatus = partner.getStatus();
 				if(!"0".equals(oldStatus) && !"S".equals(oldStatus) && !"C".equals(oldStatus)) {
@@ -476,7 +574,7 @@ public class PartnerBasicAction {
 				if(certDir != null) {
 					FileUtils.deleteDirectory(certDir);
 				}
-				certDir = new File(this.partnerImgDir +  "PARTNERID_" + partner.getVipId() + "/cert/" );
+				certDir = new File(this.partnerImgDir +  "PARTNERID_" + partner.getPartnerId() + "/cert/" );
 			}
 			//照片保存，删除旧的
 			if(!certDir.exists()) {

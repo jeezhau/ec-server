@@ -16,11 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.Postage;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.PartnerBasicService;
+import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.PostageService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.utils.SignUtils;
 
 /**
  * 运费模板管理服务接口
@@ -33,20 +36,23 @@ import com.mofangyouxuan.service.VipBasicService;
  */
 @RestController
 @RequestMapping("/postage")
-public class PostageAction {
+public class PostageController {
 	@Autowired
 	private VipBasicService vipBasicService;
 	@Autowired
 	private PartnerBasicService partnerBasicService;
 	@Autowired
+	private PartnerStaffService partnerStaffService;
+	@Autowired
 	private PostageService postageService;
+	
 	
 	/**
 	 * 获取指定ID的模版信息
 	 * @param postageId
 	 * @return {errcode:0,errmsg:"ok",postage:{...}}
 	 */
-	@RequestMapping("/get/{postageId}")
+	@RequestMapping("/{partnerId}/get/{postageId}")
 	public Object getById(@PathVariable("postageId")Long postageId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -72,7 +78,7 @@ public class PostageAction {
 	 * @param partnerId
 	 * @return {errcode:0,errmsg:"ok",postages:[{...},{...},...]}
 	 */
-	@RequestMapping("/getbypartner/{partnerId}")
+	@RequestMapping("/{partnerId}/getall")
 	public Object getByPartner(@PathVariable("partnerId")Integer partnerId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -98,7 +104,7 @@ public class PostageAction {
 	 * @param postageId
 	 * @return {errcode:0,errmsg:"ok",cnt:1}
 	 */
-	@RequestMapping("/getusingcnt/{postageId}")
+	@RequestMapping("/{partnerId}/getusingcnt/{postageId}")
 	public Object getUsingCnt(@PathVariable("postageId")Long postageId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -120,24 +126,43 @@ public class PostageAction {
 	 * @param result
 	 * @return {errcode:0,errmsg:"ok",postageId:111}
 	 */
-	@RequestMapping("/add")
+	@RequestMapping("/{partnerId}/add")
 	public Object add(@Valid Postage postage,BindingResult result,
-			@RequestParam(value="currVipId",required=true)Integer currVipId) {
+			@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			VipBasic vip = this.vipBasicService.get(currVipId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+			//数据与权限检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
 				return jsonRet.toString();
 			}
-			PartnerBasic partner = this.partnerBasicService.getByBindUser(currVipId);
-			if(partner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
 				return jsonRet.toString();
 			}
-			if(!postage.getPartnerId().equals(partner.getPartnerId())) {
+			if(!postage.getPartnerId().equals(myPartner.getPartnerId())) {
 				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您无权执行该操作！");
 				return jsonRet.toString();
@@ -223,7 +248,7 @@ public class PostageAction {
 			}
 			
 			//数据处理
-			postage.setUpdateOpr(currVipId);
+			postage.setUpdateOpr(updateOpr);
 			Long id = this.postageService.add(postage);
 			if(id  > 0) {
 				jsonRet.put("postageId", id);
@@ -247,22 +272,46 @@ public class PostageAction {
 	 * @param result
 	 * @return {errcode:0,errmsg:"ok",postageId:111}
 	 */
-	@RequestMapping("/update")
+	@RequestMapping("/{partnerId}/update")
 	public Object update(@Valid Postage postage,BindingResult result,
-			@RequestParam(value="currVipId",required=true)Integer currVipId) {
+			@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			
-			VipBasic vip = this.vipBasicService.get(currVipId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+			//数据检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
 				return jsonRet.toString();
 			}
-			PartnerBasic partner = this.partnerBasicService.getByBindUser(currVipId);
-			if(partner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			//操作员与密码验证
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			if(!postage.getPartnerId().equals(myPartner.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权执行该操作！");
 				return jsonRet.toString();
 			}
 			Postage old = this.postageService.get(postage.getPostageId());
@@ -271,7 +320,7 @@ public class PostageAction {
 				jsonRet.put("errmsg", "系统中没有该模版信息！");
 				return jsonRet.toString();
 			}
-			if(!postage.getPartnerId().equals(partner.getPartnerId()) 
+			if(!postage.getPartnerId().equals(myPartner.getPartnerId()) 
 					|| !postage.getPartnerId().equals(old.getPartnerId())) {
 				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您无权执行该操作！");
@@ -363,7 +412,7 @@ public class PostageAction {
 				return jsonRet.toString();
 			}
 			//数据处理
-			postage.setUpdateOpr(currVipId);
+			postage.setUpdateOpr(updateOpr);
 			int cnt = this.postageService.update(postage);
 			if(cnt > 0) {
 				jsonRet.put("postageId", 0);
@@ -388,21 +437,38 @@ public class PostageAction {
 	 * @param currVipId
 	 * @return {errcode:0,errmsg:"ok"}
 	 */
-	@RequestMapping("/delete")
+	@RequestMapping("/{partnerId}/delete")
 	public Object delete(@RequestParam(value="postageId",required=true)Long postageId,
-			@RequestParam(value="currVipId",required=true)Integer currVipId) {
+			@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			VipBasic vip = this.vipBasicService.get(currVipId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+			//数据检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
 				return jsonRet.toString();
 			}
-			PartnerBasic partner = this.partnerBasicService.getByBindUser(currVipId);
-			if(partner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
 				return jsonRet.toString();
 			}
 			Postage postage = this.postageService.get(postageId);
@@ -411,7 +477,7 @@ public class PostageAction {
 				jsonRet.put("errmsg", "系统中没有该模版信息！");
 				return jsonRet.toString();
 			}
-			if(!postage.getPartnerId().equals(partner.getPartnerId()) ) {
+			if(!postage.getPartnerId().equals(myPartner.getPartnerId()) ) {
 				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您无权执行该操作！");
 				return jsonRet.toString();

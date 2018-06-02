@@ -69,13 +69,14 @@ public class Goods {
     @Size(min=1,max=100,message=" 运费模版组ID：长度范围1-100字符！ ")
     private String postageIds;
 
+    @NotNull(message="修改人：不可为空！")
+    private Integer updateOpr;
+    
     private Date updateTime;
 
     private String reviewResult;
 
     private String reviewLog;
-
-    private Integer reviewOpr;
 
     private Date reviewTime;
 
@@ -257,12 +258,12 @@ public class Goods {
         this.reviewLog = reviewLog == null ? null : reviewLog.trim();
     }
 
-    public Integer getReviewOpr() {
-        return reviewOpr;
+    public Integer getUpdateOpr() {
+        return updateOpr;
     }
 
-    public void setReviewOpr(Integer reviewOpr) {
-        this.reviewOpr = reviewOpr;
+    public void setUpdateOpr(Integer updateOpr) {
+        this.updateOpr = updateOpr;
     }
 
     public String getReviewTime() {

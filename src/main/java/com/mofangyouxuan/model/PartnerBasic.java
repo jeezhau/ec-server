@@ -13,6 +13,9 @@ public class PartnerBasic {
 
     @NotNull(message=" 绑定会员：不可为空！")
     private Integer vipId;
+    
+    @Pattern(regexp="[12]",message="合作伙伴类型：取值【1-商家，2-招商推广】！")
+    private String pbTp;
 
     @NotNull(message=" 国家：不可为空！")
     @Size(min=2,max=50,message=" 国家：长度范围2-50字符 ！")
@@ -75,6 +78,9 @@ public class PartnerBasic {
     @Null
     private String status;
 
+    @NotNull(message="更新人员：不可为空！")
+    private Integer updateOpr;
+    
     @Null
     private Date updateTime;
 
@@ -230,7 +236,14 @@ public class PartnerBasic {
     public void setStatus(String status) {
         this.status = status == null ? null : status.trim();
     }
+    
+	public Integer getUpdateOpr() {
+		return updateOpr;
+	}
 
+	public void setUpdateOpr(Integer updateOpr) {
+		this.updateOpr = updateOpr;
+	}
     public Date getUpdateTime() {
         return updateTime;
     }
@@ -270,5 +283,14 @@ public class PartnerBasic {
 	public void setDistance(Double distance) {
 		this.distance = distance;
 	}
+
+	public String getPbTp() {
+		return pbTp;
+	}
+
+	public void setPbTp(String pbTp) {
+		this.pbTp = pbTp;
+	}
     
+	
 }

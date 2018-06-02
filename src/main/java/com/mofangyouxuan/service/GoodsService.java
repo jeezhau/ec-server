@@ -56,7 +56,7 @@ public interface GoodsService {
 	 * @param updPriceLowest	需要变更的最低价（全覆盖时有用）
 	 * @return
 	 */
-	public int changeSpec(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest);
+	public int changeSpec(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest,Integer updateOpr);
 	
 	/**
 	 * 记录商品审批结果
@@ -74,7 +74,7 @@ public interface GoodsService {
 	 * @param newStatus
 	 * @return
 	 */
-	public void changeStatus(List<Goods> list,String newStatus) ;
+	public void changeStatus(List<Goods> list,String newStatus,Integer upateOpr) ;
 	
 	/**
 	 * 根据指定查询和排序条件分页获取商品信息

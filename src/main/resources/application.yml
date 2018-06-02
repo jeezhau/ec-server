@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: prod
+    active: dev
 #引用测试的配置文件
 #    active: test
 #引用生产的配置文件

@@ -276,8 +276,9 @@ public class PartnerStaffController {
 	 * 头像与客服二维码上传：员工自我维护
 	 * 保存相对路径：staff
 	 * 1、头像保存名称：[userid]_headimg.xxx；
-	 * 2、客服二维码保存名称：[userid]_qrcode.xxx;
+	 * 2、客服二维码保存名称：[userid]_kfqrcode.xxx;
 	 * @param image		照片
+	 * @param mode	照片类型：headimg、kfqrcode
 	 * @param userId		当前操作用户
 	 * @param passwd		操作密码
 	 * @return {errcode:0,errmsg:"",filename:''}
@@ -353,14 +354,7 @@ public class PartnerStaffController {
 		return jsonRet.toString();
 	}
 	
-	/**
-	 * 显示头像照
-	 * @param currUserId
-	 * @param out
-	 * @param request
-	 * @param response
-	 * @throws IOException
-	 */
+
 	/**
 	 * 头像与客服二维码显示
 	 * 保存相对路径：staff
@@ -483,17 +477,17 @@ public class PartnerStaffController {
 			params.put("partnerId", partnerId);
 			PageCond pageCond = null;
 			if(jsonPageCond == null || jsonPageCond.length()<1) {
-				pageCond = new PageCond(0,100);
+				pageCond = new PageCond(0,20);
 			}else {
 				pageCond = JSONObject.toJavaObject(JSONObject.parseObject(jsonPageCond), PageCond.class);
 				if(pageCond == null) {
-					pageCond = new PageCond(0,100);
+					pageCond = new PageCond(0,20);
 				}
 				if( pageCond.getBegin()<=0) {
 					pageCond.setBegin(0);
 				}
 				if(pageCond.getPageSize()<2) {
-					pageCond.setPageSize(100);
+					pageCond.setPageSize(20);
 				}
 			}
 			int cnt = this.partnerStaffService.countAll(params);

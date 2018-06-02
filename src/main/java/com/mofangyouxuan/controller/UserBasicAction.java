@@ -233,6 +233,32 @@ public class UserBasicAction {
 	}
 	
 	/**
+	 * 根据UserId获取用户的基本信息
+	 * @param userId
+	 * 
+	 * @return {errcode:0,errmsg:"ok"} 或 {用户所有字段}
+	 * @throws JSONException 
+	 */
+	@RequestMapping(value="/getbyid/{userId}")
+	public Object getUser(@PathVariable("userId")Integer userId) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			UserBasic user = this.userBasicService.get(userId);
+			if(user == null || !"1".equals(user.getStatus())){
+				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+				jsonRet.put("errmsg", " 系统中没有该用户！ ");
+				return jsonRet.toString();
+			}
+			return user;
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+			return jsonRet.toString();
+		}
+	}
+	
+	/**
 	 * 根据OpenId或UnionId、Email或Phone获取用户的基本信息
 	 * @param openId
 	 * 

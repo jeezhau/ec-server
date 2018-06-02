@@ -34,12 +34,15 @@ import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.PartnerBasicService;
+import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.utils.SignUtils;
 
 /**
  * 商品管理
@@ -59,6 +62,8 @@ public class GoodsController {
 	@Autowired
 	private PartnerBasicService  partnerBasicService;
 	@Autowired
+	private PartnerStaffService partnerStaffService;
+	@Autowired
 	private UserBasicService userBasicService;
 	
 	
@@ -74,28 +79,12 @@ public class GoodsController {
 	 * @param result
 	 * @return {errcode:0,errmsg:'ok',goodsId:111}
 	 */
-	@RequestMapping("/add")
+	@RequestMapping("/{partnerId}/add")
 	public Object addGoods(@Valid Goods goods,BindingResult result,
-			@RequestParam(value="currVipId",required=true)Integer currVipId) {
+			@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			VipBasic vip = this.vipBasicService.get(currVipId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-				return jsonRet.toString();
-			}
-			PartnerBasic partner = this.partnerBasicService.getByBindUser(currVipId);
-			if(partner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
-				return jsonRet.toString();
-			}
-			if(!goods.getPartnerId().equals(partner.getPartnerId())) {
-				jsonRet.put("errcode", ErrCodes.GOODS_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权执行该操作！");
-				return jsonRet.toString();
-			}
 			//信息验证结果处理
 			if(result.hasErrors()){
 				StringBuilder sb = new StringBuilder();
@@ -107,6 +96,7 @@ public class GoodsController {
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				return jsonRet.toString();
 			}
+
 			//规格库存检查
 			String ret = this.checkSpec(goods);
 			if(ret != null) {
@@ -127,16 +117,46 @@ public class GoodsController {
 				jsonRet.put("errmsg", sb.toString());
 				return jsonRet.toString();
 			}
-			//数据检查
-			if(!"0".equals(partner.getStatus()) && !"S".equals(partner.getStatus())  && !"C".equals(partner.getStatus()) && !"R".equals(partner.getStatus())) {
-				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
-				jsonRet.put("errmsg", "您当前的合作伙伴状态有误，不可进行商品管理！");
+			//数据与权限检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
 				return jsonRet.toString();
 			}
+			VipBasic vip = this.vipBasicService.get(goods.getUpdateOpr());
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, goods.getUpdateOpr()); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			if(!goods.getPartnerId().equals(myPartner.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权执行该操作！");
+				return jsonRet.toString();
+			}
+			
+			//数据处理保存
 			goods.setSaledCnt(0);
+			goods.setUpdateOpr(updateOpr);
 			goods.setReviewResult("1"); 
-			goods.setReviewLog("");
-			goods.setReviewOpr(null);
+			goods.setReviewLog(null);
 			goods.setReviewTime(null);
 			Long id = this.goodsService.add(goods);
 			if(id < 1) {
@@ -161,28 +181,12 @@ public class GoodsController {
 	 * @param result
 	 * @return {errcode:0,errmsg:'ok',goodsId:111}
 	 */
-	@RequestMapping("/update")
+	@RequestMapping("/{partnerId}/update")
 	public Object updateGoods(@Valid Goods goods,BindingResult result,
-			@RequestParam(value="currVipId",required=true)Integer currVipId) {
+			@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			VipBasic vip = this.vipBasicService.get(currVipId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-				return jsonRet.toString();
-			}
-			PartnerBasic partner = this.partnerBasicService.getByBindUser(currVipId);
-			if(partner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
-				return jsonRet.toString();
-			}
-			if(!goods.getPartnerId().equals(partner.getPartnerId())) {
-				jsonRet.put("errcode", ErrCodes.GOODS_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权执行该操作！");
-				return jsonRet.toString();
-			}
 			//信息验证结果处理
 			if(result.hasErrors()){
 				StringBuilder sb = new StringBuilder();
@@ -194,6 +198,7 @@ public class GoodsController {
 				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 				return jsonRet.toString();
 			}
+
 			//规格库存检查
 			String ret = this.checkSpec(goods);
 			if(ret != null) {
@@ -215,16 +220,38 @@ public class GoodsController {
 				return jsonRet.toString();
 			}
 			
-			//数据检查
-			if(!"0".equals(partner.getStatus()) && !"S".equals(partner.getStatus())  && !"C".equals(partner.getStatus()) && !"R".equals(partner.getStatus())) {
-				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
-				jsonRet.put("errmsg", "您当前的合作伙伴状态有误，不可进行商品管理！");
+			//数据与权限检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
 				return jsonRet.toString();
 			}
-			
-			if(goods.getGoodsId() == null) {
-				jsonRet.put("errmsg", "商品ID：不可为空！");
-				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+			VipBasic vip = this.vipBasicService.get(goods.getUpdateOpr());
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, goods.getUpdateOpr()); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			if(!goods.getPartnerId().equals(myPartner.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权执行该操作！");
 				return jsonRet.toString();
 			}
 			Goods old = this.goodsService.get(false,goods.getGoodsId(),true);
@@ -233,14 +260,22 @@ public class GoodsController {
 				jsonRet.put("errmsg", "您无权处理该商品信息！");
 				return jsonRet.toString();
 			}
+			
+			//数据处理保存
+			if(goods.getGoodsId() == null) {
+				jsonRet.put("errmsg", "商品ID：不可为空！");
+				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+				return jsonRet.toString();
+			}
+			
 			//先同步更新库存
 			this.goodsService.changeSpec(old.getGoodsId(), JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class),
-					1,goods.getStockSum(), goods.getPriceLowest());
+					1,goods.getStockSum(), goods.getPriceLowest(),updateOpr);
 			//更新其他信息
 			goods.setSaledCnt(old.getSaledCnt());
+			goods.setUpdateOpr(updateOpr);
 			goods.setReviewResult("1"); 
 			goods.setReviewLog("");
-			goods.setReviewOpr(null);
 			goods.setReviewTime(null);
 			goods.setStockSum(null);
 			goods.setPriceLowest(null);
@@ -400,16 +435,41 @@ public class GoodsController {
 	 * @return {errcode:0,errmsg:"ok"}
 	 * @throws JSONException 
 	 */
-	@RequestMapping("/changeStatus")
+	@RequestMapping("/{partnerId}/changeStatus")
 	public String changeStatus(@RequestParam(value="goodsIds",required=true)String goodsIds,
-			@RequestParam(value="partnerId",required=true)Integer partnerId,
+			@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd,
 			@RequestParam(value="newStatus",required=true)String newStatus) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			if(partner == null) {
-				jsonRet.put("errmsg", "系统中该合作伙伴不存在！");
-				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
+			//数据与权限检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
 				return jsonRet.toString();
 			}
 			String[] arr = goodsIds.split(",");
@@ -426,7 +486,7 @@ public class GoodsController {
 			List<Goods> list = new ArrayList<Goods>();
 			for(Long id:okSet) {
 				Goods g = this.goodsService.get(false,id,true);
-				if(g != null && g.getPartnerId().equals(partner.getPartnerId())) {//权限验证
+				if(g != null && g.getPartnerId().equals(myPartner.getPartnerId())) {//权限验证
 					list.add(g);
 				}else {
 					errSet.add(id.toString());
@@ -439,7 +499,7 @@ public class GoodsController {
 				return jsonRet.toString();
 			}
 			if(list.size()>0) {
-				this.goodsService.changeStatus(list, newStatus);
+				this.goodsService.changeStatus(list, newStatus,updateOpr);
 			}
 			
 			if(errSet.size() > 0) {
@@ -516,16 +576,41 @@ public class GoodsController {
 	 * @param specDetail
 	 * @return {errcode:0,errmsg:'ok'}
 	 */
-	@RequestMapping("/changeSpec")
-	public String changeSpec(@RequestParam(value="partnerId",required=true)Integer partnerId,
-			@RequestParam(value="goodsId",required=true)Long goodsId,
+	@RequestMapping("/{partnerId}/changeSpec/{goodsId}")
+	public String changeSpec(@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd,
+			@PathVariable(value="goodsId",required=true)Long goodsId,
 			@RequestParam(value="specDetail",required=true)String specDetail) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			if(partner == null) {
-				jsonRet.put("errmsg", "系统中该合作伙伴不存在！");
-				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
+			//数据与权限检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
 				return jsonRet.toString();
 			}
 			Goods goods = this.goodsService.get(false, goodsId,true);
@@ -535,12 +620,13 @@ public class GoodsController {
 				return jsonRet.toString();
 			}
 			//规格库存检查
-			String ret = this.checkSpec(goods);
+			Goods updGoods = new Goods();
+			updGoods.setSpecDetail(specDetail);
+			String ret = this.checkSpec(updGoods);
 			if(ret != null) {
 				return ret;
-			}
-			//数据保存
-			int cnt = this.goodsService.changeSpec(goodsId, JSONArray.parseArray(specDetail, GoodsSpec.class), 1,goods.getStockSum(), goods.getPriceLowest());
+			}			//数据保存
+			int cnt = this.goodsService.changeSpec(goodsId, JSONArray.parseArray(specDetail, GoodsSpec.class), 1,goods.getStockSum(), goods.getPriceLowest(),updateOpr);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");

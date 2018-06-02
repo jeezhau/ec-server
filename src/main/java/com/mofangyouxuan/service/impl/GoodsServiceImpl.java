@@ -60,7 +60,6 @@ public class GoodsServiceImpl implements GoodsService{
 		goods.setGoodsId(null);
 		goods.setUpdateTime(new Date());
 		goods.setReviewLog(null);
-		goods.setReviewOpr(null);
 		goods.setReviewResult("1");
 		int cnt = this.goodsMapper.insert(goods);
 		if(cnt>0) {
@@ -84,7 +83,6 @@ public class GoodsServiceImpl implements GoodsService{
 		}
 		goods.setUpdateTime(new Date());
 		goods.setReviewLog(null);
-		goods.setReviewOpr(null);
 		goods.setReviewResult("1");
 		int cnt = this.goodsMapper.updateByPrimaryKey(goods);
 		return cnt;
@@ -111,7 +109,7 @@ public class GoodsServiceImpl implements GoodsService{
 	 * @return 更新记录数
 	 */
 	@Override
-	public synchronized int changeSpec(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest){
+	public synchronized int changeSpec(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest,Integer updateOpr){
 		Goods goods = this.get(false, goodsId,true);
 		if(goods == null) {
 			return ErrCodes.GOODS_NO_GOODS;
@@ -162,6 +160,8 @@ public class GoodsServiceImpl implements GoodsService{
 		if(updG.getStockSum()<=0) {
 			updG.setStatus("2"); //下架
 		}
+		updG.setUpdateOpr(updateOpr);
+		updG.setUpdateTime(new Date());
 		int cnt = this.goodsMapper.updateByPrimaryKey(updG);
 		return cnt;
 	}
@@ -179,7 +179,6 @@ public class GoodsServiceImpl implements GoodsService{
 		Goods g = new Goods();
 		g.setGoodsId(id);
 		g.setReviewLog(review);
-		g.setReviewOpr(oprid);
 		g.setReviewResult(result);
 		g.setReviewTime(new Date());
 		int cnt = this.goodsMapper.updateByPrimaryKey(g);
@@ -193,12 +192,13 @@ public class GoodsServiceImpl implements GoodsService{
 	 * @return 更新记录数
 	 */
 	@Override
-	public void changeStatus(List<Goods> list,String newStatus) {
+	public void changeStatus(List<Goods> list,String newStatus,Integer updateOpr) {
 		for(Goods goods:list) {
 			Long id = goods.getGoodsId();
 			Goods g = new Goods();
 			g.setGoodsId(id);
 			g.setStatus(newStatus);
+			g.setUpdateOpr(updateOpr);
 			g.setUpdateTime(new Date());
 			this.goodsMapper.updateByPrimaryKey(g);
 		}

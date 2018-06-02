@@ -86,6 +86,7 @@ public class Postage {
 
     private Date updateTime;
 
+    @NotNull(message="修改人员：不可为空！")
     private Integer updateOpr;
 
     private String status;
