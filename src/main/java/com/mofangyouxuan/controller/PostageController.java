@@ -133,40 +133,6 @@ public class PostageController {
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据与权限检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			Integer updateOpr = null;
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-					updateOpr = vip.getVipId();
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-					updateOpr = operator.getUserId();
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
-			}
-			if(!postage.getPartnerId().equals(myPartner.getPartnerId())) {
-				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权执行该操作！");
-				return jsonRet.toString();
-			}
 			//信息验证结果处理
 			if(result.hasErrors()){
 				StringBuilder sb = new StringBuilder();
@@ -246,7 +212,40 @@ public class PostageController {
 				jsonRet.put("errmsg", sb.toString());
 				return jsonRet.toString();
 			}
-			
+			//数据与权限检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("postage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			if(!postage.getPartnerId().equals(myPartner.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权执行该操作！");
+				return jsonRet.toString();
+			}
 			//数据处理
 			postage.setUpdateOpr(updateOpr);
 			Long id = this.postageService.add(postage);
@@ -279,53 +278,7 @@ public class PostageController {
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			//操作员与密码验证
-			Integer updateOpr = null;
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-					updateOpr = vip.getVipId();
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-					updateOpr = operator.getUserId();
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
-			}
-			if(!postage.getPartnerId().equals(myPartner.getPartnerId())) {
-				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权执行该操作！");
-				return jsonRet.toString();
-			}
-			Postage old = this.postageService.get(postage.getPostageId());
-			if(old == null) {
-				jsonRet.put("errcode", ErrCodes.POSTAGE_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该模版信息！");
-				return jsonRet.toString();
-			}
-			if(!postage.getPartnerId().equals(myPartner.getPartnerId()) 
-					|| !postage.getPartnerId().equals(old.getPartnerId())) {
-				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权执行该操作！");
-				return jsonRet.toString();
-			}
+			
 			//信息验证结果处理
 			if(result.hasErrors()){
 				StringBuilder sb = new StringBuilder();
@@ -411,6 +364,53 @@ public class PostageController {
 				jsonRet.put("errmsg", sb.toString());
 				return jsonRet.toString();
 			}
+			//数据检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			//操作员与密码验证
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("postage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			if(!postage.getPartnerId().equals(myPartner.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权执行该操作！");
+				return jsonRet.toString();
+			}
+			Postage old = this.postageService.get(postage.getPostageId());
+			if(old == null) {
+				jsonRet.put("errcode", ErrCodes.POSTAGE_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该模版信息！");
+				return jsonRet.toString();
+			}
+			if(!postage.getPartnerId().equals(myPartner.getPartnerId()) 
+					|| !postage.getPartnerId().equals(old.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.POSTAGE_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权执行该操作！");
+				return jsonRet.toString();
+			}
 			//数据处理
 			postage.setUpdateOpr(updateOpr);
 			int cnt = this.postageService.update(postage);
@@ -462,7 +462,7 @@ public class PostageController {
 			}
 			if(isPass != true ) {
 				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("postage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
 					isPass = true;
 				}
 			}

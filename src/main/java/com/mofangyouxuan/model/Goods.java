@@ -64,7 +64,12 @@ public class Goods {
     private Date beginTime;
 
     private Date endTime;
-
+    
+    @NotNull(message=" 可退换货期限：不可为空！ ")
+    @Min(value=0,message=" 可退换货期限：最小值为0，表示不支持退换货！")
+    @Max(value=999999,message=" 可退换货期限：最大值为999999！")
+    private Integer refundLimit;
+    
     @NotNull(message=" 运费模版组ID：不可为空！ ")
     @Size(min=1,max=100,message=" 运费模版组ID：长度范围1-100字符！ ")
     private String postageIds;
@@ -223,7 +228,15 @@ public class Goods {
         this.endTime = endTime;
     }
 
-    public String getPostageIds() {
+    public Integer getRefundLimit() {
+		return refundLimit;
+	}
+
+	public void setRefundLimit(Integer refundLimit) {
+		this.refundLimit = refundLimit;
+	}
+
+	public String getPostageIds() {
         return this.postageIds;
     }
 

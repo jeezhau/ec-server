@@ -18,6 +18,7 @@
     <result column="limited_num" jdbcType="INTEGER" property="limitedNum" />
     <result column="begin_time" jdbcType="TIMESTAMP" property="beginTime" />
     <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+    <result column="refund_limit" jdbcType="INTEGER" property="refundLimit" />
     <result column="postage_ids" jdbcType="VARCHAR" property="postageIds" />
     <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
@@ -44,6 +45,7 @@
     <result column="limited_num" jdbcType="INTEGER" property="limitedNum" />
     <result column="begin_time" jdbcType="TIMESTAMP" property="beginTime" />
     <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+     <result column="refund_limit" jdbcType="INTEGER" property="refundLimit" />
     <result column="postage_ids" jdbcType="VARCHAR" property="postageIds" />
     <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
@@ -77,7 +79,7 @@
   </resultMap>
   <sql id="Base_Column_List">
     g.goods_id, g.partner_id, g.category_id,g.goods_name, g.goods_desc, g.main_img_path,g.carousel_img_paths,g.place,g.vender,
-    g.saled_cnt, g.stock_sum, g.price_lowest, g.spec_detail,g.limited_num, g.begin_time,  g.end_time, 
+    g.saled_cnt, g.stock_sum, g.price_lowest, g.spec_detail,g.limited_num, g.begin_time,  g.end_time, g.refund_limit,
     g.postage_ids, g.update_opr, g.update_time, 
     g.review_result, g.review_log, g.review_time, g.status, g.memo
   </sql>
@@ -110,14 +112,14 @@
   <insert id="insert" parameterType="com.mofangyouxuan.model.Goods" keyProperty="goodsId" useGeneratedKeys="true">
     insert into tb_goods_info (goods_id, partner_id, category_id,goods_name, 
       goods_desc, main_img_path, carousel_img_paths,place,vender,saled_cnt, stock_sum,price_lowest,spec_detail, 
-      limited_num, begin_time, end_time, postage_ids, update_time, update_opr,
+      limited_num, begin_time, end_time, refund_limit,postage_ids, update_time, update_opr,
       review_result, review_log, review_time, 
       status, memo)
     values (#{goodsId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER},#{categoryId,jdbcType=INTEGER}, #{goodsName,jdbcType=VARCHAR}, 
       #{goodsDesc,jdbcType=VARCHAR}, #{mainImgPath,jdbcType=VARCHAR}, #{carouselImgPaths,jdbcType=VARCHAR}, 
-      #{place,jdbcType=VARCHAR},#{vender,jdbcType=VARCHAR},
-      #{saledCnt,jdbcType=INTEGER}, #{stockSum,jdbcType=INTEGER}, 
-      #{priceLowest,jdbcType=DECIMAL},#{specDetail,jdbcType=VARCHAR},#{limitedNum,jdbcType=INTEGER}, #{beginTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
+      #{place,jdbcType=VARCHAR},#{vender,jdbcType=VARCHAR}, #{saledCnt,jdbcType=INTEGER}, #{stockSum,jdbcType=INTEGER}, 
+      #{priceLowest,jdbcType=DECIMAL},#{specDetail,jdbcType=VARCHAR},
+      #{limitedNum,jdbcType=INTEGER}, #{beginTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, #{refundLimit,jdbcType=INTEGER},
       #{postageIds,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER},
       #{reviewResult,jdbcType=CHAR}, #{reviewLog,jdbcType=VARCHAR},  #{reviewTime,jdbcType=TIMESTAMP},
       #{status,jdbcType=CHAR}, #{memo,jdbcType=VARCHAR})
@@ -171,6 +173,9 @@
       <if test="endTime != null">
         end_time = #{endTime,jdbcType=TIMESTAMP},
       </if>
+      <if test="refundLimit != null">
+        refund_limit = #{refundLimit,jdbcType=INTEGER},
+      </if>      
       <if test="postageIds != null">
         postage_ids = #{postageIds,jdbcType=VARCHAR},
       </if>

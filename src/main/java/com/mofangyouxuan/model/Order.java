@@ -72,11 +72,13 @@ public class Order {
     private String logisticsComp;
 
     private String logisticsNo;
+    
+    private Integer sendOpr;
 
     private Date sendTime;
 
     private String signUser;
-
+    
     private Date signTime;
 
     private Integer scoreLogistics;
@@ -111,6 +113,8 @@ public class Order {
     private String goodsName;
     
     private String goodsMainImgPath;
+    
+    private Integer goodsRefundLimit;
 
     private Integer partnerId;
     
@@ -287,7 +291,16 @@ public class Order {
         this.logisticsNo = logisticsNo == null ? null : logisticsNo.trim();
     }
 
-    public String getSendTime() {
+    
+    public Integer getSendOpr() {
+		return sendOpr;
+	}
+
+	public void setSendOpr(Integer sendOpr) {
+		this.sendOpr = sendOpr;
+	}
+
+	public String getSendTime() {
     		if(sendTime == null) {
 			return null;
 		}
@@ -466,6 +479,14 @@ public class Order {
 
 	public void setGoodsMainImgPath(String goodsMainImgPath) {
 		this.goodsMainImgPath = goodsMainImgPath;
+	}
+
+	public Integer getGoodsRefundLimit() {
+		return goodsRefundLimit;
+	}
+
+	public void setGoodsRefundLimit(Integer goodsRefundLimit) {
+		this.goodsRefundLimit = goodsRefundLimit;
 	}
 
 	public Integer getPartnerId() {

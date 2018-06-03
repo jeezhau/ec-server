@@ -136,7 +136,7 @@ public class GoodsController {
 			}
 			if(isPass != true ) {
 				PartnerStaff operator = this.partnerStaffService.get(partnerId, goods.getUpdateOpr()); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("goods") && signPwd.equals(operator.getPasswd())) { //员工密码验证
 					isPass = true;
 					updateOpr = operator.getUserId();
 				}
@@ -239,7 +239,7 @@ public class GoodsController {
 			}
 			if(isPass != true ) {
 				PartnerStaff operator = this.partnerStaffService.get(partnerId, goods.getUpdateOpr()); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("goods") && signPwd.equals(operator.getPasswd())) { //员工密码验证
 					isPass = true;
 					updateOpr = operator.getUserId();
 				}
@@ -462,7 +462,7 @@ public class GoodsController {
 			}
 			if(isPass != true ) {
 				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("goods") && signPwd.equals(operator.getPasswd())) { //员工密码验证
 					isPass = true;
 					updateOpr = operator.getUserId();
 				}
@@ -603,7 +603,7 @@ public class GoodsController {
 			}
 			if(isPass != true ) {
 				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("goods") && signPwd.equals(operator.getPasswd())) { //员工密码验证
 					isPass = true;
 					updateOpr = operator.getUserId();
 				}

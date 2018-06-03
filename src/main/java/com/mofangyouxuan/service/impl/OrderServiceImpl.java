@@ -624,7 +624,7 @@ public class OrderServiceImpl implements OrderService{
 			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
 			Order updOrder = new Order();
 			updOrder.setOrderId(order.getOrderId());
-			updOrder.setStatus("66");
+			updOrder.setStatus("67");
 			this.orderMapper.updateByPrimaryKeySelective(updOrder);
 			//更新资金流水
 			this.changeFlowService.refundFail(payFlow.getPayAmount(), order.getMchtUId(), fail, order.getMchtUId());
@@ -670,7 +670,7 @@ public class OrderServiceImpl implements OrderService{
 					}
 				}
 				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-				jsonRet.put("errmsg", "我们还未收到第三方支付平台给出的您的支付成功通知，请稍后再查看！！");
+				jsonRet.put("errmsg", "系统还未收到第三方支付平台给出的您的支付成功通知，请稍后再查看！！");
 				return jsonRet;
 			}
 		}else if("11".equals(sysStat)) {//后端成功
@@ -690,7 +690,7 @@ public class OrderServiceImpl implements OrderService{
 				}
 			}
 			jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-			jsonRet.put("errmsg", "我们还未收到第三方支付平台给出的您的退款成功通知，请稍后再查看！！");
+			jsonRet.put("errmsg", "系统还未收到第三方支付平台给出的您的退款成功通知，请稍后再查看！！");
 			return jsonRet;
 		}else if("21".equals(sysStat)) {	//退款成功
 			jsonRet.put("errcode", 0);
@@ -742,7 +742,7 @@ public class OrderServiceImpl implements OrderService{
 		//更新订单
 		Order newO = new Order();
 		newO.setOrderId(refundFlow.getOrderId());
-		newO.setStatus("65"); //退款成功
+		newO.setStatus("66"); //退款成功
 		this.orderMapper.updateByPrimaryKeySelective(newO);
 		//更新库存:增加
 		List<GoodsSpec> buySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
@@ -811,7 +811,7 @@ public class OrderServiceImpl implements OrderService{
 			this.payFlowMapper.insert(refundFlow);
 			
 			Order updOrder = new Order();
-			updOrder.setStatus("64"); //64:同意退款，申请资金回退，
+			updOrder.setStatus("65"); //65:同意退款，申请资金回退，
 			updOrder.setOrderId(order.getOrderId());
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
@@ -905,7 +905,7 @@ public class OrderServiceImpl implements OrderService{
 	 * @return
 	 */
 	@Override
-	public JSONObject appraise2User(Order order,Integer score,String content) {
+	public JSONObject appraise2User(Order order,Integer score,String content,Integer updateOpr) {
 		JSONObject jsonRet = new JSONObject();
 		//更新订单信息
 		Date currTime = new Date();
@@ -919,6 +919,7 @@ public class OrderServiceImpl implements OrderService{
 		if(content != null && content.length()>1) {
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
+			asr.put("operator", updateOpr);
 			asr.put("content", content);
 			String oldAsr = order.getApprUser()==null ? "[]" : order.getApprUser();
 			JSONArray asrArr = JSONArray.parseArray(oldAsr);

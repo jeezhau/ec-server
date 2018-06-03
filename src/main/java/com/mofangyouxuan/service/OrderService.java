@@ -157,7 +157,7 @@ public interface OrderService {
 	 * @param content	评价内容
 	 * @return
 	 */
-	public JSONObject appraise2User(Order order,Integer score,String content);
+	public JSONObject appraise2User(Order order,Integer score,String content,Integer updateOpr);
 
 	String outPaySucc(String payFlowId, Long totalAmount, String outFinishId);
 

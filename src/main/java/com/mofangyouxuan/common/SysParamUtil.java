@@ -191,6 +191,20 @@ public class SysParamUtil {
 		return vipAccountCntLimit;
 	}
 
+	
+	//会员用户的每类通道的账户数量限制
+	@Value("${sys.partner_open_need_socre}")
+	private int partner_open_need_socre;
+	public int getPartnerOpenNeedSocre() {
+		try {
+			Integer newParam = new Integer(this.getSysParam("partner_open_need_socre"));
+			return newParam;
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return partner_open_need_socre;
+	}
+	
 	/**
 	 * 获取系统配置参数
 	 * @param paramName

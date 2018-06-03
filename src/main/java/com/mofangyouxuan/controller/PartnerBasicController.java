@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.UserBasic;
@@ -67,6 +68,9 @@ public class PartnerBasicController {
 	private PartnerBasicService partnerBasicService;
 	@Autowired
 	private PartnerStaffService partnerStaffService;
+	
+	@Autowired
+	private SysParamUtil sysParamUtil;
 	
 	@InitBinder
 	protected void initBinder(WebDataBinder binder) {
@@ -185,6 +189,13 @@ public class PartnerBasicController {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "会员ID与操作员ID不一致！");
 				return jsonRet.toString();
+			}
+			if(old == null) {//开通需要积分检查
+				if(vip.getScores() < this.sysParamUtil.getPartnerOpenNeedSocre()) {
+					jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+					jsonRet.put("errmsg", "您的当前会员积分还不够开通合作伙伴，开通需要：" + this.sysParamUtil.getPartnerOpenNeedSocre() + "会员积分！");
+					return jsonRet.toString();
+				}
 			}
 			//证件照必填检查
 			File tempCertDir = new File(this.partnerImgDir +  "VIPID_" + basic.getVipId() + "/cert/" );  //临时目录

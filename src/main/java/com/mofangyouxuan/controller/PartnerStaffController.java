@@ -43,6 +43,9 @@ import com.mofangyouxuan.utils.SignUtils;
 
 /**
  * 合作伙伴员工管理
+ * 1、绑定会员可使用所有功能；
+ * 2、员工管理自己
+ * 
  * @author jeekhan
  *
  */

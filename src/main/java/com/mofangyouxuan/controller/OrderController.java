@@ -28,6 +28,7 @@ import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.Order;
 import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.PayFlow;
 import com.mofangyouxuan.model.Postage;
 import com.mofangyouxuan.model.Receiver;
@@ -36,6 +37,7 @@ import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.OrderService;
 import com.mofangyouxuan.service.PartnerBasicService;
+import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.PostageService;
 import com.mofangyouxuan.service.ReceiverService;
 import com.mofangyouxuan.service.UserBasicService;
@@ -67,6 +69,8 @@ public class OrderController {
 	private VipBasicService vipBasicService;
 	@Autowired
 	private PartnerBasicService partnerBasicService;
+	@Autowired
+	private PartnerStaffService partnerStaffService;
 	@Autowired
 	private GoodsService goodsService;
 	@Autowired
@@ -820,6 +824,7 @@ public class OrderController {
 	
 	/**
 	 * 提交余额支付
+	 * 1、须进行会员密码密码验证
 	 * @param orderId	订单ID
 	 * @param userId		用户ID
 	 * @param passwd		会员操作密码
@@ -926,7 +931,7 @@ public class OrderController {
 	 * @param orderId	订单ID
 	 * @param userId		用户ID
 	 * @param reason		取消理由
-	 * @param passwd		会员操作密码
+	 * @param passwd		会员操作密码，会员需要密码
 	 * @return {errcode,errmsg}
 	 */
 	@RequestMapping("/{userId}/cancel/{orderId}")
@@ -1010,108 +1015,6 @@ public class OrderController {
 	}
 	
 	/**
-	 * 卖家备货与取消备货
-	 * @param orderId	订单ID
-	 * @param partnerId	合作伙伴ID
-	 * @return {errcode,errmsg}
-	 */
-	@RequestMapping("/{partnerId}/ready/{orderId}")
-	public Object readyGoods(@PathVariable(value="partnerId",required=true)Integer partnerId,
-			@PathVariable(value="orderId",required=true)String orderId) {
-		JSONObject jsonRet = new JSONObject();
-		try {
-			Order order = this.orderService.get(null, null, null, null, true,orderId);
-			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			if(order == null || partner == null) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
-				return jsonRet.toJSONString();
-			}
-			if(!order.getPartnerId().equals(partner.getPartnerId())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您没有权限处理该订单！");
-				return jsonRet.toJSONString();
-			}
-			if(!"20".equals(order.getStatus()) && !"21".equals(order.getStatus())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "该订单当前不可进行备货管理！");
-				return jsonRet.toJSONString();
-			}
-			Order nO = new Order();
-			nO.setOrderId(order.getOrderId());
-			nO.setStatus(order.getStatus().equals("20")?"21":"20");
-			int cnt = this.orderService.update(nO);
-			if(cnt >0) {
-				jsonRet.put("errcode", 0);
-				jsonRet.put("errmsg", "ok");
-			}else {
-				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-				jsonRet.put("errmsg", "数据库保存数据出错！");
-			}
-		}catch(Exception e) {
-			e.printStackTrace();
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet.toString();
-	}
-	
-	
-	/**
-	 * 卖家发货
-	 * @param orderId	订单ID
-	 * @param partnerId	合作伙伴ID
-	 * @param logisticsComp	快递公司名称
-	 * @param logisticsNo	快递单号
-	 * @return {errcode,errmsg}
-	 */
-	@RequestMapping("/{partnerId}/delivery/{orderId}")
-	public Object deliveryGoods(@PathVariable(value="partnerId",required=true)Integer partnerId,
-			@PathVariable(value="orderId",required=true)String orderId,
-			@RequestParam(value="logisticsComp",required=true)String logisticsComp,
-			@RequestParam(value="logisticsNo",required=true)String logisticsNo) {
-		JSONObject jsonRet = new JSONObject();
-		try {
-			Order order = this.orderService.get(null, null, null, null, true,orderId);
-			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			if(order == null || partner == null) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
-				return jsonRet.toJSONString();
-			}
-			if(!order.getPartnerId().equals(partner.getPartnerId())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您没有权限处理该订单！");
-				return jsonRet.toJSONString();
-			}
-			if(!"20".equals(order.getStatus()) && !"21".equals(order.getStatus())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "该订单当前不可进行发货管理！");
-				return jsonRet.toJSONString();
-			}
-			Order nO = new Order();
-			nO.setOrderId(order.getOrderId());
-			nO.setStatus("30");	//待收货
-			nO.setSendTime(new Date()); //设置发货时间
-			nO.setLogisticsComp(logisticsComp);
-			nO.setLogisticsNo(logisticsNo);
-			int cnt = this.orderService.update(nO);
-			if(cnt >0) {
-				jsonRet.put("errcode", 0);
-				jsonRet.put("errmsg", "ok");
-			}else {
-				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-				jsonRet.put("errmsg", "数据库保存数据出错！");
-			}
-		}catch(Exception e) {
-			e.printStackTrace();
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet.toString();
-	}
-	
-	/**
 	 * 查询物流
 	 * @param orderId	订单ID
 	 * @return {errcode,errmsg,order:{...}}
@@ -1145,12 +1048,13 @@ public class OrderController {
 	
 	/**
 	 * 买家申请退款(退货)
-	 * 
+	 * 1、申请退货，先提交等待卖家处理；
+	 * 2、卖家同意退货，则发送物流信息；
 	 * @param orderId	订单ID
 	 * @param userId		用户ID
 	 * @param type		退款类型(1-未收到货，3-签收退款：品质与描述问题或无理由退货)
 	 * @param reason		退款理由，签收退货包含快递信息{reason,dispatchMode,logisticsComp,logisticsNo}
-	 * @param passwd		会员操作密码
+	 * @param passwd		会员操作密码，会员需要密码
 	 * @return {errcode,errmsg}
 	 */
 	@RequestMapping("/{userId}/refund/{orderId}")
@@ -1163,33 +1067,17 @@ public class OrderController {
 		try {
 			if(!"1".equals(type) && !"3".equals(type)) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "退款类型取值不正确！");
+				jsonRet.put("errmsg", "退款类型：取值不正确！");
 				return jsonRet.toJSONString();
 			}
 			content = content.trim();
 			JSONObject asCtn = JSONObject.parseObject(content);
-			if("3".equals(type)) { //退货
-				if(null == asCtn.getInteger("dispatchMode") || asCtn.getInteger("dispatchMode") < 1 || asCtn.getInteger("dispatchMode") > 4) {
-					jsonRet.put("errmsg", "配送类型不正确(1-官方统一配送、2-商家自行配送、3-快递配送、4-自取)！");
-					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-					return jsonRet.toString();
-				}
-				if(asCtn.getString("logisticsComp") == null || asCtn.getString("logisticsComp").length()<1) {
-					jsonRet.put("errmsg", "配送方名称不可为空！");
-					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-					return jsonRet.toString();
-				}
-				if(asCtn.getString("logisticsNo") == null || asCtn.getString("logisticsNo").length()<1) {
-					jsonRet.put("errmsg", "物流单号不可为空！");
-					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-					return jsonRet.toString();
-				}
-			}
-			if(asCtn.getString("reason") == null || asCtn.getString("reason").length()<3) {
-				jsonRet.put("errmsg", "退款理由不可少于3个字符！");
+			if(asCtn.getString("reason") != null && asCtn.getString("reason").length()>1000) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				return jsonRet.toString();
+				jsonRet.put("errmsg", "退款理由：最长1000字符！");
+				return jsonRet.toJSONString();
 			}
+			
 			VipBasic userVip = this.vipBasicService.get(userId);
 			Order order = this.orderService.get(null, null, null, true, true,orderId);
 			PartnerBasic partner = this.partnerBasicService.getByID(order.getPartnerId());
@@ -1234,8 +1122,7 @@ public class OrderController {
 			//订单与退款类型检查
 			if("1".equals(type)) {//买家未收到货
 				//订单状态检查
-				if(!order.getStatus().startsWith("2") && !"30".equals(order.getStatus()) &&
-						!"54".equals(order.getStatus()) ) {
+				if(!order.getStatus().startsWith("2") && !"30".equals(order.getStatus()) && !"55".equals(order.getStatus()) ) {
 					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 					jsonRet.put("errmsg", "您当前不可执行未收到货退款申请操作！");
 					return jsonRet.toJSONString();
@@ -1248,7 +1135,7 @@ public class OrderController {
 						jsonRet.put("errmsg", "还未到最后发货时间限制，您可与卖家联系，然后执行订单取消！");
 						return jsonRet.toJSONString();
 					}
-				}else if("22".equals(order.getStatus()) || "30".equals(order.getStatus()) || "54".equals(order.getStatus())) {//发货未收到
+				}else if("22".equals(order.getStatus()) || "30".equals(order.getStatus()) || "55".equals(order.getStatus())) {//发货未收到
 					Long d = null;
 					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 					if("22".equals(order.getStatus()) || "30".equals(order.getStatus())) {
@@ -1266,19 +1153,42 @@ public class OrderController {
 			}else {//签收后退货
 				//订单状态检查
 				if(!"31".equals(order.getStatus()) && !order.getStatus().startsWith("4") &&
-						!"55".equals(order.getStatus()) && !"56".equals(order.getStatus()) ) {
+						!"56".equals(order.getStatus()) && !"57".equals(order.getStatus()) && !"58".equals(order.getStatus()) &&
+						!"61".equals(order.getStatus())) {
 					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 					jsonRet.put("errmsg", "您当前不可执行退货退款申请操作！");
 					return jsonRet.toJSONString();
 				}
 			}
-			
+			if("61".equals(order.getStatus())) { //卖家同意退货
+				if(null == asCtn.getInteger("dispatchMode") || asCtn.getInteger("dispatchMode") < 1 || asCtn.getInteger("dispatchMode") > 4) {
+					jsonRet.put("errmsg", "配送类型不正确(1-官方统一配送、2-商家自行配送、3-快递配送、4-自取)！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsComp") == null || asCtn.getString("logisticsComp").length()<1) {
+					jsonRet.put("errmsg", "配送方名称不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsNo") == null || asCtn.getString("logisticsNo").length()<1) {
+					jsonRet.put("errmsg", "物流单号不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}else {
+				if(asCtn.getString("reason") == null || asCtn.getString("reason").length()<3) {
+					jsonRet.put("errmsg", "退款理由：不可少于3个字符！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}
 			//卖家账户检查
 			VipBasic mchtVip = this.vipBasicService.get(partner.getVipId());
 			if(mchtVip == null || 
 					mchtVip.getBalance() < payFlow.getPayAmount() ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-				jsonRet.put("errmsg", "您当前不可执行退货退款申请操作，账户可用余额不足！");
+				jsonRet.put("errmsg", "您当前不可执行退货退款申请操作(卖家账户可用余额不足，请与卖家联系)！");
 				return jsonRet.toJSONString();
 			}
 			
@@ -1292,7 +1202,11 @@ public class OrderController {
 			}
 			Date currTime = new Date();
 			Order updOdr = new Order();
-			updOdr.setStatus("61"); //61:退款受理中
+			if(!"61".equals(order.getStatus())) {
+				updOdr.setStatus("60"); //60:提出申请
+			}else {
+				updOdr.setStatus("62"); //62:提交退货物流
+			}
 			updOdr.setOrderId(order.getOrderId());
 			updOdr.setAftersalesApplyTime(currTime);
 			JSONObject asr = new JSONObject();
@@ -1338,27 +1252,11 @@ public class OrderController {
 		try {
 			content = content.trim();
 			JSONObject asCtn = JSONObject.parseObject(content);
-			if(null == asCtn.getInteger("dispatchMode") || asCtn.getInteger("dispatchMode") < 1 || asCtn.getInteger("dispatchMode") > 4) {
-				jsonRet.put("errmsg", "配送类型不正确(1-官方统一配送、2-商家自行配送、3-快递配送、4-自取)！");
+			if(asCtn.getString("reason") != null && asCtn.getString("reason").length()>1000) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				return jsonRet.toString();
+				jsonRet.put("errmsg", "换货理由：最长1000字符！");
+				return jsonRet.toJSONString();
 			}
-			if(asCtn.getString("logisticsComp") == null || asCtn.getString("logisticsComp").length()<1) {
-				jsonRet.put("errmsg", "配送方名称不可为空！");
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				return jsonRet.toString();
-			}
-			if(asCtn.getString("logisticsNo") == null || asCtn.getString("logisticsNo").length()<1) {
-				jsonRet.put("errmsg", "物流单号不可为空！");
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				return jsonRet.toString();
-			}
-			if(asCtn.getString("reason") == null || asCtn.getString("reason").length()<3) {
-				jsonRet.put("errmsg", "退款理由不可少于3个字符！");
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				return jsonRet.toString();
-			}
-			
 			UserBasic user = this.userBasicService.get(userId);
 			Order order = this.orderService.get(null, null, null, true, true,orderId);
 			if(user == null || order == null ) {
@@ -1371,15 +1269,42 @@ public class OrderController {
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
-			if(!order.getStatus().equals("40") && !order.getStatus().equals("41") ) {
+			if(!order.getStatus().equals("40") && !order.getStatus().equals("41") && !order.getStatus().equals("51")) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "该订单当前不可申请换货（未签收）！");
 				return jsonRet.toJSONString();
 			}
+			if(order.getStatus().equals("51")) {
+				if(null == asCtn.getInteger("dispatchMode") || asCtn.getInteger("dispatchMode") < 1 || asCtn.getInteger("dispatchMode") > 4) {
+					jsonRet.put("errmsg", "配送类型不正确(1-官方统一配送、2-商家自行配送、3-快递配送、4-自取)！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsComp") == null || asCtn.getString("logisticsComp").length()<1) {
+					jsonRet.put("errmsg", "配送方名称不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsNo") == null || asCtn.getString("logisticsNo").length()<1) {
+					jsonRet.put("errmsg", "物流单号不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}else {
+				if(asCtn.getString("reason") == null || asCtn.getString("reason").length()<3) {
+					jsonRet.put("errmsg", "退款理由不可少于3个字符！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}
 			//更新订单信息
 			Date currTime = new Date();
 			Order updOdr = new Order();
-			updOdr.setStatus("51"); //51:换货受理中、等待退货
+			if(!order.getStatus().equals("51")) {
+				updOdr.setStatus("50"); //50:提出申请
+			}else {
+				updOdr.setStatus("52"); //52:提交发货物流
+			}
 			updOdr.setOrderId(order.getOrderId());
 			updOdr.setAftersalesApplyTime(currTime);
 			JSONObject asr = new JSONObject();
@@ -1465,13 +1390,13 @@ public class OrderController {
 				return jsonRet.toJSONString();
 			}
 			if(!"30".equals(order.getStatus()) && !"31".equals(order.getStatus()) && !"40".equals(order.getStatus()) && !"41".equals(order.getStatus()) && 
-					!"54".equals(order.getStatus()) && !"55".equals(order.getStatus()) && !"56".equals(order.getStatus())) {
+					!"54".equals(order.getStatus()) && !"56".equals(order.getStatus()) && !"57".equals(order.getStatus()) && !"58".equals(order.getStatus())) {
 				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 				jsonRet.put("errmsg", "该订单当前不可进行评价！");
 				return jsonRet.toJSONString();
 			}
 			//时间与次数检查(天)
-			Long limitApprDaysGap = 1800l;
+			Long limitApprDaysGap = 1800l;  //超过1800天的订单不可进行评价
 			if(order.getStatus().equals("41") || order.getStatus().equals("56")) {
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 				Long d = (new Date().getTime() - sdf.parse(order.getAppraiseTime()).getTime())/1000/3600/24;
@@ -1512,6 +1437,320 @@ public class OrderController {
 		return jsonRet.toString();
 	}
 	
+	
+	
+	
+	/**
+	 * 商家更新售后信息
+	 * 1、首次评价得分不可为空；
+	 * 2、追加评价仅可追加内容，不可修改得分；
+	 * @param orderId	订单ID
+	 * @param partnerId	合作伙伴ID
+	 * @param nextStat	下一个状态（处理结果）
+	 * @param content	评价内容，json格式{reason,dispatchMode,logisticsComp,logisticsNo}
+	 * @return {errcode,errmsg}
+	 */
+	@RequestMapping("/{partnerId}/aftersales/{orderId}")
+	public String updAftersales(@PathVariable(value="orderId",required=true)String orderId,
+			@PathVariable(value="partnerId",required=true)Integer partnerId,
+			@RequestParam(value="nextStat",required=true)String nextStat,
+			@RequestParam(value="content",required=true)String content,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd")String passwd) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			//数合规据检查
+			StringBuilder sb = new StringBuilder();
+			if(!"51".equals(nextStat) && "53".equals(nextStat) && "54".equals(nextStat) && "55".equals(nextStat) && "58".equals(nextStat) &&
+					!"61".equals(nextStat) && "63".equals(nextStat) && "64".equals(nextStat) && "65".equals(nextStat) && "68".equals(nextStat)) {
+				sb.append("处理结果：取值不正确！");
+			}
+			content = content.trim();
+			JSONObject asCtn = JSONObject.parseObject(content);
+			if("55".equals(nextStat)) {
+				if(null == asCtn.getInteger("dispatchMode") || asCtn.getInteger("dispatchMode") < 1 || asCtn.getInteger("dispatchMode") > 4) {
+					jsonRet.put("errmsg", "配送类型不正确(1-官方统一配送、2-商家自行配送、3-快递配送、4-自取)！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsComp") == null || asCtn.getString("logisticsComp").length()<1) {
+					jsonRet.put("errmsg", "配送方名称不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+				if(asCtn.getString("logisticsNo") == null || asCtn.getString("logisticsNo").length()<1) {
+					jsonRet.put("errmsg", "物流单号不可为空！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}
+			if(asCtn.getString("reason") == null || asCtn.getString("reason").length()<3) {
+				jsonRet.put("errmsg", "处理明细：不可少于3个字符！");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				return jsonRet.toString();
+			}
+			//数据检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			//操作员与密码验证
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("aftersale") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			Order order = this.orderService.get(null, null, null, true, true,orderId);
+			if(order == null || !myPartner.getPartnerId().equals(order.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			//当前状态与处理结果检查
+			if(!order.getStatus().equals("50") && !order.getStatus().equals("52") && !order.getStatus().equals("53") &&  
+					!order.getStatus().equals("60") && !order.getStatus().equals("62") && !order.getStatus().equals("63") ) {
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg", "该订单当前不可进行售后处理！");
+				return jsonRet.toJSONString();
+			}
+			
+			if("50".equals(order.getStatus())) {
+				if(!"51".equals(nextStat) && !"58".equals(nextStat)) {
+					jsonRet.put("errmsg", "处理结果：取值不正确！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}else if("52".equals(order.getStatus())) {
+				if(!"53".equals(nextStat) && !"54".equals(nextStat) && !"55".equals(nextStat)) {
+					jsonRet.put("errmsg", "处理结果：取值不正确！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}else if("53".equals(order.getStatus())) {
+				if(!"54".equals(nextStat) && !"55".equals(nextStat)) {
+					jsonRet.put("errmsg", "处理结果：取值不正确！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}else if("60".equals(order.getStatus())) {
+				if(!"61".equals(nextStat) && !"65".equals(nextStat) && !"68".equals(nextStat)) {
+					jsonRet.put("errmsg", "处理结果：取值不正确！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}else if("62".equals(order.getStatus())) {
+				if(!"63".equals(nextStat) && !"64".equals(nextStat) && !"65".equals(nextStat)) {
+					jsonRet.put("errmsg", "处理结果：取值不正确！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}else if("63".equals(order.getStatus())) {
+				if(!"64".equals(nextStat) && !"65".equals(nextStat)) {
+					jsonRet.put("errmsg", "处理结果：取值不正确！");
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					return jsonRet.toString();
+				}
+			}
+			//数据处理保存
+			if("65".equals(nextStat)) {	//执行退款
+				//支付流水检查
+				PayFlow payFlow = this.orderService.getLastedFlow(orderId, "1");
+				if(payFlow == null || !"11".equals(payFlow.getStatus())) {
+					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+					jsonRet.put("errmsg", "该订单没有支付成功信息（未支付到账、支付失败或已退款），无法退款！");
+					return jsonRet.toJSONString();
+				}
+				//卖家账户检查
+				VipBasic mchtVip = this.vipBasicService.get(myPartner.getVipId());
+				if(mchtVip == null || 
+						mchtVip.getBalance() < payFlow.getPayAmount() ) {
+					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+					jsonRet.put("errmsg", "您当前不可执行退货退款申请操作，账户可用余额不足！");
+					return jsonRet.toJSONString();
+				}
+				jsonRet = this.orderService.applyRefund(true,order, payFlow, order.getUserId(), myPartner.getVipId(), "3", asCtn);
+			}else {
+				//更新订单信息
+				Date currTime = new Date();
+				Order updOdr = new Order();
+				updOdr.setStatus(nextStat); 
+				updOdr.setOrderId(order.getOrderId());
+				updOdr.setAftersalesDealTime(currTime);
+				JSONObject asr = new JSONObject();
+				asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
+				asr.put("operator", updateOpr);
+				asr.put("type", nextStat.startsWith("5") ? "换货处理":"退款(货)处理");
+				asr.put("content", asCtn);
+				String oldAsr = order.getAftersalesResult()==null ? "[]" : order.getAftersalesResult();
+				JSONArray asrArr = JSONArray.parseArray(oldAsr);
+				asrArr.add(0,asr);
+				updOdr.setAftersalesResult(asrArr.toJSONString());
+				int cnt = this.orderService.update(updOdr);
+				if(cnt >0) {
+					jsonRet.put("errcode", 0);
+					jsonRet.put("errmsg", "ok");
+				}else {
+					jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+					jsonRet.put("errmsg", "数据库保存数据出错！");
+				}
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+
+	/**
+	 * 卖家备货与取消备货
+	 * @param orderId	订单ID
+	 * @param partnerId	合作伙伴ID
+	 * @return {errcode,errmsg}
+	 */
+	@RequestMapping("/{partnerId}/ready/{orderId}")
+	public Object readyGoods(@PathVariable(value="partnerId",required=true)Integer partnerId,
+			@PathVariable(value="orderId",required=true)String orderId) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			Order order = this.orderService.get(null, null, null, null, true,orderId);
+			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
+			if(order == null || partner == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			if(!order.getPartnerId().equals(partner.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			if(!"20".equals(order.getStatus()) && !"21".equals(order.getStatus())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "该订单当前不可进行备货管理！");
+				return jsonRet.toJSONString();
+			}
+			Order nO = new Order();
+			nO.setOrderId(order.getOrderId());
+			nO.setStatus(order.getStatus().equals("20")?"21":"20");
+			int cnt = this.orderService.update(nO);
+			if(cnt >0) {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			}else {
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+				jsonRet.put("errmsg", "数据库保存数据出错！");
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+
+	/**
+	 * 卖家发货
+	 * @param orderId	订单ID
+	 * @param partnerId	合作伙伴ID
+	 * @param logisticsComp	快递公司名称
+	 * @param logisticsNo	快递单号
+	 * @return {errcode,errmsg}
+	 */
+	@RequestMapping("/{partnerId}/delivery/{orderId}")
+	public Object deliveryGoods(@PathVariable(value="partnerId",required=true)Integer partnerId,
+			@PathVariable(value="orderId",required=true)String orderId,
+			@RequestParam(value="logisticsComp",required=true)String logisticsComp,
+			@RequestParam(value="logisticsNo",required=true)String logisticsNo,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			//数据检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
+			}
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			//操作员与密码验证
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("saleorder") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			
+			Order order = this.orderService.get(null, null, null, null, true,orderId);
+			if(!order.getPartnerId().equals(myPartner.getPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			if(!"20".equals(order.getStatus()) && !"21".equals(order.getStatus())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "该订单当前不可进行发货管理！");
+				return jsonRet.toJSONString();
+			}
+			//数据处理保存
+			Order nO = new Order();
+			nO.setOrderId(order.getOrderId());
+			nO.setStatus("30");	//待收货
+			nO.setSendOpr(updateOpr);
+			nO.setSendTime(new Date()); //设置发货时间
+			nO.setLogisticsComp(logisticsComp);
+			nO.setLogisticsNo(logisticsNo);
+			int cnt = this.orderService.update(nO);
+			if(cnt >0) {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			}else {
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+				jsonRet.put("errmsg", "数据库保存数据出错！");
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+
 	/**
 	 * 商家对买家的评价
 	 * 1、首次评价得分不可为空；
@@ -1525,6 +1764,8 @@ public class OrderController {
 	@RequestMapping("/{partnerId}/appr2user/{orderId}")
 	public String appraise2User(@PathVariable(value="orderId",required=true)String orderId,
 			@PathVariable(value="partnerId",required=true)Integer partnerId,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd,
 			Integer score,String content) {
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -1546,19 +1787,43 @@ public class OrderController {
 				jsonRet.put("errmsg", sb.toString());
 				return jsonRet.toJSONString();
 			}
-			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			Order order = this.orderService.get(true, true, true, true, true,orderId);
-			if(partner == null || order == null ) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
-				return jsonRet.toJSONString();
+			//数据检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
+				return jsonRet.toString();
 			}
-			if(!partner.getPartnerId().equals(order.getPartnerId())) {
+			VipBasic vip = this.vipBasicService.get(currUserId);
+			//操作员与密码验证
+			Integer updateOpr = null;
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
+					isPass = true;
+					updateOpr = vip.getVipId();
+				}
+			}
+			if(isPass != true ) {
+				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
+				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("saleorder") && signPwd.equals(operator.getPasswd())) { //员工密码验证
+					isPass = true;
+					updateOpr = operator.getUserId();
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			Order order = this.orderService.get(true, true, true, true, true,orderId);
+			if(!myPartner.getPartnerId().equals(order.getPartnerId())) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
-			if(!order.getStatus().equals("41") && !order.getStatus().equals("56") ) {
+			if(!order.getStatus().equals("41") && !order.getStatus().equals("57") ) {
 				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 				jsonRet.put("errmsg", "该订单当前不可进行评价！");
 				return jsonRet.toJSONString();
@@ -1594,157 +1859,7 @@ public class OrderController {
 					return jsonRet.toJSONString();
 				}
 			}
-			jsonRet = this.orderService.appraise2User(order, score, content);
-		}catch(Exception e) {
-			e.printStackTrace();
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet.toString();
-	} 
-	
-	/**
-	 * 商家更新售后信息
-	 * 1、首次评价得分不可为空；
-	 * 2、追加评价仅可追加内容，不可修改得分；
-	 * @param orderId	订单ID
-	 * @param partnerId	合作伙伴ID
-	 * @param nextStat	下一个状态（处理结果）
-	 * @param content	评价内容，json格式{reason,dispatchMode,logisticsComp,logisticsNo}
-	 * @return {errcode,errmsg}
-	 */
-	@RequestMapping("/{partnerId}/aftersales/{orderId}")
-	public String updAftersales(@PathVariable(value="orderId",required=true)String orderId,
-			@PathVariable(value="partnerId",required=true)Integer partnerId,
-			@RequestParam(value="nextStat",required=true)String nextStat,
-			@RequestParam(value="content",required=true)String content,
-			@RequestParam(value="passwd")String passwd) {
-		JSONObject jsonRet = new JSONObject();
-		try {
-			//数合规据检查
-			StringBuilder sb = new StringBuilder();
-			if(!"52".equals(nextStat) && "53".equals(nextStat) && "54".equals(nextStat) &&
-					!"62".equals(nextStat) && "63".equals(nextStat) && "64".equals(nextStat) ) {
-				sb.append("处理结果状态不正确！");
-			}
-			content = content.trim();
-			JSONObject asCtn = JSONObject.parseObject(content);
-			if("54".equals(nextStat)) {
-				if(null == asCtn.getInteger("dispatchMode") || asCtn.getInteger("dispatchMode") < 1 || asCtn.getInteger("dispatchMode") > 4) {
-					jsonRet.put("errmsg", "配送类型不正确(1-官方统一配送、2-商家自行配送、3-快递配送、4-自取)！");
-					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-					return jsonRet.toString();
-				}
-				if(asCtn.getString("logisticsComp") == null || asCtn.getString("logisticsComp").length()<1) {
-					jsonRet.put("errmsg", "配送方名称不可为空！");
-					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-					return jsonRet.toString();
-				}
-				if(asCtn.getString("logisticsNo") == null || asCtn.getString("logisticsNo").length()<1) {
-					jsonRet.put("errmsg", "物流单号不可为空！");
-					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-					return jsonRet.toString();
-				}
-			}
-			if(asCtn.getString("reason") == null || asCtn.getString("reason").length()<3) {
-				jsonRet.put("errmsg", "处理明细不可少于3个字符！");
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				return jsonRet.toString();
-			}
-			//权限检查
-			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			Order order = this.orderService.get(null, null, null, true, true,orderId);
-			if(partner == null || order == null ) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
-				return jsonRet.toJSONString();
-			}
-			if(!partner.getPartnerId().equals(order.getPartnerId())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您没有权限处理该订单！");
-				return jsonRet.toJSONString();
-			}
-			//密码检查
-			VipBasic userVip = this.vipBasicService.get(partner.getVipId());
-			if("1".equals(userVip.getStatus())) {
-				if(passwd == null || passwd.length()<6) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您的会员操作密码不可小于6个字符！");
-					return jsonRet.toJSONString();
-				}
-				//密码验证
-				if(userVip.getPasswd() == null || userVip.getPasswd().length()<10) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您还未设置会员操作密码，请先到会员中心完成设置！");
-					return jsonRet.toJSONString();
-				}
-				if(!SignUtils.encodeSHA256Hex(passwd).equals(userVip.getPasswd())) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您的会员操作密码输入不正确！");
-					return jsonRet.toJSONString();
-				}
-			}
-			//当前状态与处理结果检查
-			if(!order.getStatus().equals("51") && !order.getStatus().equals("52") && !order.getStatus().equals("53") &&  
-					!order.getStatus().equals("61") && !order.getStatus().equals("62") && !order.getStatus().equals("63") ) {
-				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-				jsonRet.put("errmsg", "该订单当前不可进行售后处理！");
-				return jsonRet.toJSONString();
-			}
-			if(order.getStatus().equals("51") && !"52".equals(nextStat) && !"53".equals(nextStat) && !"54".equals(nextStat) ||
-					order.getStatus().equals("52") && !"53".equals(nextStat) && !"54".equals(nextStat)) {
-				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-				jsonRet.put("errmsg", "该订单当前的处理结果不正确！");
-				return jsonRet.toJSONString();
-			}
-			if(order.getStatus().equals("61") && !"62".equals(nextStat) && !"63".equals(nextStat) && !"64".equals(nextStat) ||
-					order.getStatus().equals("62") && !"63".equals(nextStat) && !"64".equals(nextStat)) {
-				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-				jsonRet.put("errmsg", "该订单当前的处理结果不正确！");
-				return jsonRet.toJSONString();
-			}
-			
-			if("64".equals(nextStat)) {	//执行退款
-				//支付流水检查
-				PayFlow payFlow = this.orderService.getLastedFlow(orderId, "1");
-				if(payFlow == null || !"11".equals(payFlow.getStatus())) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "该订单没有支付成功信息（未支付到账、支付失败或已退款），无法退款！");
-					return jsonRet.toJSONString();
-				}
-				//卖家账户检查
-				VipBasic mchtVip = this.vipBasicService.get(partner.getVipId());
-				if(mchtVip == null || 
-						mchtVip.getBalance() < payFlow.getPayAmount() ) {
-					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-					jsonRet.put("errmsg", "您当前不可执行退货退款申请操作，账户可用余额不足！");
-					return jsonRet.toJSONString();
-				}
-				jsonRet = this.orderService.applyRefund(true,order, payFlow, order.getUserId(), partner.getVipId(), "3", asCtn);
-			}else {
-				//更新订单信息
-				Date currTime = new Date();
-				Order updOdr = new Order();
-				updOdr.setStatus(nextStat); 
-				updOdr.setOrderId(order.getOrderId());
-				updOdr.setAftersalesDealTime(currTime);
-				JSONObject asr = new JSONObject();
-				asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
-				asr.put("type", nextStat.startsWith("5") ? "换货处理":"退款(货)处理");
-				asr.put("content", asCtn);
-				String oldAsr = order.getAftersalesResult()==null ? "[]" : order.getAftersalesResult();
-				JSONArray asrArr = JSONArray.parseArray(oldAsr);
-				asrArr.add(0,asr);
-				updOdr.setAftersalesResult(asrArr.toJSONString());
-				int cnt = this.orderService.update(updOdr);
-				if(cnt >0) {
-					jsonRet.put("errcode", 0);
-					jsonRet.put("errmsg", "ok");
-				}else {
-					jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-					jsonRet.put("errmsg", "数据库保存数据出错！");
-				}
-			}
+			jsonRet = this.orderService.appraise2User(order, score, content,updateOpr);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
