@@ -221,9 +221,12 @@
       <if test="params.city != null">
         and p.city = #{params.city,jdbcType=VARCHAR}
       </if> 
+      <if test="params.city == null"><!-- 默认全国 -->
+        and (select count(1) from tb_postage_tpl t where g.partner_id = t.partner_id and t.is_city_wide='0') &gt; 0 
+      </if>
       <if test="params.area != null">
         and p.area = #{params.area,jdbcType=VARCHAR}
-      </if>        
+      </if>      
       <if test="params.postageId != null">
         and LOCATE(concat(',',#{params.postageId,jdbcType=INTEGER},','),g.postage_ids) &gt; 0
       </if>

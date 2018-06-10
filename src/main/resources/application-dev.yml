@@ -9,9 +9,9 @@ server:
 spring:
   datasource:
     name: mfyx
-    url: 'jdbc:mysql://47.106.70.72:3306/db_mfyx'
-    username: 'aoksen'
-    password: 'YesOrNoAnd0+1'
+    url: 'jdbc:mysql://192.168.0.104:3306/db_mfyx'
+    username: 'leyi'
+    password: 'leyipwd'
         # 使用druid数据源
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.jdbc.Driver    

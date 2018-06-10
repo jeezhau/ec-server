@@ -220,8 +220,10 @@ public class WXPay {
 		String tradeType;
 		if("21".equals(payType)) {
 			tradeType = "JSAPI";
-		}else {
+		}else if("22".equals(payType)){
 			tradeType = "MWEB";	//H5支付
+		}else {
+			tradeType = "NATIVE";	//扫码支付
 		}
 		JSONObject wxRet = unifiedOrder(tradeType,order,payFlowId, totalAmount, openId, userIP);
 		if(wxRet.containsKey("prepay_id")) {//成功

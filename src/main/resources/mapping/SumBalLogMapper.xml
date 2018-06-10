@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.SumBalLogMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.SumBalLog">
+    <result column="vip_id" jdbcType="INTEGER" property="vipId" />
+    <result column="begin_flow" jdbcType="VARCHAR" property="beginFlow" />
+    <result column="end_flow" jdbcType="VARCHAR" property="endFlow" />
+    <result column="amount_addbal" jdbcType="DECIMAL" property="amountAddbal" />
+    <result column="amount_subbal" jdbcType="DECIMAL" property="amountSubbal" />
+    <result column="amount_addfrz" jdbcType="DECIMAL" property="amountAddfrz" />
+    <result column="amount_subfrz" jdbcType="DECIMAL" property="amountSubfrz" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+  </resultMap>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.SumBalLog">
+    insert into tb_sumbal_log (vip_id, begin_flow, end_flow, 
+      amount_addbal, amount_subbal, amount_addfrz, 
+      amount_subfrz, create_time)
+    values (#{vipId,jdbcType=INTEGER}, #{beginFlow,jdbcType=VARCHAR}, #{endFlow,jdbcType=VARCHAR}, 
+      #{amountAddbal,jdbcType=DECIMAL}, #{amountSubbal,jdbcType=DECIMAL}, #{amountAddfrz,jdbcType=DECIMAL}, 
+      #{amountSubfrz,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP})
+  </insert>
+
+  <select id="selectAll">
+    select * 
+    from tb_sumbal_log t
+    where t.vip_id = #{vipId,jdbcType=INTEGER}
+  	
+  </select>
+  
+</mapper>

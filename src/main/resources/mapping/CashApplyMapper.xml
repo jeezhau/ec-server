@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.CashApplyMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.CashApply">
+    <id column="apply_id" jdbcType="VARCHAR" property="applyId" />
+    <result column="vip_id" jdbcType="INTEGER" property="vipId" />
+    <result column="cash_type" jdbcType="CHAR" property="cashType" />
+    <result column="account_type" jdbcType="CHAR" property="accountType" />
+    <result column="id_no" jdbcType="VARCHAR" property="idNo" />
+    <result column="channel_type" jdbcType="CHAR" property="channelType" />
+    <result column="account_name" jdbcType="VARCHAR" property="accountName" />
+    <result column="account_no" jdbcType="VARCHAR" property="accountNo" />
+    <result column="account_bank" jdbcType="VARCHAR" property="accountBank" />
+    <result column="cash_amount" jdbcType="DECIMAL" property="cashAmount" />
+    <result column="apply_opr" jdbcType="INTEGER" property="applyOpr" />
+    <result column="apply_time" jdbcType="TIMESTAMP" property="applyTime" />
+    <result column="status" jdbcType="CHAR" property="status" />
+    <result column="memo" jdbcType="VARCHAR" property="memo" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    apply_id, vip_id, cash_type, account_type, id_no, channel_type, account_name, account_no, 
+    account_bank, cash_amount, apply_opr, apply_time, status, memo
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_cash_apply
+    where apply_id = #{applyId,jdbcType=VARCHAR}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from tb_cash_apply
+    where apply_id = #{applyId,jdbcType=VARCHAR}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.CashApply">
+    insert into tb_cash_apply (apply_id, vip_id, cash_type, 
+      account_type, id_no, channel_type, 
+      account_name, account_no, account_bank, 
+      cash_amount, apply_opr, apply_time, 
+      status, memo)
+    values (#{applyId,jdbcType=VARCHAR}, #{vipId,jdbcType=INTEGER}, #{cashType,jdbcType=CHAR}, 
+      #{accountType,jdbcType=CHAR}, #{idNo,jdbcType=VARCHAR}, #{channelType,jdbcType=CHAR}, 
+      #{accountName,jdbcType=VARCHAR}, #{accountNo,jdbcType=VARCHAR}, #{accountBank,jdbcType=VARCHAR}, 
+      #{cashAmount,jdbcType=DECIMAL}, #{applyOpr,jdbcType=INTEGER}, #{applyTime,jdbcType=TIMESTAMP}, 
+      #{status,jdbcType=CHAR}, #{memo,jdbcType=VARCHAR})
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.CashApply">
+    update tb_cash_apply
+    <set>
+      <if test="vipId != null">
+        vip_id = #{vipId,jdbcType=INTEGER},
+      </if>
+      <if test="cashType != null">
+        cash_type = #{cashType,jdbcType=CHAR},
+      </if>
+      <if test="accountType != null">
+        account_type = #{accountType,jdbcType=CHAR},
+      </if>
+      <if test="idNo != null">
+        id_no = #{idNo,jdbcType=VARCHAR},
+      </if>
+      <if test="channelType != null">
+        channel_type = #{channelType,jdbcType=CHAR},
+      </if>
+      <if test="accountName != null">
+        account_name = #{accountName,jdbcType=VARCHAR},
+      </if>
+      <if test="accountNo != null">
+        account_no = #{accountNo,jdbcType=VARCHAR},
+      </if>
+      <if test="accountBank != null">
+        account_bank = #{accountBank,jdbcType=VARCHAR},
+      </if>
+      <if test="cashAmount != null">
+        cash_amount = #{cashAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="applyOpr != null">
+        apply_opr = #{applyOpr,jdbcType=INTEGER},
+      </if>
+      <if test="applyTime != null">
+        apply_time = #{applyTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=CHAR},
+      </if>
+      <if test="memo != null">
+        memo = #{memo,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where apply_id = #{applyId,jdbcType=VARCHAR}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.CashApply">
+    update tb_cash_apply
+    set vip_id = #{vipId,jdbcType=INTEGER},
+      cash_type = #{cashType,jdbcType=CHAR},
+      account_type = #{accountType,jdbcType=CHAR},
+      id_no = #{idNo,jdbcType=VARCHAR},
+      channel_type = #{channelType,jdbcType=CHAR},
+      account_name = #{accountName,jdbcType=VARCHAR},
+      account_no = #{accountNo,jdbcType=VARCHAR},
+      account_bank = #{accountBank,jdbcType=VARCHAR},
+      cash_amount = #{cashAmount,jdbcType=DECIMAL},
+      apply_opr = #{applyOpr,jdbcType=INTEGER},
+      apply_time = #{applyTime,jdbcType=TIMESTAMP},
+      status = #{status,jdbcType=CHAR},
+      memo = #{memo,jdbcType=VARCHAR}
+    where apply_id = #{applyId,jdbcType=VARCHAR}
+  </update>
+  
+    <sql id="whereSql" >
+    <where>
+      <if test="params.applyId != null">
+        and apply_id = #{params.applyId,jdbcType=VARCHAR}
+      </if>
+      <if test="params.vipId != null">
+        and vip_id = #{params.vipId,jdbcType=INTEGER}
+      </if>
+      <if test="params.cashType != null">
+        and cash_type = #{params.cashType,jdbcType=CHAR}
+      </if>
+      <if test="params.accountType != null">
+        and account_type = #{params.accountType,jdbcType=CHAR}
+      </if>
+      <if test="params.idNo != null">
+        and id_no = #{params.idNo,jdbcType=VARCHAR}
+      </if>
+      <if test="params.channelType != null">
+        and channel_type = #{params.channelType,jdbcType=CHAR}
+      </if>
+      <if test="params.accountName != null">
+        and account_name = #{params.accountName,jdbcType=VARCHAR}
+      </if>
+      <if test="params.accountNo != null">
+        and account_no = #{params.accountNo,jdbcType=VARCHAR}
+      </if>
+      <if test="params.accountBank != null">
+        and account_bank = #{params.accountBank,jdbcType=VARCHAR}
+      </if>
+      <if test="params.applyOpr != null">
+        and apply_opr = #{params.applyOpr,jdbcType=INTEGER}
+      </if>
+      <if test="params.beginApplyTime != null">
+        and apply_time &gt;= concat(#{params.beginApplyTime,jdbcType=TIMESTAMP},' 00:00:00')
+      </if>
+      <if test="params.endApplyTime != null">
+        and apply_time &lt;= concat(#{params.endApplyTime,jdbcType=TIMESTAMP},' 23:59:59')
+      </if>
+      <if test="status != null">
+        and LOCATE(status,#{params.status,jdbcType=CHAR}) &gt; 0
+      </if>
+    </where>
+    where apply_id = #{applyId,jdbcType=VARCHAR}
+  </sql>
+  
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+   select 
+    <include refid="Base_Column_List" />
+    from tb_cash_apply
+   <include refid="whereSql" />
+   <if test="sorts != null">
+    ${sorts}
+   </if>
+   limit #{pageCond.begin},#{pageCond.pageSize}
+  </select>
+ 
+   <select id="countAll" parameterType="map" resultType="int">
+   select count(1) cnt
+    from tb_cash_apply
+   <include refid="whereSql" />
+  </select>
+   
+</mapper>
+

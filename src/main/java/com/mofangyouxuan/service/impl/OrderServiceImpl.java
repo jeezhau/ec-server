@@ -406,7 +406,7 @@ public class OrderServiceImpl implements OrderService{
 		String oldFlowId = oldFlow == null ? null : oldFlow.getFlowId();
 		flowId = CommonUtil.genPayFlowId(order.getOrderId(), oldFlowId); //支付流水单号
 		//向微信申请预付单
-		if("21".equals(payType) || "22".equals(payType)) {
+		if(payType.startsWith("2")) {
 			BigDecimal feeRate = sysParamUtil.getWxFeeRate();
 			fee = amount.multiply(feeRate).setScale(0, BigDecimal.ROUND_CEILING); //计算手续费
 			totalAmount = amount.longValue() + fee.longValue();//支付金额
@@ -414,7 +414,10 @@ public class OrderServiceImpl implements OrderService{
 			if(wxRet.containsKey("prepay_id")) {//成功
 				payAccount = user.getOpenId();
 				outTradeNo = wxRet.getString("prepay_id");
-				if(wxRet.getString("mweb_url") != null) {
+				if(wxRet.getString("code_url") != null) {  //扫码支付
+					outPayUrl = wxRet.getString("code_url");
+				}
+				if(wxRet.getString("mweb_url") != null) {  //h5
 					outPayUrl = wxRet.getString("mweb_url");
 				}
 				if(wxRet.containsKey("payFlowId")) {

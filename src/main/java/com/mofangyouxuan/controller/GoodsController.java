@@ -696,7 +696,7 @@ public class GoodsController {
 				if(jsonSearch.containsKey("dispatchMode")) {
 					params.put("dispatchMode", jsonSearch.getString("dispatchMode"));
 				}
-				if(jsonSearch.containsKey("city")) {
+				if(jsonSearch.containsKey("city")) {//指定城市
 					params.put("city", jsonSearch.getString("city"));
 					if(jsonSearch.containsKey("currUserLocX") && jsonSearch.containsKey("currUserLocY")) {
 						params.put("currUserLocX", jsonSearch.getBigDecimal("currUserLocX"));

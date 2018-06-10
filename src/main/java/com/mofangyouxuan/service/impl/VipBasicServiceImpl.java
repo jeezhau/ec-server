@@ -13,8 +13,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.ChangeFlowMapper;
+import com.mofangyouxuan.mapper.SumBalLogMapper;
 import com.mofangyouxuan.mapper.VipBasicMapper;
 import com.mofangyouxuan.model.ChangeFlow;
+import com.mofangyouxuan.model.SumBalLog;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.VipBasicService;
 
@@ -26,6 +28,8 @@ public class VipBasicServiceImpl implements VipBasicService{
 	private VipBasicMapper vipBasicMapper;
 	@Autowired
 	private ChangeFlowMapper changeFlowMapper;
+	@Autowired
+	private SumBalLogMapper sumBalLogMapper;
 	
 	@Autowired
 	private SysParamUtil sysParamUtil;
@@ -78,7 +82,7 @@ public class VipBasicServiceImpl implements VipBasicService{
 	 * @param id
 	 * @return
 	 */
-	private VipBasic updBalance(Integer id) {
+	private VipBasic sumBalance(Integer id) {
 		VipBasic vip = this.vipBasicMapper.selectByPrimaryKey(id);
 		if(vip == null) {
 			return null;
@@ -95,50 +99,35 @@ public class VipBasicServiceImpl implements VipBasicService{
 		Long subFreeze = 0l;
 		List<ChangeFlow> list = null; 
 		
-		params.put("changeType", "1"); //增加可用余额
 		list = this.changeFlowMapper.selectAll(params, pageCond, sorts);
-		if(list != null) {
+		if(list != null && list.size()>0) {
+			String beginFlow = list.get(0).getFlowId();
+			String endFlow = list.get(list.size()-1).getFlowId();
 			for(ChangeFlow flow:list) {
-				addBal += flow.getAmount();
+				if(flow.getChangeType().startsWith("1")) {
+					addBal += flow.getAmount();	//增加可用余额
+				}else if(flow.getChangeType().startsWith("2")) {
+					subBal += flow.getAmount();	//减少可用余额
+				}else if(flow.getChangeType().startsWith("3")) {
+					addFreeze += flow.getAmount();	//增加冻结余额
+				}else if(flow.getChangeType().startsWith("4")) {
+					subFreeze += flow.getAmount();	//增加可用余额
+				}
 				flow.setSumFlag("1");
 				flow.setSumTime(sumTime);
 				this.changeFlowMapper.updateByPrimaryKeySelective(flow);
 			}
+			SumBalLog sumLog = new SumBalLog();
+			sumLog.setVipId(id);
+			sumLog.setBeginFlow(beginFlow);
+			sumLog.setEndFlow(endFlow);
+			sumLog.setCreateTime(sumTime);
+			sumLog.setAmountAddbal(addBal);
+			sumLog.setAmountSubbal(subBal);
+			sumLog.setAmountAddfrz(addFreeze);
+			sumLog.setAmountSubfrz(subFreeze);
+			this.sumBalLogMapper.insert(sumLog);
 		}
-		
-		params.put("changeType", "2"); //减少可用余额
-		list = this.changeFlowMapper.selectAll(params, pageCond, sorts);
-		if(list != null) {
-			for(ChangeFlow flow:list) {
-				subBal += flow.getAmount();
-				flow.setSumFlag("1");
-				flow.setSumTime(sumTime);
-				this.changeFlowMapper.updateByPrimaryKeySelective(flow);
-			}
-		}
-	
-		params.put("changeType", "3"); //增加冻结余额
-		list = this.changeFlowMapper.selectAll(params, pageCond, sorts);
-		if(list != null) {
-			for(ChangeFlow flow:list) {
-				addFreeze += flow.getAmount();
-				flow.setSumFlag("1");
-				flow.setSumTime(sumTime);
-				this.changeFlowMapper.updateByPrimaryKeySelective(flow);
-			}
-		}
-		
-		params.put("changeType", "4"); //减少冻结余额
-		list = this.changeFlowMapper.selectAll(params, pageCond, sorts);
-		if(list != null) {
-			for(ChangeFlow flow:list) {
-				subFreeze += flow.getAmount();
-				flow.setSumFlag("1");
-				flow.setSumTime(sumTime);
-				this.changeFlowMapper.updateByPrimaryKeySelective(flow);
-			}
-		}
-		
 		Long balance = vip.getBalance();
 		balance = balance + addBal - subBal;
 		Long freeze = vip.getFreeze();
@@ -162,7 +151,7 @@ public class VipBasicServiceImpl implements VipBasicService{
 	 */
 	@Override
 	public VipBasic get(Integer id) {
-		return this.updBalance(id);
+		return this.sumBalance(id);
 	}
 	
 	/**

@@ -52,7 +52,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	}
 	
 	/**
-	 * 退款失败
+	 * 退款失败，更新商家余额
 	 * 1、添加增加可用余额的流水；
 	 * 2、添加减少冻结余额的流水；
 	 * @param amount
@@ -143,8 +143,12 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(reason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
-		this.changeFlowMapper.insert(flow1);
-		return "00";
+		int cnt = this.changeFlowMapper.insert(flow1);
+		if(cnt>0 ) {
+			return "00";
+		}else {
+			return "添加可用余额变更流水信息失败";
+		}
 	}
 	
 	/**
@@ -169,8 +173,12 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(reason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
-		this.changeFlowMapper.insert(flow1);
-		return "00";
+		int cnt = this.changeFlowMapper.insert(flow1);
+		if(cnt>0 ) {
+			return "00";
+		}else {
+			return "添加可用余额变更流水信息失败";
+		}
 	}
 	
 	/**
@@ -203,7 +211,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(balReason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
-		this.changeFlowMapper.insert(flow1);
+		int cnt1 = this.changeFlowMapper.insert(flow1);
 		//添加冻结余额
 		ChangeFlow flow2 = new ChangeFlow();
 		flow2.setFlowId(this.genFlowId(vipId));
@@ -214,8 +222,12 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow2.setReason(frzReason);
 		flow2.setCreateOpr(oprId);
 		flow2.setSumFlag("0");
-		this.changeFlowMapper.insert(flow2);
-		return "00";
+		int cnt2 = this.changeFlowMapper.insert(flow2);
+		if(cnt1>0 && cnt2>0) {
+			return "00";
+		}else {
+			return "添加资金冻结流水信息失败";
+		}
 	}
 	
 	/**
@@ -248,7 +260,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(balReason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
-		this.changeFlowMapper.insert(flow1);
+		int cnt1 = this.changeFlowMapper.insert(flow1);
 		//减少冻结
 		ChangeFlow flow2 = new ChangeFlow();
 		flow2.setFlowId(this.genFlowId(vipId));
@@ -259,8 +271,12 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow2.setReason(frzReason);
 		flow2.setCreateOpr(oprId);
 		flow2.setSumFlag("0");
-		this.changeFlowMapper.insert(flow2);
-		return "00";
+		int cnt2 = this.changeFlowMapper.insert(flow2);
+		if(cnt1>0 && cnt2>0) {
+			return "00";
+		}else {
+			return "添加资金解冻流水信息失败";
+		}
 	}
 
 	/**
@@ -286,8 +302,12 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(reason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
-		this.changeFlowMapper.insert(flow1);
-		return "00";
+		int cnt = this.changeFlowMapper.insert(flow1);
+		if(cnt>0 ) {
+			return "00";
+		}else {
+			return "添加资金冻结流水信息失败";
+		}
 	}
 	
 	/**
@@ -313,8 +333,12 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(reason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
-		this.changeFlowMapper.insert(flow1);
-		return "00";
+		int cnt = this.changeFlowMapper.insert(flow1);
+		if(cnt>0 ) {
+			return "00";
+		}else {
+			return "添加资金解冻流水信息失败";
+		}
 	}
 	
 	/**
@@ -359,7 +383,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @author jeekhan
 	 */
 	public static enum CashFlowTP{
-		 CFTP11(11,"客户退款"),CFTP12(12,"系统分润"),CFTP13(13,"平台奖励"), CFTP14(14,"资金解冻"), CFTP15(15,"积分兑换"), CFTP16(16,"现金红包"), CFTP17(17,"退款失败"),  
+		 CFTP11(11,"客户退款"),CFTP12(12,"系统分润"),CFTP13(13,"平台奖励"), CFTP14(14,"资金解冻"), CFTP15(15,"积分兑换"), CFTP16(16,"现金红包"), CFTP17(17,"退款失败"), CFTP18(18,"提现失败"), 
 		 CFTP21(21,"提现申请"), CFTP22(22,"客户消费"), CFTP23(23,"资金冻结"), CFTP24(24,"投诉罚款"), CFTP25(25,"申请退款"),
 		 CFTP31(31,"冻结交易买卖额"), CFTP32(32,"买单投诉冻结"), CFTP33(33,"提现冻结"), CFTP34(34,"申请退款"),
 		 CFTP41(41,"恢复可用余额"), CFTP42(42,"提现完成"), CFTP43(43,"交易完成"), CFTP44(44,"退款成功"),CFTP45(45,"退款失败");
@@ -379,16 +403,33 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		}
 	}
 
+	/**
+	 * 提现申请
+	 * @param amount		提现金额，包含手续费
+	 * @param vipId		会员账号
+	 * @param oprId		操作员ID
+	 * @param reason
+	 */
 	@Override
-	public void cashApply(Long amount, VipBasic vip, Integer oprId, String reason) {
-		// TODO Auto-generated method stub
-		
+	public String cashApply(Long amount, Integer vipId, Integer oprId, String reason) {
+		return this.doubleFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP21, reason, CashFlowTP.CFTP33);
 	}
 
+	/**
+	 * 提现完成
+	 * @param success	是否提现成功
+	 * @param amount		金额
+	 * @param vipId		会员ID
+	 * @param oprId
+	 * @param reason
+	 */
 	@Override
-	public void cashFinish(boolean success, ChangeFlow flow, VipBasic vip, Integer oprId) {
-		// TODO Auto-generated method stub
-		
+	public String cashFinish(boolean success,Long amount, Integer vipId, Integer oprId, String reason) {
+		if(success) {
+			return this.unFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP42);
+		}else {
+			return this.doubleUnFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP18, reason, CashFlowTP.CFTP42);
+		}
 	}
 	
 }

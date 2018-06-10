@@ -84,14 +84,14 @@ public interface ChangeFlowService {
 	
 	/**
 	 * 添加用户提现申请流水
- 	 * 1、判断是否可提现：可用余额>10 And 可用余额+冻结余额>10；
- 	 * 2、减少可用余额，添加冻结余额；
-	 * @param amount 提现金额
-	 * @param vip	提现会员用户
-	 * @param oprId 操作人ID
+ 	 * 1、减少可用余额，添加冻结余额；
+	 * @param amount		提现金额，包含手续费
+	 * @param vipId		会员账号
+	 * @param oprId		操作员ID
 	 * @param reason
+	 * @return "00"-成功，其他：失败信息
 	 */
-	public void cashApply(Long amount,VipBasic vip,Integer oprId,String reason);
+	public String cashApply(Long amount, Integer vipId, Integer oprId, String reason);
 	
 	/**
 	 * 添加用户提现结束流水
@@ -101,8 +101,9 @@ public interface ChangeFlowService {
 	 * @param flow	提现的原流水
 	 * @param vip	提现会员用户
 	 * @param oprId	操作人ID
+	 * @return "00"-成功，其他：失败信息
 	 */
-	public void cashFinish(boolean success,ChangeFlow flow,VipBasic vip,Integer oprId);
+	public String cashFinish(boolean success,Long amount, Integer vipId, Integer oprId, String reason);
 	
 	
 	/**

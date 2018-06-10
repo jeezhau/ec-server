@@ -276,7 +276,8 @@ public class PartnerStaffController {
 	
 	
 	/**
-	 * 头像与客服二维码上传：员工自我维护
+	 * 头像与客服二维码上传：
+	 * 1、员工自我维护；
 	 * 保存相对路径：staff
 	 * 1、头像保存名称：[userid]_headimg.xxx；
 	 * 2、客服二维码保存名称：[userid]_kfqrcode.xxx;
@@ -362,7 +363,7 @@ public class PartnerStaffController {
 	 * 头像与客服二维码显示
 	 * 保存相对路径：staff
 	 * 1、头像保存名称：[userid]_headimg.xxx；
-	 * 2、客服二维码保存名称：[userid]_qrcode.xxx;
+	 * 2、客服二维码保存名称：[userid]_kfqrcode.xxx;
 	 * @param partnerId
 	 * @param userId
 	 * @param mode
@@ -475,7 +476,7 @@ public class PartnerStaffController {
 			String jsonSearchParams,String jsonPageCond) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			String sorts = " upate_time desc ";
+			String sorts = " order by update_time desc ";
 			Map<String,Object> params = this.getSearchMap(jsonSearchParams);
 			params.put("partnerId", partnerId);
 			PageCond pageCond = null;
@@ -537,7 +538,7 @@ public class PartnerStaffController {
 			params.put("email", jsonSearch.getString("email"));
 		}
 		if(jsonSearch.containsKey("phone")) {
-			params.put("phone", jsonSearch.getInteger("phone"));
+			params.put("phone", jsonSearch.getString("phone"));
 		}
 		if(jsonSearch.containsKey("isKf")) {
 			params.put("isKf", jsonSearch.getString("isKf"));

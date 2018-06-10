@@ -118,16 +118,17 @@ public class OrderController {
 				return jsonRet.toString();
 			}
 			//用户数据检查
-			if(user.getPhone() == null || user.getPhone().length()<6) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
-				jsonRet.put("errmsg", "您的联系电话还未补充，请先到个人信息中补充提交，该电话将方便商家与您取得联系！");
-				return jsonRet.toString();
-			}
+//			if(user.getPhone() == null || user.getPhone().length()<6) {
+//				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+//				jsonRet.put("errmsg", "您的联系电话还未补充，请先到个人信息中补充提交，该电话将方便商家与您取得联系！");
+//				return jsonRet.toString();
+//			}
 			//商品、配送信息检查
 			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
-			if(goods == null || !"1".equals(goods.getStatus()) || !"1".equals(goods.getReviewResult())) {
+			if(goods == null || "S".equals(goods.getPartner().getStatus()) || 
+					!"1".equals(goods.getStatus()) || !"1".equals(goods.getReviewResult())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
-				jsonRet.put("errmsg", "您的购买商品当前不支持下单购买！");
+				jsonRet.put("errmsg", "该商品当前不支持下单购买！");
 				return jsonRet.toString();
 			}
 			if(user.getUserId().equals(goods.getPartner().getVipId())) {
@@ -260,9 +261,15 @@ public class OrderController {
 			buyStatistics.put("count", count);
 			buyStatistics.put("weight", weight);
 			//用户数据检查
-			if(user.getPhone() == null || user.getPhone().length()<6) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
-				jsonRet.put("errmsg", "您的联系电话还未补充，请先到个人信息中补充提交，该电话将方便商家与您取得联系！");
+//			if(user.getPhone() == null || user.getPhone().length()<6) {
+//				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+//				jsonRet.put("errmsg", "您的联系电话还未补充，请先到个人信息中补充提交，该电话将方便商家与您取得联系！");
+//				return jsonRet.toString();
+//			}
+			if(goods == null || "S".equals(goods.getPartner().getStatus()) || 
+					!"1".equals(goods.getStatus()) || !"1".equals(goods.getReviewResult())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
+				jsonRet.put("errmsg", "该商品当前不支持下单购买！");
 				return jsonRet.toString();
 			}
 			if(user.getUserId().equals(goods.getPartner().getVipId())) {
@@ -776,7 +783,8 @@ public class OrderController {
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
-			if(!"1".equals(payType) && !"21".equals(payType) && !"22".equals(payType)) {
+			if(!"1".equals(payType) && 
+					!"21".equals(payType) && !"22".equals(payType) && !"23".equals(payType)) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "支付方式取值不正确！");
 				return jsonRet.toJSONString();

@@ -22,7 +22,7 @@
     phone, is_kf, tag_list, update_time, update_opr,status
   </sql>
   
-  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
     from tb_partner_staff
@@ -36,7 +36,7 @@
     where user_id = #{userId,jdbcType=INTEGER} and partner_id = #{partnerId,jdbcType=INTEGER}
   </select>
    
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from tb_partner_staff
     where rec_id = #{recId,jdbcType=INTEGER}
   </delete>

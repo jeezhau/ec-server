@@ -86,9 +86,14 @@ public class ErrCodes {
 	
 	//订单管理功能码：111
 	public static int COMPLAIN_HAS_EXISTS = -111001;		//已有该订单或商品
-	public static int COMPLAIN_NO_EXISTS = -111002;	//没有该记录
+	public static int COMPLAIN_NO_EXISTS = -111002;		//没有该记录
 	public static int COMPLAIN_STATUS_ERROR = -111011;	//状态不正确	
 		
+	//提现申请：112
+	public static int CASH_APPLY_HAS_REC = -112001;	//已有提现记录
+	public static int CASH_APPLY_NO_FULL_BAL = -112002;	//已有提现记录
+	
+	
 }
 
 
