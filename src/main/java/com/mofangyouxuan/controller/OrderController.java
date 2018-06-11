@@ -125,7 +125,7 @@ public class OrderController {
 //			}
 			//商品、配送信息检查
 			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
-			if(goods == null || "S".equals(goods.getPartner().getStatus()) || 
+			if(goods == null || !"S".equals(goods.getPartner().getStatus()) || 
 					!"1".equals(goods.getStatus()) || !"1".equals(goods.getReviewResult())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
 				jsonRet.put("errmsg", "该商品当前不支持下单购买！");
@@ -247,7 +247,7 @@ public class OrderController {
 			String postageIds = goods.getPostageIds();
 			List<Postage> postages = postageService.getByIdList(postageIds);
 			List<GoodsSpec> applySpec = JSONArray.parseArray(goodsSpec, GoodsSpec.class);
-			List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
+			List<GoodsSpec> sysSpec = goods.getSpecDetail();
 			if(user == null || goods == null || receiver == null || postages == null || applySpec.size() ==0 || sysSpec.size() ==0) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "获取数据失败！");
@@ -266,7 +266,7 @@ public class OrderController {
 //				jsonRet.put("errmsg", "您的联系电话还未补充，请先到个人信息中补充提交，该电话将方便商家与您取得联系！");
 //				return jsonRet.toString();
 //			}
-			if(goods == null || "S".equals(goods.getPartner().getStatus()) || 
+			if(goods == null || !"S".equals(goods.getPartner().getStatus()) || 
 					!"1".equals(goods.getStatus()) || !"1".equals(goods.getReviewResult())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
 				jsonRet.put("errmsg", "该商品当前不支持下单购买！");
@@ -314,7 +314,7 @@ public class OrderController {
 	 * @return 错误信息，null表示没有错误
 	 */
 	private String checkOrderData(Goods goods,List<GoodsSpec> applySpec,Integer userId,Map<String,Object> buyStatistics) {
-		List<GoodsSpec> sysSpec = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
+		List<GoodsSpec> sysSpec = goods.getSpecDetail();
 
 		JSONObject jsonRet = new JSONObject();
 		
@@ -798,7 +798,7 @@ public class OrderController {
 			buyStatistics.put("count", count);
 			buyStatistics.put("weight", weight);
 			List<GoodsSpec> applySpec = JSONObject.parseArray(order.getGoodsSpec(), GoodsSpec.class);
-			List<GoodsSpec> sysSpec = JSONObject.parseArray(goods.getSpecDetail(), GoodsSpec.class);
+			List<GoodsSpec> sysSpec = goods.getSpecDetail();
 			String errmsg = this.checStock(applySpec, sysSpec, buyStatistics);
 			if(errmsg != null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);

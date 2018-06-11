@@ -660,8 +660,8 @@ public class OrderServiceImpl implements OrderService{
 		String payType = oldFlow.getPayType();	//支付方式
 		if("00".equals(sysStat) || "10".equals(sysStat)){
 			if(payType.startsWith("2")) {	//微信支付，执行订单查询
-				Long curr = System.currentTimeMillis()/1000/60;
-				if(curr - oldFlow.getCreateTime().getTime()/1000/60 > 10) {
+				Long curr = System.currentTimeMillis()/1000;//秒
+				if(curr - oldFlow.getCreateTime().getTime()/1000 > 15) {
 					JSONObject queryRet = this.wXPay.queryOrder(oldFlow.getFlowId());
 					if(queryRet.containsKey("total_fee")) { //已经成功
 						if(queryRet.getLong("total_fee") == oldFlow.getPayAmount() + oldFlow.getFeeAmount()) {
@@ -680,8 +680,8 @@ public class OrderServiceImpl implements OrderService{
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "支付成功！");
 		}else if("20".equals(sysStat)){
-			Long curr = System.currentTimeMillis()/1000/60;
-			if(curr - oldFlow.getCreateTime().getTime()/1000/60 > 10) {
+			Long curr = System.currentTimeMillis()/1000;
+			if(curr - oldFlow.getCreateTime().getTime()/1000 > 15) {
 				JSONObject queryRet = this.wXPay.queryRefund(oldFlow.getFlowId());
 				if(queryRet.containsKey("refund_fee")) { //已经成功
 					if(queryRet.getLong("refund_fee") == oldFlow.getPayAmount() + oldFlow.getFeeAmount()) {

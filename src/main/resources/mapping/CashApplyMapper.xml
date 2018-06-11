@@ -12,14 +12,17 @@
     <result column="account_no" jdbcType="VARCHAR" property="accountNo" />
     <result column="account_bank" jdbcType="VARCHAR" property="accountBank" />
     <result column="cash_amount" jdbcType="DECIMAL" property="cashAmount" />
+    <result column="cash_fee" jdbcType="DECIMAL" property="cashFee" />
     <result column="apply_opr" jdbcType="INTEGER" property="applyOpr" />
     <result column="apply_time" jdbcType="TIMESTAMP" property="applyTime" />
     <result column="status" jdbcType="CHAR" property="status" />
+    <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="memo" jdbcType="VARCHAR" property="memo" />
   </resultMap>
   <sql id="Base_Column_List">
     apply_id, vip_id, cash_type, account_type, id_no, channel_type, account_name, account_no, 
-    account_bank, cash_amount, apply_opr, apply_time, status, memo
+    account_bank, cash_amount, cash_fee,apply_opr, apply_time, status, update_opr,update_time,memo
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
@@ -38,50 +41,23 @@
     insert into tb_cash_apply (apply_id, vip_id, cash_type, 
       account_type, id_no, channel_type, 
       account_name, account_no, account_bank, 
-      cash_amount, apply_opr, apply_time, 
-      status, memo)
+      cash_amount,cash_fee, apply_opr, apply_time, 
+      status, update_opr,update_time,memo)
     values (#{applyId,jdbcType=VARCHAR}, #{vipId,jdbcType=INTEGER}, #{cashType,jdbcType=CHAR}, 
       #{accountType,jdbcType=CHAR}, #{idNo,jdbcType=VARCHAR}, #{channelType,jdbcType=CHAR}, 
       #{accountName,jdbcType=VARCHAR}, #{accountNo,jdbcType=VARCHAR}, #{accountBank,jdbcType=VARCHAR}, 
-      #{cashAmount,jdbcType=DECIMAL}, #{applyOpr,jdbcType=INTEGER}, #{applyTime,jdbcType=TIMESTAMP}, 
-      #{status,jdbcType=CHAR}, #{memo,jdbcType=VARCHAR})
+      #{cashAmount,jdbcType=DECIMAL}, #{cashFee,jdbcType=DECIMAL}, #{applyOpr,jdbcType=INTEGER}, #{applyTime,jdbcType=TIMESTAMP}, 
+      #{status,jdbcType=CHAR}, #{updateOpr,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, #{memo,jdbcType=VARCHAR})
   </insert>
   
-  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.CashApply">
+  <update id="updateStat" parameterType="com.mofangyouxuan.model.CashApply">
     update tb_cash_apply
     <set>
-      <if test="vipId != null">
-        vip_id = #{vipId,jdbcType=INTEGER},
+      <if test="updateOpr != null">
+        update_opr = #{updateOpr,jdbcType=INTEGER},
       </if>
-      <if test="cashType != null">
-        cash_type = #{cashType,jdbcType=CHAR},
-      </if>
-      <if test="accountType != null">
-        account_type = #{accountType,jdbcType=CHAR},
-      </if>
-      <if test="idNo != null">
-        id_no = #{idNo,jdbcType=VARCHAR},
-      </if>
-      <if test="channelType != null">
-        channel_type = #{channelType,jdbcType=CHAR},
-      </if>
-      <if test="accountName != null">
-        account_name = #{accountName,jdbcType=VARCHAR},
-      </if>
-      <if test="accountNo != null">
-        account_no = #{accountNo,jdbcType=VARCHAR},
-      </if>
-      <if test="accountBank != null">
-        account_bank = #{accountBank,jdbcType=VARCHAR},
-      </if>
-      <if test="cashAmount != null">
-        cash_amount = #{cashAmount,jdbcType=DECIMAL},
-      </if>
-      <if test="applyOpr != null">
-        apply_opr = #{applyOpr,jdbcType=INTEGER},
-      </if>
-      <if test="applyTime != null">
-        apply_time = #{applyTime,jdbcType=TIMESTAMP},
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>
       <if test="status != null">
         status = #{status,jdbcType=CHAR},
@@ -93,25 +69,8 @@
     where apply_id = #{applyId,jdbcType=VARCHAR}
   </update>
   
-  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.CashApply">
-    update tb_cash_apply
-    set vip_id = #{vipId,jdbcType=INTEGER},
-      cash_type = #{cashType,jdbcType=CHAR},
-      account_type = #{accountType,jdbcType=CHAR},
-      id_no = #{idNo,jdbcType=VARCHAR},
-      channel_type = #{channelType,jdbcType=CHAR},
-      account_name = #{accountName,jdbcType=VARCHAR},
-      account_no = #{accountNo,jdbcType=VARCHAR},
-      account_bank = #{accountBank,jdbcType=VARCHAR},
-      cash_amount = #{cashAmount,jdbcType=DECIMAL},
-      apply_opr = #{applyOpr,jdbcType=INTEGER},
-      apply_time = #{applyTime,jdbcType=TIMESTAMP},
-      status = #{status,jdbcType=CHAR},
-      memo = #{memo,jdbcType=VARCHAR}
-    where apply_id = #{applyId,jdbcType=VARCHAR}
-  </update>
   
-    <sql id="whereSql" >
+  <sql id="whereSql" >
     <where>
       <if test="params.applyId != null">
         and apply_id = #{params.applyId,jdbcType=VARCHAR}
@@ -149,11 +108,13 @@
       <if test="params.endApplyTime != null">
         and apply_time &lt;= concat(#{params.endApplyTime,jdbcType=TIMESTAMP},' 23:59:59')
       </if>
-      <if test="status != null">
+      <if test="params.status != null">
         and LOCATE(status,#{params.status,jdbcType=CHAR}) &gt; 0
       </if>
+      <if test="params.updateOpr != null">
+        and update_opr = #{params.updateOpr,jdbcType=INTEGER}
+      </if>      
     </where>
-    where apply_id = #{applyId,jdbcType=VARCHAR}
   </sql>
   
   <select id="selectAll" parameterType="map" resultMap="BaseResultMap">

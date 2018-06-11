@@ -15,10 +15,8 @@ public interface CashApplyMapper {
 
     CashApply selectByPrimaryKey(String applyId);
 
-    int updateByPrimaryKeySelective(CashApply record);
+    int updateStat(CashApply record);
 
-    int updateByPrimaryKey(CashApply record);
-    
     List<CashApply> selectAll(@Param("params")Map<String,Object> params,@Param("sorts")String sorts,@Param("pageCond")PageCond pageCond);
     
     int countAll(@Param("params")Map<String,Object> params);

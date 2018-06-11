@@ -195,17 +195,17 @@ public class CashApplyController {
 	
 	/**
 	 * 获取会员的所有提现充值信息
-	 * @param vipId
+	 * 
+	 * @param jsonSearchParams	查询条件：{applyId,vipId,cashTyp,accountType,channelType}
+	 * @param jsonPageCond	分页条件：{begin,pageSize}
 	 * @return
 	 */
-	@RequestMapping("/{vipId}/getall")
-	public Object getAll(@PathVariable("vipId")Integer vipId,
-			String jsonSearchParams,String jsonPageCond) {
+	@RequestMapping("/getall")
+	public Object getAll(String jsonSearchParams,String jsonPageCond) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			String sorts = " order by apply_time desc ";
 			Map<String,Object> params = this.getSearchMap(jsonSearchParams);
-			params.put("vipId", vipId);
 			PageCond pageCond = null;
 			if(jsonPageCond == null || jsonPageCond.length()<1) {
 				pageCond = new PageCond(0,20);
@@ -287,6 +287,9 @@ public class CashApplyController {
 		}
 		if(jsonSearch.containsKey("endApplyTime")) {
 			params.put("endApplyTime", jsonSearch.getString("endApplyTime"));
+		}
+		if(jsonSearch.containsKey("updateOpr")) {
+			params.put("updateOpr", jsonSearch.getString("updateOpr"));
 		}
 		return params;
 	}

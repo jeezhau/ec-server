@@ -3,6 +3,7 @@ package com.mofangyouxuan.model;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -45,10 +46,8 @@ public class Goods {
     private String vender;
 
     private Integer saledCnt;
-
-    @NotNull(message=" 规格明细：不可为空！ ")
-    @Size(min=3,max=2550,message=" 规格明细：长度范围3-2550字符！ ")
-    private String specDetail;
+    
+    private List<GoodsSpec> specDetail;
     
     private BigDecimal priceLowest;
     
@@ -174,11 +173,11 @@ public class Goods {
         this.saledCnt = saledCnt;
     }
 
-    public String getSpecDetail() {
+    public List<GoodsSpec> getSpecDetail() {
 		return specDetail;
 	}
 
-	public void setSpecDetail(String specDetail) {
+	public void setSpecDetail(List<GoodsSpec> specDetail) {
 		this.specDetail = specDetail;
 	}
 

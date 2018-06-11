@@ -20,7 +20,6 @@ import com.mofangyouxuan.model.CashApply;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.CashApplyService;
 import com.mofangyouxuan.service.ChangeFlowService;
-import com.mofangyouxuan.utils.NonceStrUtil;
 
 @Service
 @Transactional
@@ -43,8 +42,18 @@ public class CashApplyServiceImpl implements CashApplyService{
 	public JSONObject add(VipBasic vip,CashApply apply)	{
 		JSONObject jsonRet = new JSONObject();
 		Map<String,Object> params = new HashMap<String,Object>();
+		Long fee = this.cashFeeRate.multiply(new BigDecimal(apply.getCashAmount())).longValue();
+		if(fee<100) {
+			fee = 100l;
+		}
+		//可提现检查
+		if((apply.getCashAmount() + fee)> vip.getBalance()) {
+			jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
+			jsonRet.put("errmsg", "提现金额：超过会员最大可用余额！");
+			return jsonRet;
+		}
 		Date currDate = new Date();
-		params.put("vip_id", apply.getVipId());
+		params.put("vipId", apply.getVipId());
 		params.put("status", "0");
 		int hasCnt1 = this.cashApplyMapper.countAll(params);
 		if(hasCnt1 > 0) {
@@ -65,16 +74,6 @@ public class CashApplyServiceImpl implements CashApplyService{
 		}
 		
 		String applyId = this.genApplyId(apply.getVipId());
-		Long fee = this.cashFeeRate.multiply(new BigDecimal(apply.getCashAmount())).longValue();
-		if(fee<100) {
-			fee = 100l;
-		}
-		//可提现检查
-		if((apply.getCashAmount() + fee)> vip.getBalance()) {
-			jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
-			jsonRet.put("errmsg", "提现金额：超过会员最大可用余额！");
-			return jsonRet;
-		}
 		apply.setStatus("0");
 		apply.setCashFee(fee);
 		apply.setApplyId(applyId);
@@ -169,7 +168,7 @@ public class CashApplyServiceImpl implements CashApplyService{
 		updApply.setUpdateOpr(updateOpr);
 		updApply.setUpdateTime(new Date());
 		updApply.setMemo(memo);
-		int cnt = this.cashApplyMapper.updateByPrimaryKeySelective(updApply);
+		int cnt = this.cashApplyMapper.updateStat(updApply);
 		if(cnt >0) {
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
@@ -245,6 +244,6 @@ public class CashApplyServiceImpl implements CashApplyService{
 		for(int i=0;i<11-len;i++) {
 			uId = "0" + uId;
 		}
-		return currTime + uId + NonceStrUtil.getNonceNum(4);
+		return currTime + uId ;
 	}
 }

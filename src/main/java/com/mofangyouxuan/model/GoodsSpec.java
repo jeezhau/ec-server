@@ -1,6 +1,7 @@
 package com.mofangyouxuan.model;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * 商品规格信息
@@ -9,6 +10,8 @@ import java.math.BigDecimal;
  */
 public class GoodsSpec {
 	
+	private Long goodsId;
+
 	private String name;
 	
 	private Integer val;
@@ -23,6 +26,18 @@ public class GoodsSpec {
 
 	private Integer buyNum; //购买数量
 	
+	private Date updateTime;
+
+	private Integer updateOpr;
+
+	
+	public Long getGoodsId() {
+		return goodsId;
+	}
+
+	public void setGoodsId(Long goodsId) {
+		this.goodsId = goodsId;
+	}
 
 	public String getName() {
 		return name;
@@ -80,4 +95,20 @@ public class GoodsSpec {
 		this.buyNum = buyNum;
 	}
 
+	public Date getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
+
+	public Integer getUpdateOpr() {
+		return updateOpr;
+	}
+
+	public void setUpdateOpr(Integer updateOpr) {
+		this.updateOpr = updateOpr;
+	}
+	
 }

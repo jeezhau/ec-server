@@ -1,5 +1,6 @@
 package com.mofangyouxuan.model;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.validation.constraints.Min;
@@ -150,8 +151,11 @@ public class CashApply {
         this.applyOpr = applyOpr;
     }
 
-    public Date getApplyTime() {
-        return applyTime;
+    public String getApplyTime() {
+		if(applyTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(applyTime);
     }
 
     public void setApplyTime(Date applyTime) {
@@ -171,8 +175,11 @@ public class CashApply {
 		this.updateOpr = updateOpr;
 	}
 
-	public Date getUpdateTime() {
-		return updateTime;
+	public String getUpdateTime() {
+		if(updateTime == null) {
+			return null;
+		}
+		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(updateTime);
 	}
 
 	public void setUpdateTime(Date updateTime) {

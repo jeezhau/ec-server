@@ -76,12 +76,14 @@ public class GoodsController {
 	/**
 	 * 添加商品
 	 * @param goods
+	 * @param jsonSpecArr 规格与库存json数组
 	 * @param result
 	 * @return {errcode:0,errmsg:'ok',goodsId:111}
 	 */
 	@RequestMapping("/{partnerId}/add")
-	public Object addGoods(@Valid Goods goods,BindingResult result,
-			@PathVariable("partnerId")Integer partnerId,
+	public Object addGoods(@PathVariable("partnerId")Integer partnerId,
+			@Valid Goods goods,BindingResult result,
+			@RequestParam(value="jsonSpecArr",required=true)String jsonSpecArr,
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -98,7 +100,7 @@ public class GoodsController {
 			}
 
 			//规格库存检查
-			String ret = this.checkSpec(goods);
+			String ret = this.checkSpec(goods,jsonSpecArr);
 			if(ret != null) {
 				return ret;
 			}			
@@ -182,8 +184,9 @@ public class GoodsController {
 	 * @return {errcode:0,errmsg:'ok',goodsId:111}
 	 */
 	@RequestMapping("/{partnerId}/update")
-	public Object updateGoods(@Valid Goods goods,BindingResult result,
-			@PathVariable("partnerId")Integer partnerId,
+	public Object updateGoods(@PathVariable("partnerId")Integer partnerId,
+			@Valid Goods goods,BindingResult result,
+			@RequestParam(value="jsonSpecArr",required=true)String jsonSpecArr,
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
@@ -200,7 +203,7 @@ public class GoodsController {
 			}
 
 			//规格库存检查
-			String ret = this.checkSpec(goods);
+			String ret = this.checkSpec(goods,jsonSpecArr);
 			if(ret != null) {
 				return ret;
 			}
@@ -268,9 +271,6 @@ public class GoodsController {
 				return jsonRet.toString();
 			}
 			
-			//先同步更新库存
-			this.goodsService.changeSpec(old.getGoodsId(), JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class),
-					1,goods.getStockSum(), goods.getPriceLowest(),updateOpr);
 			//更新其他信息
 			goods.setSaledCnt(old.getSaledCnt());
 			goods.setUpdateOpr(updateOpr);
@@ -279,7 +279,6 @@ public class GoodsController {
 			goods.setReviewTime(null);
 			goods.setStockSum(null);
 			goods.setPriceLowest(null);
-			goods.setSpecDetail(null);
 			int id = this.goodsService.update(goods);
 			if(id <1 ) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
@@ -297,10 +296,10 @@ public class GoodsController {
 		return jsonRet.toString();
 	}
 	
-	private String checkSpec(Goods goods) {
+	private String checkSpec(Goods goods,String jsonSpecArr) {
 		JSONObject jsonRet = null;
 		//规格检查
-		List<GoodsSpec> specList = JSONArray.parseArray(goods.getSpecDetail(), GoodsSpec.class);
+		List<GoodsSpec> specList = JSONArray.parseArray(jsonSpecArr, GoodsSpec.class);
 		if(specList == null || specList.size()<1 || specList.size()>30) {
 			jsonRet = new JSONObject();
 			jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
@@ -358,6 +357,7 @@ public class GoodsController {
 		}
 		goods.setPriceLowest(priceLowest);
 		goods.setStockSum(stockSum);
+		goods.setSpecDetail(specList);
 		return null;
 	}
 	
@@ -581,7 +581,7 @@ public class GoodsController {
 			@RequestParam(value="currUserId",required=true)Integer currUserId,
 			@RequestParam(value="passwd",required=true)String passwd,
 			@PathVariable(value="goodsId",required=true)Long goodsId,
-			@RequestParam(value="specDetail",required=true)String specDetail) {
+			@RequestParam(value="jsonSpecArr",required=true)String jsonSpecArr) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//数据与权限检查
@@ -621,12 +621,11 @@ public class GoodsController {
 			}
 			//规格库存检查
 			Goods updGoods = new Goods();
-			updGoods.setSpecDetail(specDetail);
-			String ret = this.checkSpec(updGoods);
+			String ret = this.checkSpec(updGoods,jsonSpecArr);
 			if(ret != null) {
 				return ret;
 			}			//数据保存
-			int cnt = this.goodsService.changeSpec(goodsId, JSONArray.parseArray(specDetail, GoodsSpec.class), 1,goods.getStockSum(), goods.getPriceLowest(),updateOpr);
+			int cnt = this.goodsService.changeSpec(goodsId, JSONArray.parseArray(jsonSpecArr, GoodsSpec.class), 1,goods.getStockSum(), goods.getPriceLowest(),updateOpr);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");

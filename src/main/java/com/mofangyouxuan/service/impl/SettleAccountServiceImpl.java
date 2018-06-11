@@ -41,7 +41,7 @@ public class SettleAccountServiceImpl implements SettleAccountService{
 		}
 		params.put("accountNo", account.getAccountNo());
 		hasCnt = this.settleAccountMapper.countAll(params);
-		if(hasCnt >= 0) {
+		if(hasCnt > 0) {
 			jsonRet.put("errcode", ErrCodes.VIP_ACCOUNT_SAME_NO);
 			jsonRet.put("errmsg", "已有同账号账户！");
 			return jsonRet;

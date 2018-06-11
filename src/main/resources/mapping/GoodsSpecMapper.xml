@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.GoodsSpecMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.GoodsSpec">
+    <result column="goods_id" jdbcType="INTEGER" property="goodsId" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="val" jdbcType="INTEGER" property="val" />
+    <result column="unit" jdbcType="VARCHAR" property="unit" />
+    <result column="price" jdbcType="DECIMAL" property="price" />
+    <result column="gross_weight" jdbcType="INTEGER" property="grossWeight" />
+    <result column="stock" jdbcType="INTEGER" property="stock" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
+  </resultMap>
+  <insert id="insert" parameterType="com.mofangyouxuan.model.GoodsSpec">
+    insert into tb_goods_spec (goods_id, name, val, 
+      unit, price, gross_weight, 
+      stock, update_time, update_opr
+      )
+    values (#{goodsId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{val,jdbcType=INTEGER}, 
+      #{unit,jdbcType=VARCHAR}, #{price,jdbcType=DECIMAL}, #{grossWeight,jdbcType=INTEGER}, 
+      #{stock,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER}
+      )
+  </insert>
+  
+  <update id="deleteAll" parameterType="long">
+	delete from tb_goods_spec
+	where goods_id = #{goodsId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateStock" parameterType="map">
+    update tb_goods_spec
+    set stock = stock + #{changeVal,jdbcType=INTEGER}
+   where goods_id = #{goodsId,jdbcType=INTEGER} and name = #{name,jdbcType=VARCHAR}
+  </update>
+  
+  <select id="selectAll" parameterType="long" resultMap="BaseResultMap">
+  select * 
+  from tb_goods_spec
+   where goods_id = #{goodsId,jdbcType=INTEGER}
+  </select>
+</mapper>

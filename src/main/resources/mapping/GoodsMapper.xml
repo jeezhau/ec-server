@@ -14,7 +14,6 @@
     <result column="saled_cnt" jdbcType="INTEGER" property="saledCnt" />
     <result column="stock_sum" jdbcType="INTEGER" property="stockSum" />
     <result column="price_lowest" jdbcType="DECIMAL" property="priceLowest" />
-    <result column="spec_detail" jdbcType="VARCHAR" property="specDetail" />
     <result column="limited_num" jdbcType="INTEGER" property="limitedNum" />
     <result column="begin_time" jdbcType="TIMESTAMP" property="beginTime" />
     <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
@@ -27,7 +26,9 @@
     <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="memo" jdbcType="VARCHAR" property="memo" />
+    <collection property="specDetail" ofType="com.mofangyouxuan.model.GoodsSpec" select="getGoodsSpec" column="goods_id"></collection>
   </resultMap>
+  
   <resultMap id="BaseResultMapWithPartner" type="com.mofangyouxuan.model.Goods">
     <id column="goods_id" jdbcType="INTEGER" property="goodsId" />
     <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
@@ -41,7 +42,6 @@
     <result column="saled_cnt" jdbcType="INTEGER" property="saledCnt" />
     <result column="stock_sum" jdbcType="INTEGER" property="stockSum" />
     <result column="price_lowest" jdbcType="DECIMAL" property="priceLowest" />
-    <result column="spec_detail" jdbcType="VARCHAR" property="specDetail" />
     <result column="limited_num" jdbcType="INTEGER" property="limitedNum" />
     <result column="begin_time" jdbcType="TIMESTAMP" property="beginTime" />
     <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
@@ -76,10 +76,24 @@
 	    <result column="partner_status" jdbcType="CHAR" property="status" />
 	    <result column="distance" jdbcType="DECIMAL" property="distance"/>
 	</association>
+	<collection property="specDetail" ofType="com.mofangyouxuan.model.GoodsSpec" select="getGoodsSpec" column="goods_id"></collection>
   </resultMap>
+  
+  <resultMap id="SpecBaseResultMap" type="com.mofangyouxuan.model.GoodsSpec">
+    <result column="goods_id" jdbcType="INTEGER" property="goodsId" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="val" jdbcType="INTEGER" property="val" />
+    <result column="unit" jdbcType="VARCHAR" property="unit" />
+    <result column="price" jdbcType="DECIMAL" property="price" />
+    <result column="gross_weight" jdbcType="INTEGER" property="grossWeight" />
+    <result column="stock" jdbcType="INTEGER" property="stock" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
+  </resultMap>
+  
   <sql id="Base_Column_List">
     g.goods_id, g.partner_id, g.category_id,g.goods_name, g.goods_desc, g.main_img_path,g.carousel_img_paths,g.place,g.vender,
-    g.saled_cnt, g.stock_sum, g.price_lowest, g.spec_detail,g.limited_num, g.begin_time,  g.end_time, g.refund_limit,
+    g.saled_cnt, g.stock_sum, g.price_lowest,g.limited_num, g.begin_time,  g.end_time, g.refund_limit,
     g.postage_ids, g.update_opr, g.update_time, 
     g.review_result, g.review_log, g.review_time, g.status, g.memo
   </sql>
@@ -88,7 +102,13 @@
     p.comp_type, p.comp_name, p.licence_no, p.phone, p.location_x, p.location_y, p.introduce,p.status partner_status
 
   </sql>
-    
+  
+  <select id="getGoodsSpec" parameterType="long" resultMap="SpecBaseResultMap">
+  select * 
+  from tb_goods_spec
+   where goods_id = #{goodsId,jdbcType=INTEGER}
+  </select>
+  
   <select id="selectByPrimaryKey" parameterType="map" resultMap="BaseResultMapWithPartner">
     select 
     <include refid="Base_Column_List" />
@@ -111,14 +131,14 @@
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.Goods" keyProperty="goodsId" useGeneratedKeys="true">
     insert into tb_goods_info (goods_id, partner_id, category_id,goods_name, 
-      goods_desc, main_img_path, carousel_img_paths,place,vender,saled_cnt, stock_sum,price_lowest,spec_detail, 
+      goods_desc, main_img_path, carousel_img_paths,place,vender,saled_cnt, stock_sum,price_lowest,
       limited_num, begin_time, end_time, refund_limit,postage_ids, update_time, update_opr,
       review_result, review_log, review_time, 
       status, memo)
     values (#{goodsId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER},#{categoryId,jdbcType=INTEGER}, #{goodsName,jdbcType=VARCHAR}, 
       #{goodsDesc,jdbcType=VARCHAR}, #{mainImgPath,jdbcType=VARCHAR}, #{carouselImgPaths,jdbcType=VARCHAR}, 
       #{place,jdbcType=VARCHAR},#{vender,jdbcType=VARCHAR}, #{saledCnt,jdbcType=INTEGER}, #{stockSum,jdbcType=INTEGER}, 
-      #{priceLowest,jdbcType=DECIMAL},#{specDetail,jdbcType=VARCHAR},
+      #{priceLowest,jdbcType=DECIMAL},
       #{limitedNum,jdbcType=INTEGER}, #{beginTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, #{refundLimit,jdbcType=INTEGER},
       #{postageIds,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER},
       #{reviewResult,jdbcType=CHAR}, #{reviewLog,jdbcType=VARCHAR},  #{reviewTime,jdbcType=TIMESTAMP},
@@ -160,9 +180,6 @@
       </if>
       <if test="priceLowest != null">
         price_lowest = #{priceLowest,jdbcType=DECIMAL},
-      </if>
-      <if test="specDetail != null">
-        spec_detail = #{specDetail,jdbcType=VARCHAR},
       </if>            
       <if test="limitedNum != null">
         limited_num = #{limitedNum,jdbcType=INTEGER},
@@ -221,7 +238,7 @@
       <if test="params.city != null">
         and p.city = #{params.city,jdbcType=VARCHAR}
       </if> 
-      <if test="params.city == null"><!-- 默认全国 -->
+      <if test="params.isCityWide != null and params.isCityWide =='0'"><!-- 默认全国 -->
         and (select count(1) from tb_postage_tpl t where g.partner_id = t.partner_id and t.is_city_wide='0') &gt; 0 
       </if>
       <if test="params.area != null">
