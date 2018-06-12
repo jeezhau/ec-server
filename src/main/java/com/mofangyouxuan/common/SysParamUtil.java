@@ -34,6 +34,22 @@ public class SysParamUtil {
 		}
 		return wxFeeRate;
 	}
+	
+	//微信手续费费率
+	@Value("${alipay.fee-rate-use-alipay}")
+	private BigDecimal aliFeeRate;		
+	public BigDecimal getAliFeeRate() {
+		if(this.getSysParam("fee-rate-use-alipay") != null) {
+			try {
+				BigDecimal feeRate = new BigDecimal(this.getSysParam("fee-rate-use-alipay"));
+				return feeRate;
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return aliFeeRate;
+	}
+	
 	@Value("${sys.vip_activate_need_score}")
 	private Integer activateVipNeedScore;	
 	public Integer getActivateVipNeedScore() {

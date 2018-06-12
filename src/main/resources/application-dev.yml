@@ -45,8 +45,17 @@ wxpay:
   notify-server-url: 'https://pay.mofangyouxuan.com'
   pay-notify-url: '/wxpay/notify/pay'
   refund-notify-url: '/wxpay/notify/refund'
-  fee-rate-use-wxpay: 0.007   #微信支付手续费
-  cert-key-dir: '/Users/jeekhan/wxpay/'
+  fee-rate-use-wxpay: 0.27   #微信支付手续费
+  cert-key-dir: '/Users/jeekhan/mfpay/wxpay/'
+#支付宝支付参数
+alipay:
+  appid: '2018061260389188'
+  notify-server-url: 'https://pay.mofangyouxuan.com'
+  return-server-url: 'https://h5.mofangyouxuan.com'
+  pay-notify-url: '/alipay/notify'
+  pay-return-url: '/pay/finish/{orderId}'
+  fee-rate-use-alipay: 0.007   #支付宝支付手续费
+  cert-key-dir: '/Users/jeekhan/mfpay/alipay/'
 
 #信息管理平台
 messmp:

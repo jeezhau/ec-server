@@ -17,12 +17,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSONObject;
-import com.mofangyouxuan.wxapi.WXPay;
+import com.mofangyouxuan.pay.WXPay;
 
 @RestController
 @RequestMapping("/wxpay/notify")
-public class WXPayNotice {
-	private static Logger log = LoggerFactory.getLogger(WXPayNotice.class);
+public class WXPayNotify {
+	private static Logger log = LoggerFactory.getLogger(WXPayNotify.class);
 	
 	@Autowired
 	private WXPay wXPay;

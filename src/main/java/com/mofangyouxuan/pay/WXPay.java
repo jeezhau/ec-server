@@ -1,4 +1,4 @@
-package com.mofangyouxuan.wxapi;
+package com.mofangyouxuan.pay;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -34,6 +34,7 @@ import com.mofangyouxuan.model.Postage;
 import com.mofangyouxuan.model.Receiver;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
+import com.mofangyouxuan.pay.WXPay;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.OrderService;
 import com.mofangyouxuan.service.PartnerBasicService;
@@ -44,7 +45,6 @@ import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.NonceStrUtil;
 import com.mofangyouxuan.utils.SignUtils;
-import com.mofangyouxuan.wxapi.WXPay;
 
 /**
  * 点单管理
@@ -759,7 +759,7 @@ public class OrderController {
 	 * @param userId		用户ID
 	 * @param userIp		用户IP
 	 * @param passwd		会员操作密码
-	 * @return {errcode,errmsg,payType,outPayUrl,prepay_id}
+	 * @return {errcode,errmsg,payType,outPayUrl,prepay_id,AliPayForm}
 	 */
 	@RequestMapping("/{userId}/createpay/{orderId}")
 	public Object createPrePay(@PathVariable(value="orderId",required=true)String orderId,
@@ -784,7 +784,8 @@ public class OrderController {
 				return jsonRet.toJSONString();
 			}
 			if(!"1".equals(payType) && 
-					!"21".equals(payType) && !"22".equals(payType) && !"23".equals(payType)) {
+					!"21".equals(payType) && !"22".equals(payType) && !"23".equals(payType) &&
+					!"31".equals(payType) && !"32".equals(payType)) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "支付方式取值不正确！");
 				return jsonRet.toJSONString();
@@ -805,7 +806,7 @@ public class OrderController {
 				jsonRet.put("errmsg", errmsg);
 				return jsonRet.toJSONString();
 			}
-			//outPayUrl,prepay_id
+			//errcode,errmsg,payType,prepay_id,outPayUrl,total,AliPayForm}
 			jsonRet = this.orderService.createPrePay(user, userVip, order, goods.getPartner().getVipId(), payType, userIp);
 			if(jsonRet.containsKey("prepay_id") && "21".equals(payType)) { //公众号支付
 				Long timestamp = System.currentTimeMillis()/1000;
@@ -822,6 +823,7 @@ public class OrderController {
 				jsonRet.put("timeStamp", timestamp);
 				jsonRet.put("nonceStr", nonceStr);
 			}
+			jsonRet.put("payType", payType);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
@@ -1595,7 +1597,7 @@ public class OrderController {
 					jsonRet.put("errmsg", "您当前不可执行退货退款申请操作，账户可用余额不足！");
 					return jsonRet.toJSONString();
 				}
-				jsonRet = this.orderService.applyRefund(true,order, payFlow, order.getUserId(), myPartner.getVipId(), "3", asCtn);
+				jsonRet = this.orderService.applyRefund(true,order, payFlow, order.getUserId(), myPartner.getVipId(), asCtn);
 			}else {
 				//更新订单信息
 				Date currTime = new Date();

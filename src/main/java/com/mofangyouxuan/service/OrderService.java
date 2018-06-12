@@ -114,6 +114,10 @@ public interface OrderService {
 	 */
 	public JSONObject payFinish(VipBasic userVip,Order order) ;
 	
+	String outPaySucc(String payFlowId, Long totalAmount, String outFinishId);
+
+	String outPayFail(String payFlowId, String outFinishId, String fail);
+
 	/**
 	 * 获取指定订单的最新支付流水
 	 * @param orderId
@@ -121,22 +125,6 @@ public interface OrderService {
 	 * @return
 	 */
 	public PayFlow getLastedFlow(String orderId,String flowType) ;
-	
-	/**
-	 * 订单退款申请
-	 * 1、向第三方支付申请退款，或余额退款；
-	 * 2、保存退款流水；
-	 * 3、更新订单售后信息；
-	 * @param isMcht		是否是商家申请退款
-	 * @param order		订单信息
-	 * @param payFlow	支付流水
-	 * @param userVipId	买家会员账户ID
-	 * @param mchtVipId	卖家会员ID
-	 * @param type		退款类型 ：0-买家取消，1-卖家未发货，2-买家未收到货，3-买家收货后申请卖家同意，4-其他
-	 * @param reason		退款理由，对于收货退款，其中包含退款方式与快递信息
-	 * @return
-	 */
-	public JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,String type,JSONObject reason) ;
 	
 	/**
 	 * 添加买家对商家的评价或者系统自动超时评价
@@ -159,15 +147,35 @@ public interface OrderService {
 	 */
 	public JSONObject appraise2User(Order order,Integer score,String content,Integer updateOpr);
 
-	String outPaySucc(String payFlowId, Long totalAmount, String outFinishId);
-
-	String outPayFail(String payFlowId, String outFinishId, String fail);
+	/**
+	 * 订单退款申请
+	 * 1、向第三方支付申请退款，或余额退款；
+	 * 2、保存退款流水；
+	 * 3、更新订单售后信息；
+	 * @param isMcht		是否是商家申请退款
+	 * @param order		订单信息
+	 * @param payFlow	支付流水
+	 * @param userVipId	买家会员账户ID
+	 * @param mchtVipId	卖家会员ID
+	 * @param reason		退款理由，对于收货退款，其中包含退款方式与快递信息
+	 * @return
+	 */
+	public JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,JSONObject reason) ;
 
 	String outRefundSucc(String payFlowId, Long totalAmount, String outFinishId);
 
 	String outRefundFail(String payFlowId,  String outFinishId, String fail);
 
-	
+	/**
+	 * 关闭支付
+	 * 1、支付超时；
+	 * 2、退款完成；
+	 * @param payFlowId
+	 * @param totalAmount
+	 * @param outFinishId
+	 * @return
+	 */
+	public String closePay(String payFlowId,Long totalAmount,String outFinishId);
 	
 }
 
