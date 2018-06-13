@@ -26,11 +26,14 @@
     <result column="review_log" jdbcType="VARCHAR" property="reviewLog" />
     <result column="review_opr" jdbcType="INTEGER" property="reviewOpr" />
     <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
+    <result column="score_logis" jdbcType="VARCHAR" property="scoreLogis" />
+    <result column="score_serv" jdbcType="VARCHAR" property="scoreServ" />
+    <result column="score_goods" jdbcType="VARCHAR" property="scoreGoods" />
   </resultMap>
   <sql id="Base_Column_List">
     partner_id, vip_id, pb_tp,country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
     comp_type, comp_name, licence_no, phone, location_x, location_y, introduce,status, 
-    update_opr, update_time, review_log, review_opr, review_time
+    update_opr, update_time, review_log, review_opr, review_time,score_logis,score_serv,score_goods
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -58,7 +61,8 @@
       addr, busi_name, legal_pername, 
       legal_peridno, comp_type,comp_name, licence_no, 
       phone, location_x, location_y, introduce,
-      status, update_opr, update_time, review_log, review_opr, review_time
+      status, update_opr, update_time, review_log, review_opr, review_time,
+      score_logis,score_serv,score_goods
       )
     values (#{partnerId,jdbcType=INTEGER}, #{vipId,jdbcType=INTEGER}, #{pbTp,jdbcType=VARCHAR},#{country,jdbcType=VARCHAR}, 
       #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
@@ -66,7 +70,8 @@
       #{legalPeridno,jdbcType=VARCHAR}, #{compType,jdbcType=CHAR},#{compName,jdbcType=VARCHAR}, #{licenceNo,jdbcType=VARCHAR}, 
       #{phone,jdbcType=VARCHAR}, #{locationX,jdbcType=DECIMAL}, #{locationY,jdbcType=DECIMAL},
       #{introduce,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, #{updateOpr,jdbcType=INTEGER},#{updateTime,jdbcType=TIMESTAMP}, 
-      #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP}
+      #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP},
+      #{scoreLogis,jdbcType=VARCHAR},#{scoreServ,jdbcType=VARCHAR},#{scoreGoods,jdbcType=VARCHAR}
       )
   </insert>
  
@@ -147,4 +152,13 @@
     where partner_id = #{partnerId,jdbcType=INTEGER}
   </update>
   
+  <update id="updateScore" parameterType="map">
+    update tb_partner_basic p
+     set p.score_logis = concat(ifnull(substring_index(p.score_logis,'/',1),0)+ #{scoreLogis,jdbcType=INTEGER} , '/' , ifnull(substring_index(p.score_logis,'/',-1),0)+1),
+     p.score_serv = concat(ifnull(substring_index(p.score_serv,'/',1),0)+ #{scoreServ,jdbcType=INTEGER} , '/' , ifnull(substring_index(p.score_serv,'/',-1),0)+1),
+     p.score_goods = concat(ifnull(substring_index(p.score_goods,'/',1),0)+ #{scoreGoods,jdbcType=INTEGER} , '/' , ifnull(substring_index(p.score_goods,'/',-1),0)+1)
+    where p.partner_id = #{partnerId,jdbcType=INTEGER}
+  </update>
+  
 </mapper>
+

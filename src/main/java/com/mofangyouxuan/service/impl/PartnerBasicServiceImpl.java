@@ -100,4 +100,14 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 		return this.partnerBasicMapper.updateByPrimaryKey(basic);
 	}
 
+	/**
+	 * 更新商家的评价得分
+	 * @param scoreLogis
+	 * @param scoreServ
+	 * @param scoreGoods
+	 */
+	public void updScore(Integer partnerId,Integer scoreLogis,Integer scoreServ,Integer scoreGoods) {
+		this.partnerBasicMapper.updateScore(partnerId, scoreLogis, scoreServ, scoreGoods);
+	}
+	
 }

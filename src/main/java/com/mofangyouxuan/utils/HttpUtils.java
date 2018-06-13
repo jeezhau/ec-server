@@ -131,6 +131,61 @@ public class HttpUtils {
     }
 
     /**
+     * 发送 GET 请求（HTTP），K-V形式
+     * @param url
+     * @param params
+     * @return
+     * @throws IOException 
+     */
+    public static String doGet(String url, Map<String, String> headers,Map<String, Object> params) {
+        String apiUrl = url;
+        StringBuffer param = new StringBuffer();
+        int i = 0;
+        for (String key : params.keySet()) {
+            if (i == 0)
+                param.append("?");
+            else
+                param.append("&");
+            param.append(key).append("=").append(params.get(key));
+            i++;
+        }
+        apiUrl += param;
+        String result = null;
+        
+        CloseableHttpClient httpclient = HttpClients.createDefault();
+        HttpGet httpget = new HttpGet(apiUrl);
+        for(Map.Entry<String, String> entry:headers.entrySet()) {
+        		httpget.addHeader(entry.getKey(), entry.getValue());
+        }
+        CloseableHttpResponse response = null;
+		try {
+			response = httpclient.execute(httpget);
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                InputStream instream = entity.getContent();
+                try {
+                	result = IOUtils.toString(instream, "UTF-8");
+                } finally {
+                    instream.close();
+                }
+            }
+        } catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+            try {
+				response.close();
+			} catch (IOException e) {
+			}
+            try {
+				httpclient.close();
+			} catch (IOException e) {
+			}
+        }
+        
+        return result;
+    }
+    
+    /**
      * 发送 POST 请求（HTTP），不带输入数据
      * @param apiUrl
      * @return
@@ -255,6 +310,63 @@ public class HttpUtils {
         String result = null;
         CloseableHttpClient httpClient = createSSLConnSocketFactory();
         HttpGet httpGet = new HttpGet(apiUrl);
+        CloseableHttpResponse response = null;
+        try {
+        	httpGet.setConfig(requestConfig);
+            response = httpClient.execute(httpGet);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK) {
+                return null;
+            }
+            HttpEntity entity = response.getEntity();
+            if (entity == null) {
+                return null;
+            }
+            result = EntityUtils.toString(entity, "utf-8");
+        } catch (Exception e) {
+			e.printStackTrace();
+        } finally {
+            if (response != null) {
+                try {
+                    EntityUtils.consume(response.getEntity());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+				httpClient.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
+        return result;
+    }
+    
+    /**
+     * 发送  SSL GET 请求（HTTP），K-V形式
+     * @param url
+     * @param params
+     * @return
+     */
+    public static String doGetSSL(String url, Map<String, String> headers,Map<String, Object> params) {
+        String apiUrl = url;
+        StringBuffer param = new StringBuffer();
+        int i = 0;
+        for (String key : params.keySet()) {
+            if (i == 0)
+                param.append("?");
+            else
+                param.append("&");
+            param.append(key).append("=").append(params.get(key));
+            i++;
+        }
+        apiUrl += param;
+        String result = null;
+        CloseableHttpClient httpClient = createSSLConnSocketFactory();
+        HttpGet httpGet = new HttpGet(apiUrl);
+        for(Map.Entry<String, String> entry:headers.entrySet()) {
+        		httpGet.addHeader(entry.getKey(), entry.getValue());
+        }
         CloseableHttpResponse response = null;
         try {
         	httpGet.setConfig(requestConfig);

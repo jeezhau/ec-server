@@ -30,6 +30,7 @@ import com.mofangyouxuan.pay.WXPay;
 import com.mofangyouxuan.service.ChangeFlowService;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.OrderService;
+import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.CommonUtil;
 
@@ -44,6 +45,8 @@ public class OrderServiceImpl implements OrderService{
 	private PayFlowMapper payFlowMapper;
 	@Autowired
 	private GoodsService goodsService;
+	@Autowired
+	private PartnerBasicService partnerBasicService;
 	@Autowired
 	private ChangeFlowService changeFlowService;
 	@Autowired
@@ -996,6 +999,7 @@ public class OrderServiceImpl implements OrderService{
 			asrArr.add(0, asr);
 			updOdr.setAppraiseInfo(asrArr.toJSONString());
 		}
+		this.partnerBasicService.updScore(order.getPartnerId(), scoreLogistics, scoreMerchant, scoreGoods);
 		int cnt = this.orderMapper.updateByPrimaryKeySelective(updOdr);
 		if(cnt >0) {
 			jsonRet.put("errcode", 0);

@@ -27,6 +27,7 @@
     <result column="send_time" jdbcType="TIMESTAMP" property="sendTime" />
     <result column="sign_user" jdbcType="VARCHAR" property="signUser" />
     <result column="sign_time" jdbcType="TIMESTAMP" property="signTime" />
+    <result column="sign_prolong" jdbcType="INTEGER" property="signProlong" />
     <result column="score_logistics" jdbcType="INTEGER" property="scoreLogistics" />
     <result column="score_goods" jdbcType="INTEGER" property="scoreGoods" />
     <result column="score_merchant" jdbcType="INTEGER" property="scoreMerchant" />
@@ -56,7 +57,7 @@
   
   <sql id="Column_List_Base">
     o.order_id, o.user_id, o.goods_id, o.goods_spec, o.carrage, o.amount, o.create_time, o.remark, o.status, 
-    o.dispatch_mode, o.postage_id,o.send_opr, o.send_time, o.sign_user, o.sign_time
+    o.dispatch_mode, o.postage_id,o.send_opr, o.send_time, o.sign_user, o.sign_time,sign_prolong
   </sql>
   <sql id="Column_List_Receiver">
     o.recv_name, o.recv_phone, o.recv_country, o.recv_province, o.recv_city,  o.recv_area, o.recv_addr
@@ -113,8 +114,8 @@
       recv_phone, recv_country, recv_province, 
       recv_city, recv_area, recv_addr, 
       logistics_comp, logistics_no,logistics, send_opr,send_time, 
-      sign_user, sign_time, score_logistics, 
-      score_goods, score_merchant, appraise_status, 
+      sign_user, sign_time, sign_prolong, 
+      score_logistics,score_goods, score_merchant, appraise_status, 
       appraise_time, aftersales_apply_time, 
       score_user,appr_user_time,appr_user,
       aftersales_deal_time, appraise_info, 
@@ -128,8 +129,8 @@
       #{recvCity,jdbcType=VARCHAR}, #{recvArea,jdbcType=VARCHAR}, #{recvAddr,jdbcType=VARCHAR}, 
       #{logisticsComp,jdbcType=VARCHAR}, #{logisticsNo,jdbcType=VARCHAR},#{logistics,jdbcType=LONGVARCHAR}, 
       #{sendOpr,jdbcType=INTEGER}, #{sendTime,jdbcType=TIMESTAMP}, 
-      #{signUser,jdbcType=VARCHAR}, #{signTime,jdbcType=TIMESTAMP}, #{scoreLogistics,jdbcType=INTEGER}, 
-      #{scoreGoods,jdbcType=INTEGER}, #{scoreMerchant,jdbcType=INTEGER}, #{appraiseStatus,jdbcType=CHAR}, 
+      #{signUser,jdbcType=VARCHAR}, #{signTime,jdbcType=TIMESTAMP}, #{signProlong,jdbcType=INTEGER}, 
+      #{scoreLogistics,jdbcType=INTEGER}, #{scoreGoods,jdbcType=INTEGER}, #{scoreMerchant,jdbcType=INTEGER}, #{appraiseStatus,jdbcType=CHAR}, 
       #{appraiseTime,jdbcType=TIMESTAMP}, #{aftersalesApplyTime,jdbcType=TIMESTAMP}, 
       #{scoreUser,jdbcType=INTEGER}, #{apprUserTime,jdbcType=TIMESTAMP}, #{apprUser,jdbcType=LONGVARCHAR}, 
       #{aftersalesDealTime,jdbcType=TIMESTAMP}, #{appraiseInfo,jdbcType=LONGVARCHAR}, 
@@ -212,6 +213,9 @@
       <if test="signTime != null">
         sign_time = #{signTime,jdbcType=TIMESTAMP},
       </if>
+      <if test="signProlong != null">
+        sign_prolong = #{signProlong,jdbcType=INTEGER},
+      </if>
       <if test="scoreLogistics != null">
         score_logistics = #{scoreLogistics,jdbcType=INTEGER},
       </if>
@@ -281,6 +285,7 @@
       send_time = #{sendTime,jdbcType=TIMESTAMP},
       sign_user = #{signUser,jdbcType=VARCHAR},
       sign_time = #{signTime,jdbcType=TIMESTAMP},
+      sing_prolong = #{singProlong,jdbcType=INTEGER},
       score_logistics = #{scoreLogistics,jdbcType=INTEGER},
       score_goods = #{scoreGoods,jdbcType=INTEGER},
       score_merchant = #{scoreMerchant,jdbcType=INTEGER},

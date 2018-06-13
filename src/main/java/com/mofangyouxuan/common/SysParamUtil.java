@@ -151,6 +151,21 @@ public class SysParamUtil {
 		return orderForPayCntGoodsLimit;
 	}
 	
+	//每次申请可延长收货天数
+	@Value("${sys.order-sign-prolong-days}")
+	private int orderSignProlongDays;
+	public int getOrderSignProlongDays() {
+		if(this.getSysParam("order-sign-prolong-days") != null) {
+			try {
+				Integer newParam = new Integer(this.getSysParam("order-sign-prolong-days"));
+				return newParam;
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return orderSignProlongDays;
+	}
+		
 	//超过多久未发货买家可申请退款：待发货状态
 	@Value("${sys.order-nodelivery-days-4refund}")
 	private int noDeliveryDates4Refund;

@@ -51,5 +51,13 @@ public interface PartnerBasicService {
 	 * @return 更新记录数
 	 */
 	public int changeShopStatus(Integer partnerId,String newStatus);
+	
+	/**
+	 * 更新商家的评价得分
+	 * @param scoreLogis
+	 * @param scoreServ
+	 * @param scoreGoods
+	 */
+	public void updScore(Integer partnerId,Integer scoreLogis,Integer scoreServ,Integer scoreGoods);
 
 }

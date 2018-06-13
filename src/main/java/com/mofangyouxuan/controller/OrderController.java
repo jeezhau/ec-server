@@ -753,6 +753,114 @@ public class OrderController {
 	}
 	
 	/**
+	 * 获取订单的最新支付流水
+	 * @param orderId	订单ID
+	 * @param userId		用户ID
+	 * @param type	支付类型：1-消费，2-退款，空则不论
+	 * @return {errcode,errmsg,payflow:{}}
+	 */
+	@RequestMapping("/{userId}/payflow/{orderId}")
+	public Object getPayFlow(@PathVariable(value="orderId",required=true)String orderId,
+			@PathVariable(value="userId",required=true)Integer userId,
+			String type) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			UserBasic user = this.userBasicService.get(userId);
+			VipBasic userVip = this.vipBasicService.get(userId);
+			if(user == null || userVip == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			if(type == null || type.trim().length() == 0) {
+				type = null;
+			}
+			PayFlow payFlow = this.orderService.getLastedFlow(orderId, type);
+			if(payFlow == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该订单的支付流水！");
+			}else if(!user.getUserId().equals(payFlow.getUserId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限查询该数据！");
+				return jsonRet.toJSONString();
+			}else {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+				jsonRet.put("payFlow", payFlow);
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+
+	/**
+	 * 买家支付完成
+	 * @param orderId	订单ID
+	 * @param userId		用户ID
+	 * @return {errcode,errmsg,payType,payTime,amount,fee}
+	 */
+	@RequestMapping("/{userId}/payfinish/{orderId}")
+	public Object payFinish(@PathVariable(value="orderId",required=true)String orderId,
+			@PathVariable(value="userId",required=true)Integer userId) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			VipBasic userVip = this.vipBasicService.get(userId);
+			Order order = this.orderService.get(null, null, null, null, true,orderId);
+			if(userVip == null || order == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			if(!userVip.getVipId().equals(order.getUserId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			jsonRet = this.orderService.payFinish(userVip, order);
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+
+	/**
+	 * 查询物流
+	 * @param orderId	订单ID
+	 * @return {errcode,errmsg,order:{...}}
+	 */
+	@RequestMapping("/logistics/{orderId}")
+	public Object getLogistics(@PathVariable(value="orderId",required=true)String orderId) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			Order order = this.orderService.get(true, true, null, null, true,orderId);
+			if(order == null ) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			if(!order.getStatus().startsWith("3") && !order.getStatus().startsWith("4") &&
+					!order.getStatus().startsWith("5") && !order.getStatus().startsWith("6")) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "该订单当前不可查询物流！");
+				return jsonRet.toJSONString();
+			}
+			jsonRet.put("order", order);
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+
+	/**
 	 * 创建支付订单
 	 * @param orderId	订单ID
 	 * @param payType	支付方式
@@ -889,50 +997,6 @@ public class OrderController {
 	}
 	
 	/**
-	 * 获取订单的最新支付流水
-	 * @param orderId	订单ID
-	 * @param userId		用户ID
-	 * @param type	支付类型：1-消费，2-退款，空则不论
-	 * @return {errcode,errmsg,payflow:{}}
-	 */
-	@RequestMapping("/{userId}/payflow/{orderId}")
-	public Object getPayFlow(@PathVariable(value="orderId",required=true)String orderId,
-			@PathVariable(value="userId",required=true)Integer userId,
-			String type) {
-		JSONObject jsonRet = new JSONObject();
-		try {
-			UserBasic user = this.userBasicService.get(userId);
-			VipBasic userVip = this.vipBasicService.get(userId);
-			if(user == null || userVip == null) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
-				return jsonRet.toJSONString();
-			}
-			if(type == null || type.trim().length() == 0) {
-				type = null;
-			}
-			PayFlow payFlow = this.orderService.getLastedFlow(orderId, type);
-			if(payFlow == null) {
-				jsonRet.put("errcode", ErrCodes.ORDER_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该订单的支付流水！");
-			}else if(!user.getUserId().equals(payFlow.getUserId())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您没有权限查询该数据！");
-				return jsonRet.toJSONString();
-			}else {
-				jsonRet.put("errcode", 0);
-				jsonRet.put("errmsg", "ok");
-				jsonRet.put("payFlow", payFlow);
-			}
-		}catch(Exception e) {
-			e.printStackTrace();
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet.toString();
-	}
-	
-	/**
 	 * 买家取消订单
 	 * 1、会员需要输入密码才可取消；
 	 * 2、如果未付款，则直接取消；如果预付款，则申请原路退款；
@@ -993,19 +1057,23 @@ public class OrderController {
 	}
 	
 	/**
-	 * 买家支付完成
+	 * 买家申请延长签收
+	 * 1、申请延长收货期限，最多可延长三次，每次5天（可配置）；
 	 * @param orderId	订单ID
 	 * @param userId		用户ID
-	 * @return {errcode,errmsg,payType,payTime,amount,fee}
+	 * @param passwd		会员操作密码，会员需要密码
+	 * @return {errcode,errmsg}
 	 */
-	@RequestMapping("/{userId}/payfinish/{orderId}")
-	public Object payFinish(@PathVariable(value="orderId",required=true)String orderId,
+	@RequestMapping("/{userId}/prolong/{orderId}")
+	public Object signProlong(@PathVariable(value="orderId",required=true)String orderId,
 			@PathVariable(value="userId",required=true)Integer userId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
+			
 			VipBasic userVip = this.vipBasicService.get(userId);
-			Order order = this.orderService.get(null, null, null, null, true,orderId);
-			if(userVip == null || order == null) {
+			Order order = this.orderService.get(null, null, null, true, true,orderId);
+			PartnerBasic partner = this.partnerBasicService.getByID(order.getPartnerId());
+			if(userVip == null || order == null || partner == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
 				return jsonRet.toJSONString();
@@ -1015,46 +1083,46 @@ public class OrderController {
 				jsonRet.put("errmsg", "您没有权限处理该订单！");
 				return jsonRet.toJSONString();
 			}
-			jsonRet = this.orderService.payFinish(userVip, order);
+			
+			
+			//订单状态检查
+			if(!"22".equals(order.getStatus()) && !"30".equals(order.getStatus()) && !"55".equals(order.getStatus()) ) {
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg", "您当前不可执行收货延长申请操作！");
+				return jsonRet.toJSONString();
+			}
+			
+			Order updOdr = new Order();
+			updOdr.setOrderId(order.getOrderId());
+			int days = this.sysParamUtil.getOrderSignProlongDays();
+			if(order.getSignProlong() == null || order.getSignProlong()<days) {
+				updOdr.setSignProlong(days);
+			}else {
+				if(order.getSignProlong() >= days*3) {
+					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+					jsonRet.put("errmsg", "您当前不可再次执行收货延长申请操作，已达最大限制次数！");
+					return jsonRet.toJSONString();
+				}else {
+					updOdr.setSignProlong(order.getSignProlong() + days);
+				}
+			}
+			int cnt = this.orderService.update(updOdr);
+			if(cnt >0) {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			}else {
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+				jsonRet.put("errmsg", "数据库保存数据出错！");
+			}
+			
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
 		}
 		return jsonRet.toString();
+		
 	}
-	
-	/**
-	 * 查询物流
-	 * @param orderId	订单ID
-	 * @return {errcode,errmsg,order:{...}}
-	 */
-	@RequestMapping("/logistics/{orderId}")
-	public Object getLogistics(@PathVariable(value="orderId",required=true)String orderId) {
-		JSONObject jsonRet = new JSONObject();
-		try {
-			Order order = this.orderService.get(true, true, null, null, true,orderId);
-			if(order == null ) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
-				return jsonRet.toJSONString();
-			}
-			if(!order.getStatus().startsWith("3") && !order.getStatus().startsWith("4") &&
-					!order.getStatus().startsWith("5") && !order.getStatus().startsWith("6")) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "该订单当前不可查询物流！");
-				return jsonRet.toJSONString();
-			}
-			jsonRet.put("order", order);
-			jsonRet.put("errcode", 0);
-			jsonRet.put("errmsg", "ok");
-		}catch(Exception e) {
-			e.printStackTrace();
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet.toString();
-	}	
 	
 	/**
 	 * 买家申请退款(退货)

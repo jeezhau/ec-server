@@ -91,6 +91,11 @@ public class PartnerBasic {
     @Null
     private Date reviewTime;
     
+    //评分汇总
+    private String scoreLogis;
+    private String scoreServ;
+    private String scoreGoods;
+    
     private Double distance;//商户距离合作伙伴的距离
 
     public Integer getPartnerId() {
@@ -291,6 +296,31 @@ public class PartnerBasic {
 	public void setPbTp(String pbTp) {
 		this.pbTp = pbTp;
 	}
+
+	public String getScoreLogis() {
+		return scoreLogis;
+	}
+
+	public void setScoreLogis(String scoreLogis) {
+		this.scoreLogis = scoreLogis;
+	}
+
+	public String getScoreServ() {
+		return scoreServ;
+	}
+
+	public void setScoreServ(String scoreServ) {
+		this.scoreServ = scoreServ;
+	}
+
+	public String getScoreGoods() {
+		return scoreGoods;
+	}
+
+	public void setScoreGoods(String scoreGoods) {
+		this.scoreGoods = scoreGoods;
+	}
     
+	
 	
 }
