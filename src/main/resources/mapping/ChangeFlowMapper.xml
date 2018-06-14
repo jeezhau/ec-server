@@ -11,10 +11,11 @@
     <result column="reason" jdbcType="LONGVARCHAR" property="reason" />
     <result column="sum_flag" jdbcType="CHAR" property="sumFlag" />
     <result column="sum_time" jdbcType="TIMESTAMP" property="sumTime" />
+    <result column="order_id" jdbcType="VARCHAR" property="orderId" />
   </resultMap>
   
   <sql id="Base_Column_List">
-    flow_id, vip_id, change_type, amount, create_time, create_opr,reason,sum_flag,sum_time
+    flow_id, vip_id, change_type, amount, create_time, create_opr,reason,sum_flag,sum_time,order_id
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
@@ -31,55 +32,23 @@
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.ChangeFlow">
     insert into tb_change_flow (flow_id, vip_id, change_type, 
-      amount, create_time, create_opr, reason,sum_flag,sum_time)
+      amount, create_time, create_opr, reason,sum_flag,sum_time,order_id)
     values (#{flowId,jdbcType=VARCHAR}, #{vipId,jdbcType=INTEGER}, #{changeType,jdbcType=CHAR}, 
       #{amount,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{createOpr,jdbcType=INTEGER},
-      #{reason,jdbcType=LONGVARCHAR},#{sumFlag,jdbcType=CHAR}, #{sumTime,jdbcType=TIMESTAMP})
+      #{reason,jdbcType=LONGVARCHAR},#{sumFlag,jdbcType=CHAR}, #{sumTime,jdbcType=TIMESTAMP},#{orderId,jdbcType=VARCHAR})
   </insert>
   
 
-  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.ChangeFlow">
+  <update id="updateSumFlag" parameterType="com.mofangyouxuan.model.ChangeFlow">
     update tb_change_flow
     <set>
-      <if test="vipId != null">
-        vip_id = #{vipId,jdbcType=INTEGER},
-      </if>
-      <if test="changeType != null">
-        change_type = #{changeType,jdbcType=CHAR},
-      </if>
-      <if test="amount != null">
-        amount = #{amount,jdbcType=DECIMAL},
-      </if>
-      <if test="createTime != null">
-        create_time = #{createTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="createOpr != null">
-        create_opr = #{createOpr,jdbcType=INTEGER},
-      </if>
-      <if test="reason != null">
-        reason = #{reason,jdbcType=LONGVARCHAR},
-      </if>
       <if test="sumFlag != null">
         sum_flag = #{sumFlag,jdbcType=CHAR},
-      </if>   
+      </if>
       <if test="sumTime != null">
         sum_time = #{sumTime,jdbcType=TIMESTAMP},
       </if>          
     </set>
-    where flow_id = #{flowId,jdbcType=VARCHAR}
-  </update>
-  
-
-  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.ChangeFlow">
-    update tb_change_flow
-    set vip_id = #{vipId,jdbcType=INTEGER},
-      change_type = #{changeType,jdbcType=CHAR},
-      amount = #{amount,jdbcType=DECIMAL},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      create_opr = #{createOpr,jdbcType=INTEGER},
-      sum_flag = #{sumFlag,jdbcType=CHAR},
-      sum_time = #{sumTime,jdbcType=TIMESTAMP},
-      reason = #{reason,jdbcType=LONGVARCHAR}
     where flow_id = #{flowId,jdbcType=VARCHAR}
   </update>
   
@@ -117,7 +86,10 @@
       </if>
       <if test="params.sumFlag != null">
         and sum_flag = #{params.sumFlag,jdbcType=CHAR}
-      </if>      
+      </if>
+      <if test="params.orderId != null">
+        and order_id = #{params.orderId,jdbcType=VARCHAR}
+      </if>
     </where> 
   </sql>
   

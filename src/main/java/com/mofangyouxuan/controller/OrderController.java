@@ -1032,18 +1032,18 @@ public class OrderController {
 			if("1".equals(userVip.getStatus())) {
 				if(passwd == null || passwd.length()<6) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您的基金操作密码不可为空！");
+					jsonRet.put("errmsg", "您的会员密码不可为空！");
 					return jsonRet.toJSONString();
 				}
 				//密码验证
 				if(userVip.getPasswd() == null || userVip.getPasswd().length()<10) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您还未设置资金操作密码，请先到会员中心完成设置！");
+					jsonRet.put("errmsg", "您还未设置会员操作密码，请先到会员中心完成设置！");
 					return jsonRet.toJSONString();
 				}
 				if(!SignUtils.encodeSHA256Hex(passwd).equals(userVip.getPasswd())) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "您的资金操作密码输入不正确！");
+					jsonRet.put("errmsg", "您的会员操作密码输入不正确！");
 					return jsonRet.toJSONString();
 				}
 			}
@@ -1193,14 +1193,20 @@ public class OrderController {
 			PayFlow payFlow = this.orderService.getLastedFlow(orderId, "1");
 			if(payFlow == null || !"11".equals(payFlow.getStatus())) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您的订单没有支付成功信息（未支付到账、支付失败或已退款）！");
+				jsonRet.put("errmsg", "您的订单没有支付成功信息（未支付到账、支付失败）！");
 				return jsonRet.toJSONString();
+			}
+			payFlow = this.orderService.getLastedFlow(orderId, null);
+			if(payFlow == null || (!"11".equals(payFlow.getStatus()) && !"F2".equals(payFlow.getStatus()))) {
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg","系统没有您的支付流水信息！");
+				return jsonRet;
 			}
 			
 			//订单与退款类型检查
 			if("1".equals(type)) {//买家未收到货
 				//订单状态检查
-				if(!order.getStatus().startsWith("2") && !"30".equals(order.getStatus()) && !"55".equals(order.getStatus()) ) {
+				if(!order.getStatus().startsWith("2") && !"30".equals(order.getStatus()) && !"55".equals(order.getStatus()) && !"67".equals(order.getStatus())) {
 					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 					jsonRet.put("errmsg", "您当前不可执行未收到货退款申请操作！");
 					return jsonRet.toJSONString();
@@ -1232,7 +1238,7 @@ public class OrderController {
 				//订单状态检查
 				if(!"31".equals(order.getStatus()) && !order.getStatus().startsWith("4") &&
 						!"56".equals(order.getStatus()) && !"57".equals(order.getStatus()) && !"58".equals(order.getStatus()) &&
-						!"61".equals(order.getStatus())) {
+						!"61".equals(order.getStatus()) && !"67".equals(order.getStatus())) {
 					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 					jsonRet.put("errmsg", "您当前不可执行退货退款申请操作！");
 					return jsonRet.toJSONString();
@@ -1654,7 +1660,13 @@ public class OrderController {
 				PayFlow payFlow = this.orderService.getLastedFlow(orderId, "1");
 				if(payFlow == null || !"11".equals(payFlow.getStatus())) {
 					jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-					jsonRet.put("errmsg", "该订单没有支付成功信息（未支付到账、支付失败或已退款），无法退款！");
+					jsonRet.put("errmsg", "您的订单没有支付成功信息（未支付到账、支付失败）！");
+					return jsonRet.toJSONString();
+				}
+				payFlow = this.orderService.getLastedFlow(orderId, null);
+				if(payFlow == null || (!"11".equals(payFlow.getStatus()) && !"F2".equals(payFlow.getStatus()))) {
+					jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+					jsonRet.put("errmsg","系统没有您的支付流水信息！");
 					return jsonRet.toJSONString();
 				}
 				//卖家账户检查

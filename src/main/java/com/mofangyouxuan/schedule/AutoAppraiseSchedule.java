@@ -66,7 +66,12 @@ public class AutoAppraiseSchedule {
 				try {
 					Order updOrder = new Order();
 					updOrder.setOrderId(order.getOrderId());
-					Date signTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(order.getSignTime());
+					Date signTime = null;
+					if("40".equals(order.getStatus())) {
+						signTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(order.getSignTime());
+					}else {
+						signTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(order.getAftersalesDealTime());
+					}
 					long gapDays = (new Date().getTime() - signTime.getTime())/1000/3600/24 +10; //单位天
 					if(gapDays > this.autoApprDays) { //超时
 						if(order.getAppraiseTime() == null || order.getApprUserTime() == null) {

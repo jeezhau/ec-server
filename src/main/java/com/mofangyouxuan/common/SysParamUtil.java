@@ -235,6 +235,32 @@ public class SysParamUtil {
 		}
 		return partner_open_need_socre;
 	}
+
+	//推广买家可获得所推广买家交易额的分润利率
+	@Value("${sys.spread_user_profit_ratio}")
+	private BigDecimal spread_user_profit_ratio;
+	public BigDecimal getSpreadUserProfitRatio() {
+		try {
+			BigDecimal newParam = new BigDecimal(this.getSysParam("spread_user_profit_ratio"));
+			return newParam;
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return spread_user_profit_ratio;
+	}
+	
+	//推广商家可获得所推广商家交易额的分润利率
+	@Value("${sys.spread_user_profit_ratio}")
+	private BigDecimal spread_mcht_profit_ratio;
+	public BigDecimal getSpreadMchtProfitRatio() {
+		try {
+			BigDecimal newParam = new BigDecimal(this.getSysParam("spread_mcht_profit_ratio"));
+			return newParam;
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return spread_mcht_profit_ratio;
+	}
 	
 	/**
 	 * 获取系统配置参数

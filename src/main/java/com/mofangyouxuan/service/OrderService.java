@@ -80,8 +80,9 @@ public interface OrderService {
 	 * @param mchtVipId	卖家会员账户ID
 	 * @param reason		取消理由
 	 * @return
+	 * @throws Exception 
 	 */
-	public JSONObject cancelOrder(Order order,Integer userVipId,Integer mchtVipId,String reason) ;
+	public JSONObject cancelOrder(Order order,Integer userVipId,Integer mchtVipId,String reason) throws Exception ;
 	
 	/**
 	 * 生成预支付订单
@@ -103,18 +104,20 @@ public interface OrderService {
 	 * @param userVip
 	 * @param order
 	 * @param mchtVipId
+	 * @throws Exception 
 	 */
-	public void execPaySucc(boolean useBal,PayFlow payFlow,VipBasic userVip,Order order,Integer mchtVipId,String outFinishId);
+	public void execPaySucc(boolean useBal,PayFlow payFlow,VipBasic userVip,Order order,Integer mchtVipId,String outFinishId) throws Exception;
 	
 	/**
 	 * 客户端支付完成
 	 * @param userVip
 	 * @param order
 	 * @return
+	 * @throws Exception 
 	 */
-	public JSONObject payFinish(VipBasic userVip,Order order) ;
+	public JSONObject payFinish(VipBasic userVip,Order order) throws Exception ;
 	
-	String outPaySucc(String payFlowId, Long totalAmount, String outFinishId);
+	String outPaySucc(String payFlowId, Long totalAmount, String outFinishId) throws Exception;
 
 	String outPayFail(String payFlowId, String outFinishId, String fail);
 
@@ -159,12 +162,13 @@ public interface OrderService {
 	 * @param mchtVipId	卖家会员ID
 	 * @param reason		退款理由，对于收货退款，其中包含退款方式与快递信息
 	 * @return
+	 * @throws Exception 
 	 */
-	public JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,JSONObject reason) ;
+	public JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,JSONObject reason) throws Exception ;
 
-	String outRefundSucc(String payFlowId, Long totalAmount, String outFinishId);
+	String outRefundSucc(String payFlowId, Long totalAmount, String outFinishId) throws Exception;
 
-	String outRefundFail(String payFlowId,  String outFinishId, String fail);
+	String outRefundFail(String payFlowId,  String outFinishId, String fail) throws Exception;
 
 	/**
 	 * 关闭支付
@@ -174,8 +178,9 @@ public interface OrderService {
 	 * @param totalAmount
 	 * @param outFinishId
 	 * @return
+	 * @throws Exception 
 	 */
-	public String closePay(String payFlowId,Long totalAmount,String outFinishId);
+	public String closePay(String payFlowId,Long totalAmount,String outFinishId) throws Exception;
 	
 }
 

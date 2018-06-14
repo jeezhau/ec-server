@@ -277,8 +277,8 @@ public class GoodsController {
 			goods.setReviewResult("1"); 
 			goods.setReviewLog("");
 			goods.setReviewTime(null);
-			goods.setStockSum(null);
-			goods.setPriceLowest(null);
+			//goods.setStockSum(null);
+			//goods.setPriceLowest(null);
 			int id = this.goodsService.update(goods);
 			if(id <1 ) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
@@ -625,7 +625,7 @@ public class GoodsController {
 			if(ret != null) {
 				return ret;
 			}			//数据保存
-			int cnt = this.goodsService.changeSpec(goodsId, JSONArray.parseArray(jsonSpecArr, GoodsSpec.class), 1,goods.getStockSum(), goods.getPriceLowest(),updateOpr);
+			int cnt = this.goodsService.changeSpec(goodsId, JSONArray.parseArray(jsonSpecArr, GoodsSpec.class), 1,updGoods.getStockSum(), updGoods.getPriceLowest(),updateOpr);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");

@@ -1,16 +1,23 @@
 package com.mofangyouxuan.service.impl;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.ChangeFlowMapper;
 import com.mofangyouxuan.model.ChangeFlow;
+import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.ChangeFlowService;
+import com.mofangyouxuan.service.UserBasicService;
+import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.NonceStrUtil;
 
 @Service
@@ -19,105 +26,225 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	
 	@Autowired
 	private ChangeFlowMapper changeFlowMapper;
+	@Autowired
+	private UserBasicService userBasicService;
+	@Autowired
+	private VipBasicService vipBasicService;
+	
+	@Autowired
+	private SysParamUtil sysParamUtil;
 	
 	/**
 	 * 用户或商家申请退款
 	 * 1、添加商户冻结余额流水；
 	 * 2、减少商户可用余额流水；
-	 * @param amount
-	 * @param vipId
-	 * @param reason
-	 * @param oprId
+	 * @param amount		退款金额
+	 * @param vipId		商家VIPID
+	 * @param reason		退款原因
+	 * @param oprId		操作员ID
+	 * @param orderId	商品订单ID
+	 * 
+	 * @return 00-成功，其他-失败信息 
+	 * @throws Exception 
 	 */
-	@Override
-	public void refundApply(Long amount,Integer vipId,String reason,Integer oprId) {
-		this.doubleFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP25, reason, CashFlowTP.CFTP34);
+	public String refundApply(Long amount, Integer mchtVipId, String reason, Integer oprId,String orderId) throws Exception {
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("orderId", orderId);
+		params.put("vipId", mchtVipId);
+		params.put("changeType", CashFlowTP.CFTP31.value); 
+		int cnt = this.changeFlowMapper.countAll(params); //交易成功冻结记录数
+		if(cnt <= 0) {
+			throw new Exception("该订单没有交易成功流水信息");
+		}
+		params.put("changeType", CashFlowTP.CFTP14.value); 
+		int cnt1 = this.changeFlowMapper.countAll(params); //资金解冻记录数
+		if(cnt1 > 0) {
+			String ret = this.doubleFreeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP25, reason, CashFlowTP.CFTP34,orderId);
+			if(!"00".equals(ret)) {
+				throw new Exception(ret);
+			}
+		}
+		return "00";
 	}
 	
 	/**
 	 * 添加客户退款成功流水
 	 * 1、买家使用余额支付，则退款时增加买家的可用余额；减少卖家的冻结余额；
 	 * 2、买家使用非余额支付，则退款时减少卖家的冻结余额；
- 	 * 
-	 * @return
+	 * 
+	 * @param useVipPay	是否使用会员余额支付
+	 * @param amount		交易金额
+	 * @param userVipId	买家会员账户
+	 * @param reason		退款原因
+	 * @param oprId		操作员ID
+	 * @param mchtVipId	卖家会员账户Id
+	 * @param orderId	商品订单ID
+	 * 
+	 * @return 00-成功，其他-失败信息 
+	 * @throws Exception 
 	 */
-	@Override
-	public void refundSuccess(boolean useVip,Long amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId) {
-		if(useVip) {//卖家使用余额支付
-			//客户退款
-			this.addBal(amount, userVipId, oprId, reason, CashFlowTP.CFTP11);
+	public String refundSuccess(boolean useVipPay,Long amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId,String orderId) throws Exception {
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("orderId", orderId);
+		params.put("vipId", mchtVipId);
+		params.put("changeType", CashFlowTP.CFTP31.value); 
+		int cnt = this.changeFlowMapper.countAll(params); //交易成功冻结记录数
+		if(cnt <= 0) {
+			throw new Exception("该订单没有交易成功流水信息");
 		}
-		//商家解冻
-		this.unFreeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP44);
+		if(useVipPay) {//卖家使用余额支付
+			//客户增加可用余额
+			String ret = this.addBal(amount, userVipId, oprId, reason, CashFlowTP.CFTP11,orderId);
+			if(!"00".equals(ret)) {
+				throw new Exception(ret);
+			}
+		}
+		//商家减少解冻余额
+		String ret = this.unFreeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP44,orderId);
+		if(!"00".equals(ret)) {
+			throw new Exception(ret);
+		}
+		return "00";
 	}
 	
 	/**
-	 * 退款失败，更新商家余额
-	 * 1、添加增加可用余额的流水；
-	 * 2、添加减少冻结余额的流水；
-	 * @param amount
-	 * @param vipId
-	 * @param reason
-	 * @param oprId
+	 * 退款失败
+	 * 1、增加商户可用余额的流水；
+	 * 2、减少商户冻结余额的流水；
+	 * @param amount		退款金额
+	 * @param mchtVipId	商家VIPID
+	 * @param reason		失败原因
+	 * @param oprId		操作员ID
+	 * @param orderId	商品订单ID
+	 * 
+	 * @return 00-成功，其他-失败信息 
+	 * @throws Exception 
 	 */
-	@Override
-	public void refundFail(Long amount,Integer vipId,String reason,Integer oprId) {
-		this.doubleUnFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP17, reason, CashFlowTP.CFTP45);
+	public String refundFail(Long amount, Integer mchtVipId, String reason, Integer oprId,String orderId) throws Exception {
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("orderId", orderId);
+		params.put("vipId", mchtVipId);
+		params.put("changeType", CashFlowTP.CFTP31.value); 
+		int cnt = this.changeFlowMapper.countAll(params); //交易成功冻结记录数
+		if(cnt <= 0) {
+			throw new Exception("该订单没有交易成功流水信息");
+		}
+		params.put("changeType", CashFlowTP.CFTP14.value); 
+		int cnt1 = this.changeFlowMapper.countAll(params); //资金解冻记录数
+		if(cnt1 > 0) {
+			String ret = this.doubleUnFreeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP17, reason, CashFlowTP.CFTP45,orderId);
+			if(!"00".equals(ret)) {
+				throw new Exception(ret);
+			}
+		}
+		return "00";
 	}
 	
 	/**
-	 * 客户支付成功(买商家的商品)
-	 * 1、余额支付则添加减少可用余额流水；
-	 * 2、添加商家冻结余额流水；
-	 * @param flow
-	 * @return
+	 * 添加客户支付成功流水(买商家的商品)
+	 * 1、客户使用余额支付，添加客户的支付流水（减少可用余额）；
+	 * 2、添加商户的冻结余额；
+	 * 
+	 * @param useVipPay	是否使用会员余额支付
+	 * @param amount		交易金额
+	 * @param userVip	买家会员账户
+	 * @param reason		成功明细
+	 * @param oprId		操作员ID
+	 * @param mchtVipId	卖家会员账户ID
+	 * @param orderId	商品订单ID 
+	 * 
+	 * @return 00-成功，其他-失败信息
+	 * @throws Exception 
 	 */
-	@Override
-	public void paySuccess(boolean useBal,Long amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId) {
-		if(useBal) {
+	public String paySuccess(boolean useVipPay,Long amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId,String orderId) throws Exception{
+		if(useVipPay) {
 			//客户消费
-			this.subBal(amount, userVip, oprId, reason, CashFlowTP.CFTP22);
+			String ret = this.subBal(amount, userVip, oprId, reason, CashFlowTP.CFTP22,orderId);
+			if(!"00".equals(ret)) {
+				throw new Exception(ret);
+			}
 		}
 		//商家冻结，待评价完成解冻
-		this.freeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP31);
+		String ret = this.freeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP31,orderId);
+		if(!"00".equals(ret)) {
+			throw new Exception(ret);
+		}
+		return "00";
 	}
 	
 	/**
-	 * 交易完成，解冻商家
-	 * 1、减少冻结额
-	 * 2、添加可用余额
-	 * @param flow
-	 * @return
+	 * 解冻商家
+	 * 1、减少冻结余额，增加可用余额；
+	 * 2、执行推广用户系统分润；
+	 * @param amount		交易金额
+	 * @param userId		买家ID
+	 * @param mchtVipId	商家会员账户
+	 * @param oprId 		操作员ID
+	 * @param reason		操作原因
+	 * @param orderId	商品订单ID 
+	 * 
+	 * @return 00-成功，其他-失败信息
+	 * @throws Exception 
 	 */
-	@Override
-	public void dealFinish(Long amount,Integer vipId,Integer oprId,String reason) {
-		this.doubleUnFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP14, reason, CashFlowTP.CFTP43);
+	public String dealFinish(Long amount,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId) throws Exception {
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("orderId", orderId);
+		params.put("vipId", mchtVipId);
+		params.put("changeType", CashFlowTP.CFTP31.value); 
+		int cnt = this.changeFlowMapper.countAll(params); //交易成功冻结记录数
+		if(cnt <= 0) {
+			throw new Exception("该订单没有交易成功流水信息");
+		}
+		String ret = this.doubleUnFreeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP14, reason, CashFlowTP.CFTP43,orderId);
+		if(!"00".equals(ret)) {
+			throw new Exception(ret);
+		}
+		//推广用户分润
+		UserBasic buyUser = this.userBasicService.get(userId);
+		if(buyUser != null && buyUser.getSenceId()!=null) {
+			VipBasic spreadVip = this.vipBasicService.get(buyUser.getSenceId());
+			if(spreadVip != null) {
+				BigDecimal spreadUserProfitRate = this.sysParamUtil.getSpreadUserProfitRatio();
+				Long profit = spreadUserProfitRate.multiply(new BigDecimal(amount)).setScale(0, BigDecimal.ROUND_FLOOR).longValue();
+				ret = this.shareProfit(profit, spreadVip.getVipId(), oprId, "推广用户购买商品获得分润",orderId);
+				if(!"00".equals(ret)) {
+					throw new Exception(ret);
+				}
+			}
+		}
+		
+		return "00";
 	}
 	
 	/**
 	 * 添加分润流水
-	 * 变更会员账户信息
-	 * 资金变动类型(1-可用余额来源，2-可用余额去向，3-冻结金额来源，4-解冻金额去向)':
-	 * 	11-客户退款、12-系统分润、13-平台奖励、14-资金解冻、15-积分兑换、16-现金红包、17-其他
-	 * 	21-提现申请、22-客户消费、23-资金冻结、24-投诉罚款、25-其他
-	 * 	31-冻结交易买卖额、32-买单投诉冻结、33-提现冻结、34-其他
- 	 * 	41-恢复可用余额、42-提现完成、43-交易完成、44-买家退款
-	 * @param flow
-	 * @return
+	 * 1、增加可用余额；
+	 * @param amount		分润金额
+	 * @param vipId
+	 * @param oprId
+	 * @param reason
+	 * @param orderId	商品订单ID
+	 * @return 00-成功，其他-失败信息
+	 * @throws Exception
 	 */
 	@Override
-	public int shareProfit(Long amount,VipBasic vip,Integer oprId,String reason) {
+	public String shareProfit(Long amount,Integer vipId,Integer oprId,String reason,String orderId) throws Exception {
 		ChangeFlow flow1 = new ChangeFlow();
-		flow1.setFlowId(this.genFlowId(vip.getVipId()));
-		flow1.setVipId(vip.getVipId());
+		flow1.setFlowId(this.genFlowId(vipId));
+		flow1.setVipId(vipId);
 		flow1.setCreateTime(new Date());
 		flow1.setAmount(amount);
-		flow1.setChangeType("12");
+		flow1.setChangeType(CashFlowTP.CFTP12.getValue()+"");
 		flow1.setReason(reason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
+		flow1.setOrderId(orderId);
 		int cnt = this.changeFlowMapper.insert(flow1);
-		return cnt;
+		if(cnt >0) {
+			return "00";
+		}else {
+			return "添加分润流水失败";
+		}
 	}
 	
 	/**
@@ -129,8 +256,9 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param oprId		操作员ID
 	 * @param reason		增加可用余额的理由
 	 * @param tp			增加可用余额的流水类型
+	 * @param orderId	商品订单ID
 	 */
-	private String addBal(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp) {
+	private String addBal(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp,String orderId) {
 		if(tp == null || tp.getValue()<10 || tp.getValue()>19) {
 			return "增加可用余额流水的类型不正确！";
 		}
@@ -143,6 +271,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(reason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
+		flow1.setOrderId(orderId);
 		int cnt = this.changeFlowMapper.insert(flow1);
 		if(cnt>0 ) {
 			return "00";
@@ -159,8 +288,9 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param oprId		操作员ID
 	 * @param reason		减少冻结余额的理由
 	 * @param tp			减少冻结余额的流水类型
+	 * @param orderId	商品订单ID
 	 */
-	private String subBal(Long amount,VipBasic vip,Integer oprId,String reason,CashFlowTP tp) {
+	private String subBal(Long amount,VipBasic vip,Integer oprId,String reason,CashFlowTP tp,String orderId) {
 		if(tp == null || tp.getValue()<20 || tp.getValue()>29) {
 			return "减少可用余额流水的类型不正确！";
 		}
@@ -173,6 +303,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(reason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
+		flow1.setOrderId(orderId);
 		int cnt = this.changeFlowMapper.insert(flow1);
 		if(cnt>0 ) {
 			return "00";
@@ -193,8 +324,9 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param balTp		减少可用余额余额的流水类型
 	 * @param frzReason	增加冻结余额流水的原因
 	 * @param frzTp		增加冻结余额流水的原因
+	 * @param orderId	商品订单ID
 	 */
-	private String doubleFreeze(Long amount,Integer vipId,Integer oprId,String balReason,CashFlowTP balTp,String frzReason,CashFlowTP frzTp) {
+	private String doubleFreeze(Long amount,Integer vipId,Integer oprId,String balReason,CashFlowTP balTp,String frzReason,CashFlowTP frzTp,String orderId) {
 		if(balTp == null || balTp.getValue()<20 || balTp.getValue()>29) {
 			return "减少可用余额流水的类型不正确！";
 		}
@@ -211,6 +343,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(balReason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
+		flow1.setOrderId(orderId);
 		int cnt1 = this.changeFlowMapper.insert(flow1);
 		//添加冻结余额
 		ChangeFlow flow2 = new ChangeFlow();
@@ -222,6 +355,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow2.setReason(frzReason);
 		flow2.setCreateOpr(oprId);
 		flow2.setSumFlag("0");
+		flow2.setOrderId(orderId);
 		int cnt2 = this.changeFlowMapper.insert(flow2);
 		if(cnt1>0 && cnt2>0) {
 			return "00";
@@ -242,8 +376,9 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param balTp		增加可用余额余额的流水类型
 	 * @param frzReason	减少冻结余额流水的原因
 	 * @param frzTp		减少冻结余额流水的原因
+	 * @param orderId	商品订单ID
 	 */
-	private String doubleUnFreeze(Long amount,Integer vipId,Integer oprId,String balReason,CashFlowTP balTp,String frzReason,CashFlowTP frzTp) {
+	private String doubleUnFreeze(Long amount,Integer vipId,Integer oprId,String balReason,CashFlowTP balTp,String frzReason,CashFlowTP frzTp,String orderId) {
 		if(balTp == null || balTp.getValue()<10 || balTp.getValue()>19) {
 			return "增加可用余额流水的类型不正确！";
 		}
@@ -260,6 +395,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(balReason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
+		flow1.setOrderId(orderId);
 		int cnt1 = this.changeFlowMapper.insert(flow1);
 		//减少冻结
 		ChangeFlow flow2 = new ChangeFlow();
@@ -271,6 +407,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow2.setReason(frzReason);
 		flow2.setCreateOpr(oprId);
 		flow2.setSumFlag("0");
+		flow2.setOrderId(orderId);
 		int cnt2 = this.changeFlowMapper.insert(flow2);
 		if(cnt1>0 && cnt2>0) {
 			return "00";
@@ -288,8 +425,9 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param oprId		操作员ID
 	 * @param reason		增加冻结余额的理由
 	 * @param tp			增加冻结余额的流水类型
+	 * @param orderId	商品订单ID
 	 */
-	private String freeze(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp) {
+	private String freeze(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp,String orderId) {
 		if(tp == null || tp.getValue()<30 || tp.getValue()>39) {
 			return "增加冻结余额流水的类型不正确！";
 		}
@@ -302,6 +440,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(reason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
+		flow1.setOrderId(orderId);
 		int cnt = this.changeFlowMapper.insert(flow1);
 		if(cnt>0 ) {
 			return "00";
@@ -319,8 +458,9 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param oprId		操作员ID
 	 * @param reason		减少冻结余额的理由
 	 * @param tp			减少冻结余额的流水类型
+	 * @param orderId	商品订单ID
 	 */
-	private String unFreeze(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp) {
+	private String unFreeze(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp,String orderId) {
 		if(tp == null || tp.getValue()<40 || tp.getValue()>49) {
 			return "减少冻结余额流水的类型不正确！";
 		}
@@ -333,6 +473,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setReason(reason);
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
+		flow1.setOrderId(orderId);
 		int cnt = this.changeFlowMapper.insert(flow1);
 		if(cnt>0 ) {
 			return "00";
@@ -412,7 +553,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 */
 	@Override
 	public String cashApply(Long amount, Integer vipId, Integer oprId, String reason) {
-		return this.doubleFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP21, reason, CashFlowTP.CFTP33);
+		return this.doubleFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP21, reason, CashFlowTP.CFTP33,null);
 	}
 
 	/**
@@ -426,9 +567,9 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	@Override
 	public String cashFinish(boolean success,Long amount, Integer vipId, Integer oprId, String reason) {
 		if(success) {
-			return this.unFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP42);
+			return this.unFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP42,null);
 		}else {
-			return this.doubleUnFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP18, reason, CashFlowTP.CFTP42);
+			return this.doubleUnFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP18, reason, CashFlowTP.CFTP42,null);
 		}
 	}
 	

@@ -64,7 +64,8 @@ messmp:
   verify-email-vericode: '/email/vericode/verify'
   send-phone-resetpwd: '/sms/resetpwd/send'
   send-email-resetpwd: '/email/resetpwd/send'
- #物流查询
+  
+#物流查询
 logistics:
   alicloudapi-appcode: 'c1f1103e8f2a4283a6ca696cddb4242c' 
 
@@ -81,8 +82,8 @@ sys:
   vip_activate_need_score: 1000 #激活会员需要多少积分
   spread_per_user_score: 50     #每推广一个用户可获得多少积分
   spread_per_mcht_score: 100    #推广一个商家可获得会员积分
-  spread_user_profit_ratio: 0.003 #推广买家可获得所推广买家交易额的千分之三
-  spread_mcht_profit_ratio: 0.003 #推广商家可获得所推广商家交易额的千分之三
+  spread_user_profit_ratio: 0.001 #推广买家可获得所推广买家交易额的分润利率
+  spread_mcht_profit_ratio: 0.001 #推广商家可获得所推广商家交易额的分润利率
   partner_open_need_socre: 1500   #开通合作伙伴需要多少积分
   trade_score_one_yuan: 1         #每消费一元获得多少积分
   
@@ -94,7 +95,7 @@ sys:
   order-4pay-cnt-all-limit: 30    #每个用户可持有的所有待付款订单数
   order-4pay-cnt-goods-limit: 1   #每个用户可持有的单个商品待付款订单数
   order-nodelivery-days-4refund: 3    #超过3天卖家未发货买家可申请退款
-  order-nosign-days-4refund: 7        #至卖家发货之后超过N天买家没有获得签收可申请退款
+  order-nosign-days-4refund: 7        #自卖家发货之后超过N天买家没有获得签收可申请退款
   order-sign-prolong-days: 5      #每次申请可延长签收天数
   order-auto-appr-days: 7         #自从签收后超过N天没有评价则系统自动好评
   order-amount-unfreeze-days: 10  #自从买家评价后超过N天后商家卖款解冻

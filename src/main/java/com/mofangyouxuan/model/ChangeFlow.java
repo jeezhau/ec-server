@@ -1,6 +1,5 @@
 package com.mofangyouxuan.model;
 
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -22,6 +21,8 @@ public class ChangeFlow {
     private String sumFlag;
     
     private Date sumTime;
+    
+    private String orderId;
 
     public String getFlowId() {
         return flowId;
@@ -100,6 +101,13 @@ public class ChangeFlow {
 	public void setSumTime(Date sumTime) {
 		this.sumTime = sumTime;
 	}
-    
+
+	public String getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(String orderId) {
+		this.orderId = orderId;
+	}
     
 }

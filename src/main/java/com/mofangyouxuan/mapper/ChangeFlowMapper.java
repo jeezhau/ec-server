@@ -17,12 +17,8 @@ public interface ChangeFlowMapper {
 
     ChangeFlow selectByPrimaryKey(String flowId);
 
-    int updateByPrimaryKeySelective(ChangeFlow record);
+    int updateSumFlag(ChangeFlow record);
 
-    int updateByPrimaryKeyWithBLOBs(ChangeFlow record);
-
-    int updateByPrimaryKey(ChangeFlow record);
-    
     List<ChangeFlow> selectAll(@Param("params")Map<String,Object> params,
     		@Param("pageCond")PageCond pageCond,@Param("sorts")String sorts);
    

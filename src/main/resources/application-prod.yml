@@ -45,9 +45,18 @@ wxpay:
   notify-server-url: 'https://pay.mofangyouxuan.com'
   pay-notify-url: '/wxpay/notify/pay'
   refund-notify-url: '/wxpay/notify/refund'
-  fee-rate-use-wxpay: 0.007
-  cert-key-dir: '/var/wxpay/'
-
+  fee-rate-use-wxpay: 0.27   #微信支付手续费
+  cert-key-dir: '/var/mfpay/wxpay/'
+#支付宝支付参数
+alipay:
+  appid: '2018061260389188'
+  notify-server-url: 'https://pay.mofangyouxuan.com'
+  return-server-url: 'https://h5.mofangyouxuan.com'
+  pay-notify-url: '/alipay/notify'
+  pay-return-url: '/pay/finish/{orderId}'
+  fee-rate-use-alipay: 0.007   #支付宝支付手续费
+  cert-key-dir: '/var/mfpay/alipay/'
+  
 #信息管理平台
 messmp:
   messmp-server-url: 'http://172.18.235.107:8888'
@@ -55,7 +64,11 @@ messmp:
   verify-email-vericode: '/email/vericode/verify'
   send-phone-resetpwd: '/sms/resetpwd/send'
   send-email-resetpwd: '/email/resetpwd/send'
-  
+ 
+#物流查询
+logistics:
+  alicloudapi-appcode: 'c1f1103e8f2a4283a6ca696cddb4242c' 
+ 
 ######系统参数############  
 sys:
   tmp-file-dir: '/var/mfyx/tmp/'  #系统临时目录
@@ -69,8 +82,8 @@ sys:
   vip_activate_need_score: 1000 #激活会员需要多少积分
   spread_per_user_score: 50     #每推广一个用户可获得多少积分
   spread_per_mcht_score: 100    #推广一个商家可获得会员积分
-  spread_user_profit_ratio: 0.003 #推广买家可获得所推广买家交易额的千分之三
-  spread_mcht_profit_ratio: 0.003 #推广商家可获得所推广商家交易额的千分之三
+  spread_user_profit_ratio: 0.001 #推广买家可获得所推广买家交易额的千分之三
+  spread_mcht_profit_ratio: 0.001 #推广商家可获得所推广商家交易额的千分之三
   partner_open_need_socre: 1500   #开通合作伙伴需要多少积分
   trade_score_one_yuan: 1         #每消费一元获得多少积分
   
@@ -82,9 +95,14 @@ sys:
   order-4pay-cnt-all-limit: 30    #每个用户可持有的所有待付款订单数
   order-4pay-cnt-goods-limit: 1   #每个用户可持有的单个商品待付款订单数
   order-nodelivery-days-4refund: 3    #超过3天卖家未发货买家可申请退款
-  order-nosign-days-4refund: 10       #至卖家发货之后超过10天买家没有获得签收可申请退款
-  
+  order-nosign-days-4refund: 7        #自卖家发货之后超过N天买家没有获得签收可申请退款
+  order-sign-prolong-days: 5      #每次申请可延长签收天数
+  order-auto-appr-days: 7         #自从签收后超过N天没有评价则系统自动好评
+  order-amount-unfreeze-days: 10  #自从买家评价后超过N天后商家卖款解冻
+   
   user-collection-limit: 20 #每个用户可有的收藏数量
   
   vip-account-cnt-limit: 5 #会员用户的账户数量限制
+  
+  
   

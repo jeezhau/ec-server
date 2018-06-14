@@ -325,8 +325,9 @@ public class OrderServiceImpl implements OrderService{
 	 * @param mchtVipId	卖家会员账户ID
 	 * @param reason		退款理由
 	 * @return {errcode,errmsg}
+	 * @throws Exception 
 	 */
-	public JSONObject cancelOrder(Order order,Integer userVipId,Integer mchtVipId,String reason) {
+	public JSONObject cancelOrder(Order order,Integer userVipId,Integer mchtVipId,String reason) throws Exception {
 		JSONObject jsonRet = new JSONObject();
 		JSONObject ctn = new JSONObject();
 		ctn.put("reason", reason);
@@ -355,20 +356,21 @@ public class OrderServiceImpl implements OrderService{
 			}
 			return jsonRet;
 		}
-		if(!"11".equals(order.getStatus()) && !"20".equals(order.getStatus())) {
+		if(!"11".equals(order.getStatus()) && !"20".equals(order.getStatus()) && !"DF".equals(order.getStatus())) {
 			jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-			jsonRet.put("errmsg","您当前不可执行退款！！");
+			jsonRet.put("errmsg","您当前不可执行取消并退款！！");
 			return jsonRet;
 		}
 		
 		//查询已有最新支付流水单
-		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),null);
-		if(oldFlow == null) {
+		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),"1");
+		if(oldFlow == null || !"11".equals(oldFlow.getStatus())) {
 			jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-			jsonRet.put("errmsg","系统没有您的支付流水信息！");
+			jsonRet.put("errmsg","系统没有您的支付成功流水信息！");
 			return jsonRet;
 		}
-		if(!"11".equals(oldFlow.getStatus())) {
+		oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),null);
+		if(oldFlow == null || (!"11".equals(oldFlow.getStatus()) && !"F2".equals(oldFlow.getStatus()))) {
 			jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
 			jsonRet.put("errmsg","您的订单没有支付成功信息（未支付到账、支付失败或已退款）！");
 			return jsonRet;
@@ -513,13 +515,14 @@ public class OrderServiceImpl implements OrderService{
 	 * @param userVip
 	 * @param order
 	 * @param mchtVipId
+	 * @throws Exception 
 	 */
 	@Override
-	public void execPaySucc(boolean useBal,PayFlow oldPayFlow,VipBasic userVip,Order order,Integer mchtVipId,String outFinishId) {
+	public void execPaySucc(boolean useBal,PayFlow oldPayFlow,VipBasic userVip,Order order,Integer mchtVipId,String outFinishId) throws Exception {
 		//添加现金余额流水
 		this.changeFlowService.paySuccess(useBal, oldPayFlow.getPayAmount(), userVip, 
 				"商品购买【订单号:" + oldPayFlow.getOrderId() + "】", 
-				oldPayFlow.getUserId(), mchtVipId);
+				oldPayFlow.getUserId(), mchtVipId,oldPayFlow.getOrderId());
 		//更新会员积分
 		this.vipBasicService.updScore(userVip.getVipId(), (int)(oldPayFlow.getPayAmount()/100));
 		//更新支付流水
@@ -552,9 +555,10 @@ public class OrderServiceImpl implements OrderService{
 	 * @param accountId		付款人账户
 	 * @param outFinishId	外部支付单号
 	 * @return
+	 * @throws Exception 
 	 */
 	@Override
-	public synchronized String outPaySucc(String payFlowId,Long totalAmount,String outFinishId) {
+	public synchronized String outPaySucc(String payFlowId,Long totalAmount,String outFinishId) throws Exception {
 		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(payFlowId);
 		if(payFlow == null) {
 			return "系统中没有该支付流水信息！";
@@ -616,8 +620,9 @@ public class OrderServiceImpl implements OrderService{
 	 * @param totalAmount
 	 * @param outFinishId
 	 * @return
+	 * @throws Exception 
 	 */
-	public String closePay(String payFlowId,Long totalAmount,String outFinishId) {
+	public String closePay(String payFlowId,Long totalAmount,String outFinishId) throws Exception {
 		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(payFlowId);
 		if(payFlow == null) {
 			return "系统中没有该支付流水信息！";
@@ -644,9 +649,10 @@ public class OrderServiceImpl implements OrderService{
 	 * @param userVip
 	 * @param order
 	 * @return {errcode,errmsg,payType,payTime,amount,fee}
+	 * @throws Exception 
 	 */
 	@Override
-	public JSONObject payFinish(VipBasic userVip,Order order) {
+	public JSONObject payFinish(VipBasic userVip,Order order) throws Exception {
 		JSONObject jsonRet = new JSONObject();
 		//查询已有最新支付、退款流水单
 		PayFlow oldFlow = this.payFlowMapper.selectLastestFlow(order.getOrderId(),null);
@@ -744,30 +750,32 @@ public class OrderServiceImpl implements OrderService{
 	 * 3、更新订单售后信息；
 	 * @param isMcht		是否是商家申请退款
 	 * @param order		订单信息
-	 * @param payFlow	支付流水
+	 * @param payFlow	最近的支付或退款流水
 	 * @param userVipId	买家会员账户
 	 * @param mchtVipId	卖家会员ID
 	 * @param type		退款类型 ：0-买家取消，3-买家申请，卖家同意
 	 * @param reason		退款理由，对于收货退款，其中包含退款方式与快递信息
 	 * @return
+	 * @throws Exception 
 	 */
 	@Override
-	public JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,JSONObject reason) {
+	public JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,JSONObject reason) throws Exception {
 		JSONObject jsonRet = new JSONObject();
 	
 		String refundFlowId = CommonUtil.genPayFlowId(payFlow.getOrderId(), payFlow.getFlowId()); //退款流水ID
-		Long totalAmount = payFlow.getPayAmount();//退款总金额，分
+		Long totalAmount = null;//退款总金额，分
 		PayFlow refundFlow = null;
 		Date currTime = new Date();
 		String changeReason = ""; //资金变更流水理由前缀
 		if(!isMcht) {
 			changeReason = "买家取消全额退款";	//手续费由买家承担
+			totalAmount = payFlow.getPayAmount();
 		}else { //卖家申请退款
 			changeReason = "卖家申请全额退款";
 			totalAmount = payFlow.getPayAmount() + payFlow.getFeeAmount(); //手续费由卖家承担
 		}
 		if("1".equals(payFlow.getPayType())) {
-			//余额支付
+			//余额支付退款
 			refundFlow = new PayFlow();
 			refundFlow.setPayType("1");
 		}else if(payFlow.getPayType().startsWith("2")){
@@ -836,9 +844,10 @@ public class OrderServiceImpl implements OrderService{
 				updOrder.setAftersalesReason(asrArr.toJSONString());
 			}
 			this.orderMapper.updateByPrimaryKeySelective(updOrder);
-			//冻结卖家
-			this.changeFlowService.refundApply(payFlow.getPayAmount(), mchtVipId, changeReason, mchtVipId);
-			if("1".equals(payFlow.getPayType())) {//余额支付，执行退款成功
+			
+			//资金冻结
+			this.changeFlowService.refundApply(payFlow.getPayAmount(), mchtVipId, changeReason+"【订单号："+order.getOrderId()+"】", mchtVipId,payFlow.getOrderId());
+			if("1".equals(payFlow.getPayType())) {//余额退款，执行退款成功
 				this.execRefundSucc(true, refundFlow, userVipId, updOrder, mchtVipId, changeReason, null);
 			}
 		}
@@ -857,9 +866,10 @@ public class OrderServiceImpl implements OrderService{
 	 * @param totalAmount	退款金额
 	 * @param outFinishId	外部退款单号
 	 * @return
+	 * @throws Exception 
 	 */
 	@Override
-	public synchronized String outRefundSucc(String payFlowId,Long totalAmount,String outFinishId) {
+	public synchronized String outRefundSucc(String payFlowId,Long totalAmount,String outFinishId) throws Exception {
 		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(payFlowId);
 		if(payFlow == null) {
 			return "系统中没有该退款流水信息！";
@@ -885,9 +895,10 @@ public class OrderServiceImpl implements OrderService{
 	 * @param accountId		退款人账户
 	 * @param fail			失败信息
 	 * @return
+	 * @throws Exception 
 	 */
 	@Override
-	public synchronized String outRefundFail(String payFlowId,String outFinishId,String fail) {
+	public synchronized String outRefundFail(String payFlowId,String outFinishId,String fail) throws Exception {
 		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(payFlowId);
 		if(payFlow == null) {
 			return "系统中没有该退款流水信息！";
@@ -911,7 +922,7 @@ public class OrderServiceImpl implements OrderService{
 			}
 			this.orderMapper.updateByPrimaryKeySelective(updOrder);
 			//更新资金流水
-			this.changeFlowService.refundFail(payFlow.getPayAmount(), order.getMchtUId(), fail, order.getMchtUId());
+			this.changeFlowService.refundFail(payFlow.getPayAmount(), order.getMchtUId(), "退款失败【订单号："+order.getOrderId()+"】", order.getMchtUId(),payFlow.getOrderId());
 			return "00";
 		}
 		return "订单退款状态有误！";
@@ -925,13 +936,14 @@ public class OrderServiceImpl implements OrderService{
 	 * @param order		订单信息
 	 * @param mchtVipId	商家VIP
 	 * @param outFinishId 外部系统的退款单号
+	 * @throws Exception 
 	 */
-	private void execRefundSucc(boolean useBal,PayFlow refundFlow,Integer userVipId,Order order,Integer mchtVipId,String changeReason,String outFinishId) {
+	private void execRefundSucc(boolean useBal,PayFlow refundFlow,Integer userVipId,Order order,Integer mchtVipId,String changeReason,String outFinishId) throws Exception {
 		Long totalAmount = refundFlow.getPayAmount() + refundFlow.getFeeAmount();
 		//账户退款：更新用户与商家余额
 		Date currTime = new Date();
 		this.changeFlowService.refundSuccess(useBal, totalAmount, 
-				userVipId, changeReason + "【订单号:" + order.getOrderId() +"】", mchtVipId, mchtVipId);
+				userVipId, changeReason + "【订单号:" + order.getOrderId() +"】", mchtVipId, mchtVipId,refundFlow.getOrderId());
 		//更新会员积分
 		this.vipBasicService.updScore(userVipId, (int)(totalAmount/100));
 		//更新退款流水
@@ -948,7 +960,7 @@ public class OrderServiceImpl implements OrderService{
 		if("65".equals(order.getStatus())) {
 			newO.setStatus("66"); //退款成功
 		}else {
-			newO.setStatus("DS"); //退款成功
+			newO.setStatus("DR"); //退款成功
 		}
 		this.orderMapper.updateByPrimaryKeySelective(newO);
 		//更新库存:增加

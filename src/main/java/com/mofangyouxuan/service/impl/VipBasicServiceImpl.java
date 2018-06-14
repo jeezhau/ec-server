@@ -115,7 +115,7 @@ public class VipBasicServiceImpl implements VipBasicService{
 				}
 				flow.setSumFlag("1");
 				flow.setSumTime(sumTime);
-				this.changeFlowMapper.updateByPrimaryKeySelective(flow);
+				this.changeFlowMapper.updateSumFlag(flow);
 			}
 			SumBalLog sumLog = new SumBalLog();
 			sumLog.setVipId(id);
