@@ -9,13 +9,10 @@
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
-    <result column="phone" jdbcType="VARCHAR" property="phone" />
-    <result column="email" jdbcType="VARCHAR" property="email" />
     <result column="passwd" jdbcType="VARCHAR" property="passwd" />
   </resultMap>
   <sql id="Base_Column_List">
-    vip_id, scores, balance, freeze, create_time, status, update_time, phone, email, 
-    passwd
+    vip_id, scores, balance, freeze, create_time, status, update_time, passwd
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -32,13 +29,10 @@
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.VipBasic">
     insert into tb_vip_basic (vip_id, scores, balance, 
-      freeze, create_time, status, 
-      update_time, phone, email, 
-      passwd)
+      freeze, create_time, status, update_time)
     values (#{vipId,jdbcType=INTEGER}, #{scores,jdbcType=INTEGER}, #{balance,jdbcType=DECIMAL}, 
       #{freeze,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP}, #{status,jdbcType=CHAR}, 
-      #{updateTime,jdbcType=TIMESTAMP}, #{phone,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
-      #{passwd,jdbcType=VARCHAR})
+      #{updateTime,jdbcType=TIMESTAMP})
   </insert>
   
   <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.VipBasic">
@@ -62,12 +56,6 @@
       <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="phone != null">
-        phone = #{phone,jdbcType=VARCHAR},
-      </if>
-      <if test="email != null">
-        email = #{email,jdbcType=VARCHAR},
-      </if>
       <if test="passwd != null">
         passwd = #{passwd,jdbcType=VARCHAR},
       </if>
@@ -83,8 +71,6 @@
       create_time = #{createTime,jdbcType=TIMESTAMP},
       status = #{status,jdbcType=CHAR},
       update_time = #{updateTime,jdbcType=TIMESTAMP},
-      phone = #{phone,jdbcType=VARCHAR},
-      email = #{email,jdbcType=VARCHAR},
       passwd = #{passwd,jdbcType=VARCHAR}
     where vip_id = #{vipId,jdbcType=INTEGER}
   </update>

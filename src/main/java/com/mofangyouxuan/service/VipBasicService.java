@@ -52,22 +52,6 @@ public interface VipBasicService {
 	public int updPwd(Integer vipId,String passwd);
 	
 	/**
-	 * 更新手机号
-	 * @param vipId
-	 * @param phone
-	 * @return
-	 */
-	public int updPhone(Integer vipId,String phone);
-	
-	/**
-	 * 更新邮箱
-	 * @param vipId
-	 * @param email
-	 * @return
-	 */
-	public int updEmail(Integer vipId,String email);
-	
-	/**
 	 * 更新会员积分
 	 * @param vipId
 	 * @param subScore 需要增加的积分

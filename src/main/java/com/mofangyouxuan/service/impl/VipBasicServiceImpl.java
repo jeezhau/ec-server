@@ -237,32 +237,4 @@ public class VipBasicServiceImpl implements VipBasicService{
 	}
 	
 	
-	/**
-	 * 更新手机号
-	 * @param vipId
-	 * @param phone
-	 * @return
-	 */
-	public int updPhone(Integer vipId,String phone) {
-		VipBasic vip = new VipBasic();
-		vip.setVipId(vipId);
-		vip.setPhone(phone);
-		int cnt = this.vipBasicMapper.updateByPrimaryKeySelective(vip);
-		return cnt;
-	}
-	
-	/**
-	 * 更新邮箱
-	 * @param vipId
-	 * @param email
-	 * @return
-	 */
-	public int updEmail(Integer vipId,String email) {
-		VipBasic vip = new VipBasic();
-		vip.setVipId(vipId);
-		vip.setEmail(email);
-		int cnt = this.vipBasicMapper.updateByPrimaryKeySelective(vip);
-		return cnt;
-	}
-	
 }

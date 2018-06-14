@@ -41,7 +41,8 @@
     select 
     <include refid="Base_Column_List" />
     from tb_user_basic
-    where open_id = #{openId,jdbcType=VARCHAR} 
+    where user_id = #{openId,jdbcType=INTEGER} 
+    	    or open_id = #{openId,jdbcType=VARCHAR} 
     		or union_id = #{openId,jdbcType=VARCHAR} 
     		or email = #{openId,jdbcType=VARCHAR}
     		or phone = #{openId,jdbcType=VARCHAR}

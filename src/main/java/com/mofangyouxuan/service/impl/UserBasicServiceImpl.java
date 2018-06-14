@@ -106,4 +106,48 @@ public class UserBasicServiceImpl implements UserBasicService{
 		return this.userBasicMapper.countSpreadUsers(userId);
 	}
 
+	/**
+	 * 更新密码
+	 * @param userId
+	 * @param passwd
+	 * @return
+	 */
+	@Override
+	public int updPwd(Integer userId,String passwd) {
+		UserBasic user = new UserBasic();
+		user.setUserId(userId);
+		user.setPasswd(passwd);
+		int cnt = this.userBasicMapper.updateByPrimaryKey(user);
+		return cnt;
+	}
+	
+	
+	/**
+	 * 更新手机号
+	 * @param userId
+	 * @param phone
+	 * @return
+	 */
+	public int updPhone(Integer userId,String phone) {
+		UserBasic user = new UserBasic();
+		user.setUserId(userId);
+		user.setPhone(phone);
+		int cnt = this.userBasicMapper.updateByPrimaryKey(user);
+		return cnt;
+	}
+	
+	/**
+	 * 更新邮箱
+	 * @param userId
+	 * @param email
+	 * @return
+	 */
+	public int updEmail(Integer userId,String email) {
+		UserBasic user = new UserBasic();
+		user.setUserId(userId);
+		user.setEmail(email);
+		int cnt = this.userBasicMapper.updateByPrimaryKey(user);
+		return cnt;
+	}
+	
 }

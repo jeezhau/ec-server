@@ -38,5 +38,29 @@ public interface UserBasicService {
 	 * @return
 	 */
 	public int countSpreadUsers(Integer userId);
+	
+	/**
+	 * 更新登录密码
+	 * @param userId
+	 * @param passwd
+	 * @return
+	 */
+	public int updPwd(Integer userId,String passwd);
+	
+	/**
+	 * 更新手机号
+	 * @param userId
+	 * @param phone
+	 * @return
+	 */
+	public int updPhone(Integer userId,String phone);
+	
+	/**
+	 * 更新邮箱
+	 * @param userId
+	 * @param email
+	 * @return
+	 */
+	public int updEmail(Integer userId,String email);
 
 }
