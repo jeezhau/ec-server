@@ -109,12 +109,12 @@ public class UserBasicAction {
 					jsonRet.put("errmsg", "邮箱或手机号不可都为空！ ");
 					return jsonRet.toString();
 				}
-				if(veriCode.length() != 6) {
+				if(veriCode == null || veriCode.length() != 6) {
 					jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
 					jsonRet.put("errmsg", "验证码：格式不正确！");
 					return jsonRet.toString();
 				}
-				if(email != null) {
+				if(email != null && email.length()>1) {
 					if(!email.matches(this.regexpEmail)) {
 						jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
 						jsonRet.put("errmsg", "邮箱：格式不正确！");
@@ -136,7 +136,7 @@ public class UserBasicAction {
 					}
 					unique = email;
 				}
-				if(phone != null) {
+				if(phone != null && phone.length()>0) {
 					if(!phone.matches(this.regexpPhone)) {
 						jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
 						jsonRet.put("errmsg", "手机号：格式不正确！");
@@ -163,7 +163,7 @@ public class UserBasicAction {
 					jsonRet.put("errmsg", " 密码: 长度 6-20 个字符. ");
 					return jsonRet.toString();
 				}else {
-					userBasic.setPasswd(SignUtils.encodeSHAHex(passwd));//加密明文密码
+					userBasic.setPasswd(SignUtils.encodeSHA256Hex(passwd));//加密明文密码
 				}
 				
 				
