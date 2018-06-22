@@ -17,6 +17,8 @@ public class PartnerBasic {
     @Pattern(regexp="[12]",message="合作伙伴类型：取值【1-商家，2-招商推广】！")
     private String pbTp;
 
+    private Integer upPartnerId;
+    
     @NotNull(message=" 国家：不可为空！")
     @Size(min=2,max=50,message=" 国家：长度范围2-50字符 ！")
     private String country;
@@ -85,8 +87,8 @@ public class PartnerBasic {
     private Date updateTime;
 
     private String reviewLog;
-
-    private Integer reviewOpr;
+    //审批人员：上级合作伙伴ID#员工ID
+    private String reviewOpr;
 
     @Null
     private Date reviewTime;
@@ -112,6 +114,15 @@ public class PartnerBasic {
 
 	public void setVipId(Integer vipId) {
 		this.vipId = vipId;
+	}
+
+	
+	public Integer getUpPartnerId() {
+		return upPartnerId;
+	}
+
+	public void setUpPartnerId(Integer upPartnerId) {
+		this.upPartnerId = upPartnerId;
 	}
 
 	public String getCountry() {
@@ -265,11 +276,11 @@ public class PartnerBasic {
         this.reviewLog = reviewLog == null ? null : reviewLog.trim();
     }
 
-    public Integer getReviewOpr() {
+    public String getReviewOpr() {
         return reviewOpr;
     }
 
-    public void setReviewOpr(Integer reviewOpr) {
+    public void setReviewOpr(String reviewOpr) {
         this.reviewOpr = reviewOpr;
     }
 
@@ -320,7 +331,6 @@ public class PartnerBasic {
 	public void setScoreGoods(String scoreGoods) {
 		this.scoreGoods = scoreGoods;
 	}
-    
-	
+
 	
 }

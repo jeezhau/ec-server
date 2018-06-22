@@ -5,6 +5,7 @@
     <id column="partner_id" jdbcType="INTEGER" property="partnerId" />
     <result column="vip_id" jdbcType="INTEGER" property="vipId" />
     <result column="pb_Tp" jdbcType="VARCHAR" property="pbTp" />
+    <result column="up_partnerId" jdbcType="INTEGER" property="upPartnerId" />
     <result column="country" jdbcType="VARCHAR" property="country" />
     <result column="province" jdbcType="VARCHAR" property="province" />
     <result column="city" jdbcType="VARCHAR" property="city" />
@@ -24,14 +25,15 @@
     <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
     <result column="review_log" jdbcType="VARCHAR" property="reviewLog" />
-    <result column="review_opr" jdbcType="INTEGER" property="reviewOpr" />
+    <result column="review_opr" jdbcType="VARCHAR" property="reviewOpr" />
     <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
     <result column="score_logis" jdbcType="VARCHAR" property="scoreLogis" />
     <result column="score_serv" jdbcType="VARCHAR" property="scoreServ" />
     <result column="score_goods" jdbcType="VARCHAR" property="scoreGoods" />
+   
   </resultMap>
   <sql id="Base_Column_List">
-    partner_id, vip_id, pb_tp,country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
+    partner_id, vip_id, pb_tp, up_partnerId, country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
     comp_type, comp_name, licence_no, phone, location_x, location_y, introduce,status, 
     update_opr, update_time, review_log, review_opr, review_time,score_logis,score_serv,score_goods
   </sql>
@@ -56,27 +58,52 @@
   </delete>
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.PartnerBasic"  keyProperty="partnerId" useGeneratedKeys="true">
-    insert into tb_partner_basic (partner_id, vip_id, pb_tp,country, 
-      province, city, area, 
+    insert into tb_partner_basic (partner_id, vip_id, pb_tp, up_partnerId,
+      country, province, city, area, 
       addr, busi_name, legal_pername, 
       legal_peridno, comp_type,comp_name, licence_no, 
       phone, location_x, location_y, introduce,
       status, update_opr, update_time, review_log, review_opr, review_time,
       score_logis,score_serv,score_goods
       )
-    values (#{partnerId,jdbcType=INTEGER}, #{vipId,jdbcType=INTEGER}, #{pbTp,jdbcType=VARCHAR},#{country,jdbcType=VARCHAR}, 
-      #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
+    values (#{partnerId,jdbcType=INTEGER}, #{vipId,jdbcType=INTEGER}, #{pbTp,jdbcType=VARCHAR},#{upPartnerId,jdbcType=INTEGER},
+      #{country,jdbcType=VARCHAR}, #{province,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, #{area,jdbcType=VARCHAR}, 
       #{addr,jdbcType=VARCHAR}, #{busiName,jdbcType=VARCHAR}, #{legalPername,jdbcType=VARCHAR}, 
       #{legalPeridno,jdbcType=VARCHAR}, #{compType,jdbcType=CHAR},#{compName,jdbcType=VARCHAR}, #{licenceNo,jdbcType=VARCHAR}, 
       #{phone,jdbcType=VARCHAR}, #{locationX,jdbcType=DECIMAL}, #{locationY,jdbcType=DECIMAL},
       #{introduce,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, #{updateOpr,jdbcType=INTEGER},#{updateTime,jdbcType=TIMESTAMP}, 
-      #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=INTEGER}, #{reviewTime,jdbcType=TIMESTAMP},
+      #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=VARCHAR}, #{reviewTime,jdbcType=TIMESTAMP},
       #{scoreLogis,jdbcType=VARCHAR},#{scoreServ,jdbcType=VARCHAR},#{scoreGoods,jdbcType=VARCHAR}
       )
   </insert>
- 
 
-  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PartnerBasic">
+   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PartnerBasic">
+    update tb_partner_basic
+    set country = #{country,jdbcType=VARCHAR},
+        province = #{province,jdbcType=VARCHAR},
+        city = #{city,jdbcType=VARCHAR},
+        area = #{area,jdbcType=VARCHAR},
+        addr = #{addr,jdbcType=VARCHAR},
+        busi_name = #{busiName,jdbcType=VARCHAR},
+        legal_pername = #{legalPername,jdbcType=VARCHAR},
+        legal_peridno = #{legalPeridno,jdbcType=VARCHAR},
+        comp_type = #{compType,jdbcType=CHAR},
+        comp_name = #{compName,jdbcType=VARCHAR},
+        licence_no = #{licenceNo,jdbcType=VARCHAR},
+        phone = #{phone,jdbcType=VARCHAR},
+        location_x = #{locationX,jdbcType=DECIMAL},
+        location_y = #{locationY,jdbcType=DECIMAL},
+        introduce = #{introduce,jdbcType=VARCHAR},
+        status = #{status,jdbcType=CHAR},
+        update_opr = #{updateOpr,jdbcType=INTEGER},
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+        review_log = null,
+        review_opr = null,
+        review_time = null
+    where partner_id = #{partnerId,jdbcType=INTEGER}
+  </update>
+
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.PartnerBasic">
     update tb_partner_basic
     <set>
       <if test="vipId != null">
@@ -84,6 +111,9 @@
       </if>
       <if test="pbTp != null">
         pb_tp = #{pbTp,jdbcType=VARCHAR},
+      </if>
+      <if test="upPartnerId != null">
+        up_partnerId = #{upPartnerId,jdbcType=INTEGER},
       </if>      
       <if test="country != null">
         country = #{country,jdbcType=VARCHAR},
@@ -143,7 +173,7 @@
         review_log = #{reviewLog,jdbcType=VARCHAR},
       </if>
       <if test="reviewOpr != null">
-        review_opr = #{reviewOpr,jdbcType=INTEGER},
+        review_opr = #{reviewOpr,jdbcType=VARCHAR},
       </if>
       <if test="reviewTime != null">
         review_time = #{reviewTime,jdbcType=TIMESTAMP},
@@ -159,6 +189,83 @@
      p.score_goods = concat(ifnull(substring_index(p.score_goods,'/',1),0)+ #{scoreGoods,jdbcType=INTEGER} , '/' , ifnull(substring_index(p.score_goods,'/',-1),0)+1)
     where p.partner_id = #{partnerId,jdbcType=INTEGER}
   </update>
+  
+  <sql id="whereSql">
+    <where>
+      <if test="params.vipId != null">
+        and vip_id = #{params.vipId,jdbcType=INTEGER}
+      </if>
+      <if test="params.pbTp != null and params.pbTp != ''">
+        and pb_tp = #{params.pbTp,jdbcType=VARCHAR}
+      </if>
+      <if test="params.upPartnerId != null">
+        and up_partnerId = #{params.upPartnerId,jdbcType=INTEGER}
+      </if>      
+      <if test="params.country != null and params.country != ''">
+        and country = #{params.country,jdbcType=VARCHAR}
+      </if>
+      <if test="params.province != null and params.province != ''">
+        and province = #{params.province,jdbcType=VARCHAR}
+      </if>
+      <if test="params.city != null and params.city != ''">
+        and city = #{params.city,jdbcType=VARCHAR}
+      </if>
+      <if test="params.area != null and params.area != ''">
+        and area = #{params.area,jdbcType=VARCHAR}
+      </if>
+      <if test="params.addr != null and params.addr != ''">
+        and addr = #{params.addr,jdbcType=VARCHAR}
+      </if>
+      <if test="params.busiName != null and params.busiName != ''">
+        and busi_name = #{params.busiName,jdbcType=VARCHAR}
+      </if>
+      <if test="params.legalPername != null and params.legalPername != ''">
+        and legal_pername = #{params.legalPername,jdbcType=VARCHAR}
+      </if>
+      <if test="params.legalPeridno != null and params.legalPeridno != ''">
+        and legal_peridno = #{params.legalPeridno,jdbcType=VARCHAR}
+      </if>
+      <if test="params.compType != null and params.compType != ''">
+        and comp_type = #{params.compType,jdbcType=CHAR}
+      </if>      
+      <if test="params.compName != null and params.compName != ''">
+        and comp_name = #{params.compName,jdbcType=VARCHAR}
+      </if>
+      <if test="params.licenceNo != null and params.licenceNo != ''">
+        and licence_no = #{params.licenceNo,jdbcType=VARCHAR}
+      </if>
+      <if test="params.phone != null and params.phone != ''">
+        and phone = #{params.phone,jdbcType=VARCHAR}
+      </if>     
+      <if test="params.beginUpdateTime != null">
+        and update_time &gt;= concat(#{params.beginUpdateTime,jdbcType=TIMESTAMP},' 00:00:00')
+      </if>
+      <if test="params.endUpdateTime != null">
+        and update_time &lt;= concat(#{params.endUpdateTime,jdbcType=TIMESTAMP},' 23:59:59')
+      </if>            
+      <if test="params.status != null and params.status != ''">
+        and LOCATE(status,#{params.status,jdbcType=CHAR}) &gt; 0
+      </if>
+    </where>
+  </sql>
+  
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+   select 
+    <include refid="Base_Column_List" />
+    from tb_partner_basic 
+     <include refid="whereSql" />
+    <if test="sorts">
+    ${sorts}
+    </if>
+    limit #{pageCond.begin},#{pageCond.pageSize} 
+  </select>
+  
+  <select id="countAll" parameterType="map" resultType="int">
+   select count(1) cnt
+    from tb_partner_basic 
+     <include refid="whereSql" />
+  </select>
+  
   
 </mapper>
 

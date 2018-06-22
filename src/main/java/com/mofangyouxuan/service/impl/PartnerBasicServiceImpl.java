@@ -1,12 +1,15 @@
 package com.mofangyouxuan.service.impl;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mofangyouxuan.common.ErrCodes;
+import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.mapper.PartnerBasicMapper;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.service.PartnerBasicService;
@@ -61,28 +64,39 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 	 * @return 更新记录数
 	 */
 	@Override
-	public int update(PartnerBasic basic) {
+	public int updateBasic(PartnerBasic basic) {
 		basic.setUpdateTime(new Date());
 		return this.partnerBasicMapper.updateByPrimaryKey(basic);
 	}
 	
 	/**
+	 * 自己更新合作伙伴信息
+	 * @param basic
+	 * @return 更新记录数
+	 */
+	@Override
+	public int updateSelective(PartnerBasic basic) {
+		basic.setUpdateTime(new Date());
+		return this.partnerBasicMapper.updateByPrimaryKeySelective(basic);
+	}
+	
+	/**
 	 * 记录审批人员的审批结果
 	 * @param partnerId	合作伙伴ID
-	 * @param oprId	审批人员ID
+	 * @param reviewPidUid	审批人员：上级合作伙伴ID#员工ID
 	 * @param review	审批意见
 	 * @param result	审批结果
 	 * @return 更新记录数
 	 */
 	@Override
-	public int review(Integer partnerId,Integer oprId,String review,String result) {
+	public int review(Integer partnerId,String reviewPidUid,String review,String result) {
 		PartnerBasic basic = new PartnerBasic();
 		basic.setPartnerId(partnerId);
-		basic.setReviewOpr(oprId);
+		basic.setReviewOpr(reviewPidUid);
 		basic.setReviewLog(review);
 		basic.setReviewTime(new Date());
 		basic.setStatus(result);
-		return this.partnerBasicMapper.updateByPrimaryKey(basic);
+		return this.partnerBasicMapper.updateByPrimaryKeySelective(basic);
 	}
 	
 
@@ -97,7 +111,7 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 		PartnerBasic basic = new PartnerBasic();
 		basic.setPartnerId(partnerId);
 		basic.setStatus(newStatus);
-		return this.partnerBasicMapper.updateByPrimaryKey(basic);
+		return this.partnerBasicMapper.updateByPrimaryKeySelective(basic);
 	}
 
 	/**
@@ -109,5 +123,31 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 	public void updScore(Integer partnerId,Integer scoreLogis,Integer scoreServ,Integer scoreGoods) {
 		this.partnerBasicMapper.updateScore(partnerId, scoreLogis, scoreServ, scoreGoods);
 	}
+	
+	/**
+	 * 获取所有的合作伙伴信息
+	 * 
+	 * @param params
+	 * @param sorts
+	 * @param pageCond
+	 * @return
+	 */
+	public List<PartnerBasic> getAll(Map<String,Object> params,String sorts,PageCond pageCond){
+		if(pageCond == null) {
+			pageCond = new PageCond(0,20);
+		}
+		return this.partnerBasicMapper.selectAll(params, sorts, pageCond);
+	}
+	
+	
+	/**
+	 * 统计所有的合作伙伴数量
+	 * @param params
+	 * @return
+	 */
+	public int countAll(Map<String,Object> params) {
+		return this.partnerBasicMapper.countAll(params);
+	}
+	
 	
 }

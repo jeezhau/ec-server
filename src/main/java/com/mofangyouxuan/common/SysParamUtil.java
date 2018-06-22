@@ -20,6 +20,12 @@ public class SysParamUtil {
 	@Autowired
 	private SysParamService sysParamService;
 	
+	//系统顶级合作伙伴ID
+	private Integer sysPartnerId = 1000;
+	public Integer getSysPartnerId() {
+		return this.sysPartnerId;
+	}
+	
 	//微信手续费费率
 	@Value("${wxpay.fee-rate-use-wxpay}")
 	private BigDecimal wxFeeRate;		

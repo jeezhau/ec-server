@@ -7,7 +7,9 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
@@ -29,16 +31,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
+import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.PartnerStaff;
-import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.PartnerStaffService;
-import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.FileFilter;
 import com.mofangyouxuan.utils.SignUtils;
@@ -58,9 +60,8 @@ public class PartnerBasicController {
 	@Value("${sys.partner-img-dir}")
 	private String partnerImgDir;	//合作伙伴照片保存目录
 	
-	private String[] certTypeArr = {"logo","idcard1","idcard2","licence"}; 	//当前支持的证件类型
-	@Autowired
-	private UserBasicService userBasicService;
+	private String[] certTypeArr = {"logo","idcard1","idcard2","licence","agreement"}; 	//当前支持的证件类型
+
 	@Autowired
 	private VipBasicService vipBasicService;
 	
@@ -197,6 +198,14 @@ public class PartnerBasicController {
 					return jsonRet.toString();
 				}
 			}
+			if(basic.getUpPartnerId() != null) {
+				PartnerBasic newUp = this.partnerBasicService.getByID(basic.getUpPartnerId());
+				if(newUp == null || !"S".equals(newUp.getStatus())) {
+					jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+					jsonRet.put("errmsg", "该上级合作伙伴不存在！");
+					return jsonRet.toString();
+				}
+			}
 			//证件照必填检查
 			File tempCertDir = new File(this.partnerImgDir +  "VIPID_" + basic.getVipId() + "/cert/" );  //临时目录
 			if(!tempCertDir.exists() || !tempCertDir.isDirectory()) {
@@ -214,14 +223,16 @@ public class PartnerBasicController {
 				jsonRet.put("errmsg", "您还未上传法人身份证照片！");
 				return jsonRet.toString();
 			}
-			//String compType = basic.getCompType();
-			//if("2".equals(compType)) {
-				if(tempCertDir.listFiles(new FileFilter("licence")).length<=0 ) {
-					jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
-					jsonRet.put("errmsg", "您还未上传公司营业执照或小微商户法人手持身份证正面照片！");
-					return jsonRet.toString();
-				}
-			//}
+			if(tempCertDir.listFiles(new FileFilter("licence")).length<=0 ) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
+				jsonRet.put("errmsg", "您还未上传公司营业执照或小微商户法人手持身份证正面照片！");
+				return jsonRet.toString();
+			}
+			if(tempCertDir.listFiles(new FileFilter("agreement")).length<=0 ) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
+				jsonRet.put("errmsg", "您还未上传签约协议照片！");
+				return jsonRet.toString();
+			}
 			//密码验证
 			if(vip.getPasswd() == null || vip.getPasswd().length()<10) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
@@ -240,11 +251,11 @@ public class PartnerBasicController {
 			basic.setReviewTime(null);
 			Integer id = this.partnerBasicService.add(basic);
 			if(id == null) {
-				File certDir = new File(this.partnerImgDir +  "PARTNERID_" + id + "/cert/" ); //初次确立后不可变更
-				FileUtils.moveDirectory(tempCertDir, certDir);
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
+				File certDir = new File(this.partnerImgDir +  "PARTNERID_" + id + "/cert/" ); //初次确立后不可变更
+				FileUtils.moveDirectory(tempCertDir, certDir);
 				jsonRet.put("errcode", 0);
 				jsonRet.put("partnerId", id);
 				jsonRet.put("errmsg", "ok");
@@ -260,7 +271,7 @@ public class PartnerBasicController {
 	
 	/**
 	 * 会员自己或员工更新合作伙伴
-	 * 
+	 * 1、合作伙伴类型，上级ID不可变更；
 	 * @param basic	合作伙伴信息
 	 * @param result 字段验证结果
 	 * 
@@ -329,14 +340,16 @@ public class PartnerBasicController {
 				jsonRet.put("errmsg", "您还未上传法人身份证照片！");
 				return jsonRet.toString();
 			}
-			//String compType = basic.getCompType();
-			//if("2".equals(compType)) {
-				if(certDir.listFiles(new FileFilter("licence")).length<=0 ) {
-					jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
-					jsonRet.put("errmsg", "您还未上传公司营业执照或小微商户法人手持身份证正面照片！");
-					return jsonRet.toString();
-				}
-			//}
+			if(certDir.listFiles(new FileFilter("licence")).length<=0 ) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
+				jsonRet.put("errmsg", "您还未上传公司营业执照或小微商户法人手持身份证正面照片！");
+				return jsonRet.toString();
+			}
+			if(certDir.listFiles(new FileFilter("agreement")).length<=0 ) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
+				jsonRet.put("errmsg", "您还未上传签约协议照片！");
+				return jsonRet.toString();
+			}
 			//操作员与密码验证
 			Boolean isPass = false;
 			String signPwd = SignUtils.encodeSHA256Hex(passwd);
@@ -362,7 +375,7 @@ public class PartnerBasicController {
 			basic.setReviewOpr(null);
 			basic.setReviewTime(null);
 			
-			int cnt = this.partnerBasicService.update(basic);
+			int cnt = this.partnerBasicService.updateBasic(basic);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
@@ -449,57 +462,6 @@ public class PartnerBasicController {
 			}
 		}catch(Exception e) {
 			//数据处理
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet.toString();
-	}
-	
-	/**
-	 * 合作伙伴审核
-	 * 
-	 * @param partnerId	带审批合作伙伴ID
-	 * @param currUserId	审批人
-	 * @param review 审批意见
-	 * @param result 审批结果：S-通过，R-拒绝
-	 * 
-	 * @return {errcode:0,errmsg:"ok"}
-	 * @throws JSONException
-	 */
-	@RequestMapping("/review")
-	public String review(@RequestParam(value="partnerId",required=true)Integer partnerId,
-			@RequestParam(value="currUserId",required=true)Integer currUserId,
-			@RequestParam(value="review",required=true)String review,
-			@RequestParam(value="result",required=true)String result){
-		JSONObject jsonRet = new JSONObject();
-		try {
-			UserBasic user = this.userBasicService.get(currUserId);
-			if(user == null || user.getUserId()<100 || user.getUserId()>=1000) {
-				jsonRet.put("errcode", ErrCodes.USER_NOT_REVIEW_ADMIN);
-				jsonRet.put("errmsg", "该用户不是审核管理员！");
-				return jsonRet.toString();
-			}
-			PartnerBasic old = this.partnerBasicService.getByID(partnerId);
-			if(old == null || !"0".equals(old.getStatus())) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
-				jsonRet.put("errmsg", "该合作伙伴不存在或状态不正确！");
-				return jsonRet.toString();
-			}
-			if(!"S".equals(result) && !"R".equals(result)) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "审批结果不正确（S-通过，R-拒绝）！");
-				return jsonRet.toString();
-			}
-			int cnt = this.partnerBasicService.review(partnerId, currUserId, review, result);
-			if(cnt < 1) {
-				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-				jsonRet.put("errmsg", "数据保存至数据库失败！");
-			}else {
-				jsonRet.put("errcode", 0);
-				jsonRet.put("errmsg", "ok");
-			}
-		}catch(Exception e) {
-			//异常处理
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
@@ -611,6 +573,7 @@ public class PartnerBasicController {
 		return jsonRet.toString();
 		
 	}
+	
 	/**
 	 * 显示证件照
 	 * @param certType
@@ -637,4 +600,313 @@ public class PartnerBasicController {
 			ImageIO.write(image, type, os); 
 		}
 	}
+
+
+	/**
+	 * 变更上级合作伙伴
+	 * 1、合作伙伴上级变更其下级；
+	 * 2、顶级合作伙伴为其变更；
+	 * @param partnerId	被操作的合作伙伴ID
+	 * @param newUpId	新的上级ID
+	 * @param oldUpId	旧的上级ID
+	 * @param oprPartnerId	操作人合作伙伴
+	 * @param operator	操作人ID
+	 * @param passwd		操作密码
+	 * @return
+	 */
+	@RequestMapping("/changeUp")
+	public Object changeUpPartner(@RequestParam(value="partnerId",required=true)Integer partnerId,
+		@RequestParam(value="newUpId",required=true)Integer newUpId,
+		@RequestParam(value="oprPartnerId",required=true)Integer oprPartnerId,
+		@RequestParam(value="operator",required=true)Integer operator,
+		@RequestParam(value="passwd",required=true)String passwd) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			
+			//数据检查
+			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
+			if(partner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+				jsonRet.put("errmsg", "目标合作伙伴不存在！");
+				return jsonRet.toString();
+			}
+			PartnerBasic oprPartner = this.partnerBasicService.getByID(oprPartnerId);
+			if(oprPartner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+				jsonRet.put("errmsg", "操作者合作伙伴不存在！");
+				return jsonRet.toString();
+			}
+			if(!oprPartnerId.equals(this.sysParamUtil.getSysPartnerId()) && !oprPartnerId.equals(partner.getUpPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权限执行该操作！");
+				return jsonRet.toString();
+			}
+			PartnerBasic newUp = this.partnerBasicService.getByID(newUpId);
+			if(newUp == null || !"S".equals(newUp.getStatus()) || !newUp.getPbTp().contains("2")) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+				jsonRet.put("errmsg", "新推广上级合作伙伴不存在！");
+				return jsonRet.toString();
+			}
+			
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(operator.equals(oprPartner.getVipId())) { //绑定会员
+				VipBasic vip = this.vipBasicService.get(operator);
+				if(vip == null || !"1".equals(vip.getStatus()) ) {
+					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+					return jsonRet.toString();
+				}
+				if(signPwd.equals(vip.getPasswd())) {
+					isPass = true;
+				}
+			}
+			if(isPass != true) {
+				PartnerStaff staff = this.partnerStaffService.get(oprPartnerId, operator);
+				if(staff != null && staff.getTagList() != null && staff.getTagList().contains("mypartners") && signPwd.equals(staff.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			
+			//数据处理保存
+			PartnerBasic upd = new PartnerBasic();
+			upd.setPartnerId(partnerId);
+			upd.setUpPartnerId(newUpId);
+			upd.setUpdateOpr(operator);
+			int cnt = this.partnerBasicService.updateSelective(upd);
+			if(cnt < 1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+				jsonRet.put("errmsg", "数据保存至数据库失败！");
+			}else {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			}
+		}catch(Exception e) {
+			//异常处理
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	
+	/**
+	 * 合作伙伴审核与抽查
+	 * 上级审批下级信息
+	 * 1、上级可对下级进行审核；
+	 * 2、顶级对所有合作伙伴进行最终审核；
+	 * 3、仅顶级审核通过后才算通过；
+	 * @param partnerId	待审批合作伙伴ID
+	 * @param review 	审批意见
+	 * @param result 	审批结果：S-通过，R-拒绝
+	 * @param rewPartnerId	审批人合作伙伴ID
+	 * @param operator	审批人ID，为上级合作伙伴的员工用户ID
+	 * @param passwd		审批人操作密码
+	 * 
+	 * @return {errcode:0,errmsg:"ok"}
+	 * @throws JSONException
+	 */
+	@RequestMapping("/review")
+	public String review(@RequestParam(value="partnerId",required=true)Integer partnerId,
+			@RequestParam(value="review",required=true)String review,
+			@RequestParam(value="result",required=true)String result,
+			@RequestParam(value="rewPartnerId",required=true)Integer rewPartnerId,
+			@RequestParam(value="operator",required=true)Integer operator,
+			@RequestParam(value="passwd",required=true)String passwd){
+		JSONObject jsonRet = new JSONObject();
+		try {
+			if(!"S".equals(result) && !"R".equals(result)) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "审批结果不正确（S-通过，R-拒绝）！");
+				return jsonRet.toString();
+			}
+			if(review == null || review.length()<2 || review.length()>600) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "审批意见：长度2-600字符！");
+				return jsonRet.toString();
+			}
+			//数据检查
+			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
+			if(partner == null || (!"0".equals(partner.getStatus()) && !partner.getStatus().contains("S") && !partner.getStatus().contains("R")) ) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+				jsonRet.put("errmsg", "该合作伙伴不存在或状态不正确！");
+				return jsonRet.toString();
+			}
+			PartnerBasic rewPartner = this.partnerBasicService.getByID(rewPartnerId);
+			if(rewPartner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+				jsonRet.put("errmsg", "审核者合作伙伴不存在！");
+				return jsonRet.toString();
+			}
+			if(!rewPartnerId.equals(this.sysParamUtil.getSysPartnerId()) && !rewPartnerId.equals(partner.getUpPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权限执行该操作！");
+				return jsonRet.toString();
+			}
+			
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(operator.equals(rewPartner.getVipId())) { //绑定会员
+				VipBasic vip = this.vipBasicService.get(operator);
+				if(vip == null || !"1".equals(vip.getStatus()) ) {
+					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+					return jsonRet.toString();
+				}
+				if(signPwd.equals(vip.getPasswd())) {
+					isPass = true;
+				}
+			}
+			if(isPass != true) {
+				PartnerStaff staff = this.partnerStaffService.get(rewPartnerId, operator);
+				if(staff != null && staff.getTagList() != null && staff.getTagList().contains("mypartners") && signPwd.equals(staff.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			if(!rewPartnerId.equals(this.sysParamUtil.getSysPartnerId())) {
+				result = result + "N";
+			}
+			//数据处理保存
+			int cnt = this.partnerBasicService.review(partnerId, rewPartnerId+"#"+operator, review, result);
+			if(cnt < 1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+				jsonRet.put("errmsg", "数据保存至数据库失败！");
+			}else {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			}
+		}catch(Exception e) {
+			//异常处理
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	/**
+	 * 查询指定查询条件、排序条件、分页条件的信息；
+	 * @param jsonSearchParams	查询条件:{partnerId,pbTp,upPartnerId,country,province,city,area,busiName,legalPername,legalPeridno,compType,compName,licenceNo,phone,status,beginUpdateTime,endUpdateTime}
+	 * @param jsonPageCond		分页信息:{begin:, pageSize:}
+	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
+	 */
+	@RequestMapping("/getall/{upPartnerId}")
+	public Object getAll(@PathVariable("upPartnerId")Integer upPartnerId,
+			String jsonSearchParams,String jsonPageCond) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			String sorts = " order by update_time desc ";
+			Map<String,Object> params = this.getSearchMap(jsonSearchParams);
+			if(!upPartnerId.equals(this.sysParamUtil.getSysPartnerId())) {
+				params.put("upPartnerId", upPartnerId);
+			}
+			PageCond pageCond = null;
+			if(jsonPageCond == null || jsonPageCond.length()<1) {
+				pageCond = new PageCond(0,20);
+			}else {
+				pageCond = JSONObject.toJavaObject(JSONObject.parseObject(jsonPageCond), PageCond.class);
+				if(pageCond == null) {
+					pageCond = new PageCond(0,20);
+				}
+				if( pageCond.getBegin()<=0) {
+					pageCond.setBegin(0);
+				}
+				if(pageCond.getPageSize()<2) {
+					pageCond.setPageSize(20);
+				}
+			}
+			int cnt = this.partnerBasicService.countAll(params);
+			pageCond.setCount(cnt);
+			jsonRet.put("pageCond", pageCond);
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "没有获取到满足条件的记录信息！");
+			if(cnt>0) {
+				List<PartnerBasic> list = this.partnerBasicService.getAll(params, sorts, pageCond);
+				if(list != null && list.size()>0) {
+					jsonRet.put("datas", list);
+					jsonRet.put("errcode", 0);
+					jsonRet.put("errmsg", "ok");
+				}
+			}
+			return jsonRet.toString();
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+			return jsonRet.toString();
+		}
+	}
+	
+	private Map<String,Object> getSearchMap(String jsonSearchParams) {
+		Map<String,Object> params = new HashMap<String,Object>();
+		if(jsonSearchParams == null || jsonSearchParams.length()<=0) {
+			return params;
+		}
+		JSONObject jsonSearch = JSONObject.parseObject(jsonSearchParams);
+		if(jsonSearch.containsKey("partnerId")) {
+			params.put("partnerId", jsonSearch.getInteger("partnerId"));
+		}
+		if(jsonSearch.containsKey("pbTp")) {
+			params.put("pbTp", jsonSearch.getInteger("pbTp"));
+		}
+		if(jsonSearch.containsKey("upPartnerId")) {
+			params.put("upPartnerId", jsonSearch.getString("upPartnerId"));
+		}
+		if(jsonSearch.containsKey("country")) {
+			params.put("country", jsonSearch.getString("country"));
+		}
+		if(jsonSearch.containsKey("province")) {
+			params.put("province", jsonSearch.getString("province"));
+		}
+		if(jsonSearch.containsKey("city")) {
+			params.put("city", jsonSearch.getString("city"));
+		}
+		if(jsonSearch.containsKey("area")) {
+			params.put("area", jsonSearch.getString("area"));
+		}
+		if(jsonSearch.containsKey("busiName")) {
+			params.put("busiName", jsonSearch.getString("busiName"));
+		}
+		if(jsonSearch.containsKey("legalPername")) {
+			params.put("legalPername", jsonSearch.getString("legalPername"));
+		}
+		if(jsonSearch.containsKey("legalPeridno")) {
+			params.put("legalPeridno", jsonSearch.getString("legalPeridno"));
+		}
+		if(jsonSearch.containsKey("phone")) {
+			params.put("phone", jsonSearch.getString("phone"));
+		}
+		if(jsonSearch.containsKey("compType")) {
+			params.put("compType", jsonSearch.getString("compType"));
+		}
+		if(jsonSearch.containsKey("compName")) {
+			params.put("compName", jsonSearch.getString("compName"));
+		}
+		if(jsonSearch.containsKey("licenceNo")) {
+			params.put("licenceNo", jsonSearch.getString("licenceNo"));
+		}
+		if(jsonSearch.containsKey("status")) {
+			params.put("status", jsonSearch.getString("status"));
+		}
+		if(jsonSearch.containsKey("beginUpdateTime")) {
+			params.put("beginUpdateTime", jsonSearch.getString("beginUpdateTime"));
+		}
+		if(jsonSearch.containsKey("endUpdateTime")) {
+			params.put("endUpdateTime", jsonSearch.getString("endUpdateTime"));
+		}
+		return params;
+	}
+	
 }
+

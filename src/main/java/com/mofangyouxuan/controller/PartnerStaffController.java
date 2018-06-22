@@ -384,7 +384,7 @@ public class PartnerStaffController {
 		if(!dir.exists()) {
 			return;
 		}
-		File[] files = dir.listFiles(new FileFilter(mode));
+		File[] files = dir.listFiles(new FileFilter(userId + "_" + mode));
 		if(dir.isDirectory() && files != null && files.length>0) {
 			File file = files[0];
 			BufferedImage image = ImageIO.read(file);

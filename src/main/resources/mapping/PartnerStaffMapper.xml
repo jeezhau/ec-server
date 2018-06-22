@@ -5,7 +5,7 @@
     <id column="rec_id" jdbcType="INTEGER" property="recId" />
     <result column="user_id" jdbcType="INTEGER" property="userId" />
     <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
-    <result column="staff_id" jdbcType="INTEGER" property="staffId" />
+    <result column="staff_id" jdbcType="VARCHAR" property="staffId" />
     <result column="nickname" jdbcType="VARCHAR" property="nickname" />
     <result column="email" jdbcType="VARCHAR" property="email" />
     <result column="passwd" jdbcType="VARCHAR" property="passwd" />
@@ -48,7 +48,7 @@
       tag_list, update_time, update_opr,status
       )
     values (#{recId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{partnerId,jdbcType=INTEGER}, 
-      #{staffId,jdbcType=INTEGER}, #{nickname,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
+      #{staffId,jdbcType=VARCHAR}, #{nickname,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, 
       #{passwd,jdbcType=VARCHAR}, #{introduce,jdbcType=VARCHAR},#{phone,jdbcType=VARCHAR}, #{isKf,jdbcType=CHAR}, 
       #{tagList,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER},#{status,jdbcType=CHAR}
       )
@@ -61,7 +61,7 @@
         user_id = #{userId,jdbcType=INTEGER},
       </if>
       <if test="staffId != null">
-        staff_id = #{staffId,jdbcType=INTEGER},
+        staff_id = #{staffId,jdbcType=VARCHAR},
       </if>
       <if test="nickname != null">
         nickname = #{nickname,jdbcType=VARCHAR},
@@ -100,7 +100,7 @@
   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PartnerStaff">
     update tb_partner_staff
     set user_id = #{userId,jdbcType=INTEGER},
-      staff_id = #{staffId,jdbcType=INTEGER},
+      staff_id = #{staffId,jdbcType=VARCHAR},
       nickname = #{nickname,jdbcType=VARCHAR},
       email = #{email,jdbcType=VARCHAR},
       passwd = #{passwd,jdbcType=VARCHAR},
@@ -125,23 +125,23 @@
       <if test="params.partnerId != null">
        and partner_id = #{params.partnerId,jdbcType=INTEGER}
       </if>
-      <if test="params.staffId != null">
-       and staff_id = #{params.staffId,jdbcType=INTEGER}
+      <if test="params.staffId != null and params.staffId != ''">
+       and staff_id = #{params.staffId,jdbcType=VARCHAR}
       </if>
-      <if test="params.nickname != null">
+      <if test="params.nickname != null and params.nickname != ''">
        and nickname = #{params.nickname,jdbcType=VARCHAR}
       </if>
-      <if test="params.email != null">
+      <if test="params.email != null and params.email != ''">
        and email = #{params.email,jdbcType=VARCHAR}
       </if>
-      <if test="params.phone != null">
+      <if test="params.phone != null and params.phone != ''">
        and phone = #{params.phone,jdbcType=VARCHAR}
       </if>
-      <if test="params.isKf != null">
+      <if test="params.isKf != null and params.isKf != ''">
        and is_kf = #{params.isKf,jdbcType=CHAR}
       </if>
-      <if test="params.tagid != null">
-        and tag_list like concat('%,',#{params.tagid},',%')
+      <if test="params.tagId != null and params.tagId != ''">
+        and tag_list like concat('%,',#{params.tagId},',%')
       </if>
       <if test="params.beginUpdateTime != null">
         and update_time &gt;= concat(#{params.beginUpdateTime,jdbcType=TIMESTAMP},' 00:00:00')
@@ -152,7 +152,7 @@
       <if test="params.updateOpr != null">
        and update_opr = #{params.updateOpr,jdbcType=INTEGER}
       </if>           
-      <if test="params.status != null">
+      <if test="params.status != null and params.status != ''">
         and status = #{params.status,jdbcType=CHAR}
       </if>
     </where>
@@ -161,7 +161,7 @@
   <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
    select 
     <include refid="Base_Column_List" />
-    from tb_partner_staff l
+    from tb_partner_staff
      <include refid="whereSql" />
     <if test="sorts">
     ${sorts}
@@ -171,7 +171,7 @@
   
   <select id="countAll" parameterType="map" resultType="int">
    select count(1) cnt
-    from tb_partner_staff l
+    from tb_partner_staff
      <include refid="whereSql" />
   </select>
     

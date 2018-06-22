@@ -1,5 +1,9 @@
 package com.mofangyouxuan.service;
 
+import java.util.List;
+import java.util.Map;
+
+import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.PartnerBasic;
 
 public interface PartnerBasicService {
@@ -31,17 +35,25 @@ public interface PartnerBasicService {
 	 * @param basic
 	 * @return 更新记录数
 	 */
-	public int update(PartnerBasic basic);
+	public int updateBasic(PartnerBasic basic);
+	
+	/**
+	 * 更新合作伙伴部分信息
+	 * @param basic
+	 * @return 更新记录数
+	 */
+	public int updateSelective(PartnerBasic basic);
+	
 	
 	/**
 	 * 记录审批人员的审批结果
 	 * @param partnerId	合作伙伴ID
-	 * @param oprId	审批人员ID
+	 * @param reviewPidUid	审批人员：上级合作伙伴ID#员工ID
 	 * @param review	审批意见
 	 * @param result	审批结果
 	 * @return 更新记录数
 	 */
-	public int review(Integer partnerId,Integer oprId,String review,String result);
+	public int review(Integer partnerId,String reviewPidUid,String review,String result);
 	
 
 	/**
@@ -60,4 +72,24 @@ public interface PartnerBasicService {
 	 */
 	public void updScore(Integer partnerId,Integer scoreLogis,Integer scoreServ,Integer scoreGoods);
 
+	
+	/**
+	 * 获取所有的合作伙伴信息
+	 * 
+	 * @param params
+	 * @param sorts
+	 * @param pageCond
+	 * @return
+	 */
+	public List<PartnerBasic> getAll(Map<String,Object> params,String sorts,PageCond pageCond);
+	
+	
+	/**
+	 * 统计所有的合作伙伴数量
+	 * @param params
+	 * @return
+	 */
+	public int countAll(Map<String,Object> params);
+	
+	
 }

@@ -100,15 +100,20 @@ public class UserBasicAction {
 			}
 			String registType = userBasic.getRegistType();
 			String unique = ""; //唯一值
+			String email = userBasic.getEmail();
+			String phone = userBasic.getPhone();
+			if("".equals(email)) {
+				email = null;
+				userBasic.setEmail(null);
+			}
+			if("".equals(phone)) {
+				phone = null;
+				userBasic.setPhone(null);
+			}
 			if("1".equals(registType)) {//官网注册
-				String email = userBasic.getEmail();
-				String phone = userBasic.getPhone();
 				String passwd = userBasic.getPasswd();
-				if(email == null || phone == null) {
-					jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
-					jsonRet.put("errmsg", "邮箱或手机号不可都为空！ ");
-					return jsonRet.toString();
-				}
+				userBasic.setOpenId(null);
+				userBasic.setUnionId(null);
 				if(veriCode == null || veriCode.length() != 6) {
 					jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
 					jsonRet.put("errmsg", "验证码：格式不正确！");

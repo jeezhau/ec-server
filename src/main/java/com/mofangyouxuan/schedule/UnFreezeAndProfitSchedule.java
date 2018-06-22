@@ -38,8 +38,8 @@ public class UnFreezeAndProfitSchedule {
 	/**
 	 * 解冻资金
 	 */
-	//@Scheduled(cron="0 0 4-8/4 * * ?")
-	@Scheduled(cron="0 * * * * ?")
+	@Scheduled(cron="0 0 4-8/4 * * ?")
+	//@Scheduled(cron="0 * * * * ?")
 	public void unFreezeAmount() {
 		JSONObject jsonSearch = new JSONObject();
 		jsonSearch.put("status", "41,57"); //评价完成
