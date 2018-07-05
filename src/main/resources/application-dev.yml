@@ -9,17 +9,18 @@ server:
 spring:
   datasource:
     name: mfyx
-    url: 'jdbc:mysql://192.168.43.174:3306/db_mfyx'
+    url: 'jdbc:mysql://192.168.0.104:3306/db_mfyx'
     username: 'leyi'
-    password: 'leyi'
+    password: 'leyipwd'
         # 使用druid数据源
     type: com.alibaba.druid.pool.DruidDataSource
-    driver-class-name: com.mysql.jdbc.Driver    
+    driver-class-name: com.mysql.jdbc.Driver   
+         
   servlet: 
     multipart:
       max-file-size: 10Mb
       max-request-size: 10Mb
-        
+      
 mybatis:
   mapper-locations: classpath:/mapping/*.xml
   type-aliases-package: com.mofanyouxuan.model
@@ -79,13 +80,13 @@ sys:
   image-file-all-limit: 100       #每个会员最多可有100个文件（普通文件和目录），后续针对用户进行付费控制
   image-folder-file-limit: 100    #每个文件夹下最多可有100个文件（普通文件和目录），后续针对用户进行付费控制
   
-  vip_activate_need_score: 1000 #激活会员需要多少积分
-  spread_per_user_score: 50     #每推广一个用户可获得多少积分
-  spread_per_mcht_score: 100    #推广一个商家可获得会员积分
+  vip_activate_need_score: 500 #激活会员需要多少积分
+  spread_per_user_score: 20     #每推广一个用户可获得多少积分
   spread_user_profit_ratio: 0.001 #推广买家可获得所推广买家交易额的分润利率
   spread_mcht_profit_ratio: 0.001 #推广商家可获得所推广商家交易额的分润利率
-  partner_open_need_socre: 1500   #开通合作伙伴需要多少积分
-  trade_score_one_yuan: 1         #每消费一元获得多少积分
+  partner_open_need_socre: 1000   #开通合作伙伴需要多少积分
+  trade_score_one_yuan: 1        #每消费一元获得多少积分
+  platform_service_fee_ratio: 1.8  #平台收取服务费费率
   
   postage-cnt-limit: 20 #每个合作伙伴可添加的运费模版数量限制，后续针对用户进行付费控制
   goods-cnt-limit: 30   #每个合作伙伴可添加的商品数量限制，后续针对用户进行付费控制

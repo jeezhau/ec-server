@@ -91,19 +91,7 @@ public interface ChangeFlowService {
 	 */
 	public String dealFinish(Long amount,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId)throws Exception;
 	
-	/**
-	 * 添加分润流水
-	 * 1、增加可用余额；
-	 * @param amount		分润金额
-	 * @param vipId
-	 * @param oprId
-	 * @param reason
-	 * @param orderId	商品订单ID
-	 * @return 
-	 * @throws Exception
-	 */
-	public String shareProfit(Long amount,Integer vipId,Integer oprId,String reason,String orderId) throws Exception;
-	
+
 	/**
 	 * 添加用户提现申请流水
  	 * 1、减少可用余额，添加冻结余额；

@@ -81,17 +81,21 @@ public class AutoAppraiseSchedule {
 								updOrder.setScoreGoods(scoreGoods);
 								updOrder.setScoreLogistics(scoreLogis);
 								updOrder.setScoreMerchant(scoreServ);
+								updOrder.setAppraiseStatus("1");
 							}
 							if(order.getApprUserTime() == null) {
 								updOrder.setApprUserTime(new Date());
 								updOrder.setScoreUser(10);
+								updOrder.setAppraiseStatus("2");
 							}
 							if("40".equals(order.getStatus())) {
 								updOrder.setStatus("41");
 							}else {
 								updOrder.setStatus("57");
 							}
-							updOrder.setAppraiseStatus("1");
+							if(order.getAppraiseTime() == null && order.getApprUserTime() == null) {
+								updOrder.setAppraiseStatus("S");
+							}
 							this.orderService.update(updOrder);
 							Integer partnerId = order.getPartnerId();
 							this.partnerBasicService.updScore(partnerId, scoreLogis, scoreServ, scoreGoods);

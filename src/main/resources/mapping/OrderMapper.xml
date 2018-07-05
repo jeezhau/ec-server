@@ -316,6 +316,9 @@
       <if test="params.partnerId != null">
         and g.partner_id = #{params.partnerId,jdbcType=INTEGER}
       </if>
+      <if test="params.upPartnerId != null">
+        and p.up_partnerId = #{params.upPartnerId,jdbcType=INTEGER}
+      </if>
       <if test="params.goodsName != null">
         and g.goods_name = #{params.goodsName,jdbcType=VARCHAR}
       </if>
@@ -332,7 +335,7 @@
         and o.postage_id = #{params.postageId,jdbcType=INTEGER}
       </if>     
       <if test="params.appraiseStatus != null">
-        and o.appraise_status = #{params.appraiseStatus,jdbcType=VARCHAR}
+        and LOCATE(o.appraise_status,#{params.appraiseStatus,jdbcType=VARCHAR}) &gt; 0
       </if> 
       <if test="params.beginCreateTime != null">
         and o.create_time &gt;= concat(#{params.beginCreateTime,jdbcType=VARCHAR},' 00:00:00')

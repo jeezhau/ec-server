@@ -19,8 +19,9 @@ public interface GoodsService {
 	/**
 	 * 根据ID获取指定商品信息
 	 * @param needPartner 是否包含合作伙伴信息
-	 * @param isSelf 是否时合作伙伴自己
 	 * @param id
+	 * @param isSelf 是否时合作伙伴自己
+	 * 
 	 * @return
 	 */
 	public Goods get(Boolean needPartner,Long id,Boolean isSelf);
@@ -61,12 +62,13 @@ public interface GoodsService {
 	/**
 	 * 记录商品审批结果
 	 * @param goods
-	 * @param oprid
+	 * @param rewPartnerId
+	 * @param oprId
 	 * @param result 审批结果：1-审核通过，2-审核拒绝
 	 * @param review
 	 * @return
 	 */
-	public int review(Goods goods,Integer oprid,String result,String review);
+	public int review(Goods goods,Integer rewPartnerId,Integer oprid,String result,String review);
 	
 	/**
 	 * 变更商品状态:1-上架、2-下架

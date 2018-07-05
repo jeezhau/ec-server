@@ -4,18 +4,22 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.ChangeFlowMapper;
 import com.mofangyouxuan.model.ChangeFlow;
+import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.ChangeFlowService;
+import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.NonceStrUtil;
@@ -30,6 +34,9 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	private UserBasicService userBasicService;
 	@Autowired
 	private VipBasicService vipBasicService;
+	@Autowired
+	private PartnerBasicService partnerBasicService;
+	
 	
 	@Autowired
 	private SysParamUtil sysParamUtil;
@@ -71,7 +78,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * 添加客户退款成功流水
 	 * 1、买家使用余额支付，则退款时增加买家的可用余额；减少卖家的冻结余额；
 	 * 2、买家使用非余额支付，则退款时减少卖家的冻结余额；
-	 * 
+	 * 3、收回已经支付的服务费、交易分润；
 	 * @param useVipPay	是否使用会员余额支付
 	 * @param amount		交易金额
 	 * @param userVipId	买家会员账户
@@ -103,6 +110,48 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		String ret = this.unFreeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP44,orderId);
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
+		}
+		
+		UserBasic buyUser = this.userBasicService.get(userVipId);
+		PartnerBasic partner = this.partnerBasicService.getByBindUser(mchtVipId);
+		PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
+		if(sysPartner == null || buyUser == null || partner == null) {
+			throw new Exception("获取用户或商家信息失败！");
+		}
+		//收回交易服务费
+		params.put("vipId", sysPartner.getVipId());
+		params.put("changeType", CashFlowTP.CFTP10.value); 
+		List<ChangeFlow> serviceList = this.changeFlowMapper.selectAll(params, new PageCond(0,1), null);
+		if(serviceList != null && serviceList.size()>0) {
+			ret = this.subBal(serviceList.get(0).getAmount(), sysPartner.getVipId(), oprId, reason, CashFlowTP.CFTP20, orderId);
+			if(!"00".equals(ret)) {
+				throw new Exception(ret);
+			}
+		}
+		//收回推广用户分润奖励
+		params.put("vipId", buyUser.getSenceId());
+		params.put("changeType", CashFlowTP.CFTP12.value); 
+		List<ChangeFlow> userShareList = this.changeFlowMapper.selectAll(params, new PageCond(0,1), null);
+		if(userShareList != null && userShareList.size()>0) {
+			ret = this.unShareProfit(sysPartner, userShareList.get(0).getAmount(), buyUser.getSenceId(), oprId, reason, orderId);
+			if(!"00".equals(ret)) {
+				throw new Exception(ret);
+			}
+		}
+		//收回推广商家分润奖励
+		if(partner.getUpPartnerId() != null) {
+			PartnerBasic spPartner = this.partnerBasicService.getByID(partner.getUpPartnerId());
+			if(spPartner != null) {
+				params.put("vipId", spPartner.getVipId());
+				params.put("changeType", CashFlowTP.CFTP12.value); 
+				List<ChangeFlow> partnerShareList = this.changeFlowMapper.selectAll(params, new PageCond(0,1), null);
+				if(partnerShareList != null && partnerShareList.size()>0) {
+					ret = this.unShareProfit(sysPartner, partnerShareList.get(0).getAmount(), spPartner.getVipId(), oprId, reason, orderId);
+					if(!"00".equals(ret)) {
+						throw new Exception(ret);
+					}
+				}
+			}
 		}
 		return "00";
 	}
@@ -159,7 +208,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	public String paySuccess(boolean useVipPay,Long amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId,String orderId) throws Exception{
 		if(useVipPay) {
 			//客户消费
-			String ret = this.subBal(amount, userVip, oprId, reason, CashFlowTP.CFTP22,orderId);
+			String ret = this.subBal(amount, userVip.getVipId(), oprId, reason, CashFlowTP.CFTP22,orderId);
 			if(!"00".equals(ret)) {
 				throw new Exception(ret);
 			}
@@ -176,6 +225,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * 解冻商家
 	 * 1、减少冻结余额，增加可用余额；
 	 * 2、执行推广用户系统分润；
+	 * 3、执行推广卖家系统分润；
 	 * @param amount		交易金额
 	 * @param userId		买家ID
 	 * @param mchtVipId	商家会员账户
@@ -187,6 +237,12 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @throws Exception 
 	 */
 	public String dealFinish(Long amount,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId) throws Exception {
+		UserBasic buyUser = this.userBasicService.get(userId);
+		PartnerBasic partner = this.partnerBasicService.getByBindUser(mchtVipId);
+		PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
+		if(sysPartner == null || buyUser == null || partner == null) {
+			throw new Exception("获取用户或商家信息失败！");
+		}
 		Map<String,Object> params = new HashMap<String,Object>();
 		params.put("orderId", orderId);
 		params.put("vipId", mchtVipId);
@@ -195,40 +251,60 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		if(cnt <= 0) {
 			throw new Exception("该订单没有交易成功流水信息");
 		}
+		//商家卖款解冻
 		String ret = this.doubleUnFreeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP14, reason, CashFlowTP.CFTP43,orderId);
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
 		}
 		//推广用户分润
-		UserBasic buyUser = this.userBasicService.get(userId);
 		if(buyUser != null && buyUser.getSenceId()!=null) {
 			VipBasic spreadVip = this.vipBasicService.get(buyUser.getSenceId());
 			if(spreadVip != null) {
 				BigDecimal spreadUserProfitRate = this.sysParamUtil.getSpreadUserProfitRatio();
 				Long profit = spreadUserProfitRate.multiply(new BigDecimal(amount)).setScale(0, BigDecimal.ROUND_FLOOR).longValue();
-				ret = this.shareProfit(profit, spreadVip.getVipId(), oprId, "推广用户购买商品获得分润",orderId);
+				ret = this.shareProfit(sysPartner,profit, spreadVip.getVipId(), oprId, "推广用户购买商品获得奖励",orderId);
 				if(!"00".equals(ret)) {
 					throw new Exception(ret);
 				}
 			}
+		}
+		//推广商家分润
+		if(partner.getUpPartnerId() != null) {
+			PartnerBasic spPartner = this.partnerBasicService.getByID(partner.getUpPartnerId());
+			if(spPartner != null) {
+				BigDecimal spreadMchtProfitRate = this.sysParamUtil.getSpreadMchtProfitRatio();
+				Long profit = spreadMchtProfitRate.multiply(new BigDecimal(amount)).setScale(0, BigDecimal.ROUND_FLOOR).longValue();
+				ret = this.shareProfit(sysPartner,profit, spPartner.getVipId(), oprId, "推广商家出售商品获得奖励",orderId);
+				if(!"00".equals(ret)) {
+					throw new Exception(ret);
+				}
+			}
+		}
+		//收取服务费
+		BigDecimal platformServiceFeeRate = this.sysParamUtil.getPlatformServiceFeeRatio();
+		Long profit = platformServiceFeeRate.multiply(new BigDecimal(amount)).setScale(0, BigDecimal.ROUND_CEILING).longValue();
+		ret = this.addBal(profit, sysPartner.getVipId(), oprId, reason, CashFlowTP.CFTP10, orderId);
+		if(!"00".equals(ret)) {
+			throw new Exception(ret);
 		}
 		
 		return "00";
 	}
 	
 	/**
-	 * 添加分润流水
-	 * 1、增加可用余额；
+	 * 交易资金解冻时添加分润流水
+	 * 1、增加推广者可用余额；
+	 * 2、减少系统合作伙伴用户可用余额；
+	 * @param sysPartner
 	 * @param amount		分润金额
-	 * @param vipId
+	 * @param vipId		获得分润的VIP:推广买家或推广卖家
 	 * @param oprId
 	 * @param reason
 	 * @param orderId	商品订单ID
 	 * @return 00-成功，其他-失败信息
 	 * @throws Exception
 	 */
-	@Override
-	public String shareProfit(Long amount,Integer vipId,Integer oprId,String reason,String orderId) throws Exception {
+	private String shareProfit(PartnerBasic sysPartner,Long amount,Integer vipId,Integer oprId,String reason,String orderId) throws Exception {
 		ChangeFlow flow1 = new ChangeFlow();
 		flow1.setFlowId(this.genFlowId(vipId));
 		flow1.setVipId(vipId);
@@ -239,14 +315,73 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		flow1.setCreateOpr(oprId);
 		flow1.setSumFlag("0");
 		flow1.setOrderId(orderId);
-		int cnt = this.changeFlowMapper.insert(flow1);
-		if(cnt >0) {
+		int cnt1 = this.changeFlowMapper.insert(flow1);
+		
+		ChangeFlow flow2 = new ChangeFlow();
+		flow2.setFlowId(this.genFlowId(sysPartner.getVipId()));
+		flow2.setVipId(sysPartner.getVipId());
+		flow2.setCreateTime(new Date());
+		flow2.setAmount(amount);
+		flow2.setChangeType(CashFlowTP.CFTP26.getValue()+"");
+		flow2.setReason(reason);
+		flow2.setCreateOpr(oprId);
+		flow2.setSumFlag("0");
+		flow2.setOrderId(orderId);
+		int cnt2 = this.changeFlowMapper.insert(flow2);
+		
+		if(cnt1 >0 && cnt2 >0) {
 			return "00";
 		}else {
 			return "添加分润流水失败";
 		}
+		
 	}
 	
+	/**
+	 * 退款收回分润奖励
+	 * 1、减少推广者可用余额；
+	 * 2、增加系统合作伙伴用户可用余额；
+	 * @param sysPartner
+	 * @param amount		分润金额
+	 * @param vipId		获得分润的VIP:推广买家或推广卖家
+	 * @param oprId
+	 * @param reason
+	 * @param orderId	商品订单ID
+	 * @return 00-成功，其他-失败信息
+	 * @throws Exception
+	 */
+	private String unShareProfit(PartnerBasic sysPartner,Long amount,Integer vipId,Integer oprId,String reason,String orderId) throws Exception {
+		ChangeFlow flow1 = new ChangeFlow();
+		flow1.setFlowId(this.genFlowId(vipId));
+		flow1.setVipId(vipId);
+		flow1.setCreateTime(new Date());
+		flow1.setAmount(amount);
+		flow1.setChangeType(CashFlowTP.CFTP26.getValue()+"");
+		flow1.setReason(reason);
+		flow1.setCreateOpr(oprId);
+		flow1.setSumFlag("0");
+		flow1.setOrderId(orderId);
+		int cnt1 = this.changeFlowMapper.insert(flow1);
+		
+		ChangeFlow flow2 = new ChangeFlow();
+		flow2.setFlowId(this.genFlowId(sysPartner.getVipId()));
+		flow2.setVipId(sysPartner.getVipId());
+		flow2.setCreateTime(new Date());
+		flow2.setAmount(amount);
+		flow2.setChangeType(CashFlowTP.CFTP12.getValue()+"");
+		flow2.setReason(reason);
+		flow2.setCreateOpr(oprId);
+		flow2.setSumFlag("0");
+		flow2.setOrderId(orderId);
+		int cnt2 = this.changeFlowMapper.insert(flow2);
+		
+		if(cnt1 >0 && cnt2 >0) {
+			return "00";
+		}else {
+			return "添加分润流水失败";
+		}
+		
+	}
 	/**
 	 * 账户可用资金单向增加
 	 * 1、添加增加可用余额流水；
@@ -290,13 +425,13 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param tp			减少冻结余额的流水类型
 	 * @param orderId	商品订单ID
 	 */
-	private String subBal(Long amount,VipBasic vip,Integer oprId,String reason,CashFlowTP tp,String orderId) {
+	private String subBal(Long amount,Integer vipId,Integer oprId,String reason,CashFlowTP tp,String orderId) {
 		if(tp == null || tp.getValue()<20 || tp.getValue()>29) {
 			return "减少可用余额流水的类型不正确！";
 		}
 		ChangeFlow flow1 = new ChangeFlow();
-		flow1.setFlowId(this.genFlowId(vip.getVipId()));
-		flow1.setVipId(vip.getVipId());
+		flow1.setFlowId(this.genFlowId(vipId));
+		flow1.setVipId(vipId);
 		flow1.setCreateTime(new Date());
 		flow1.setAmount(amount);
 		flow1.setChangeType(tp.getValue() + "");
@@ -524,8 +659,8 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @author jeekhan
 	 */
 	public static enum CashFlowTP{
-		 CFTP11(11,"客户退款"),CFTP12(12,"系统分润"),CFTP13(13,"平台奖励"), CFTP14(14,"资金解冻"), CFTP15(15,"积分兑换"), CFTP16(16,"现金红包"), CFTP17(17,"退款失败"), CFTP18(18,"提现失败"), 
-		 CFTP21(21,"提现申请"), CFTP22(22,"客户消费"), CFTP23(23,"资金冻结"), CFTP24(24,"投诉罚款"), CFTP25(25,"申请退款"),
+		 CFTP10(10,"服务费"),CFTP11(11,"客户退款"),CFTP12(12,"交易分润"),CFTP13(13,"平台奖励"), CFTP14(14,"资金解冻"), CFTP15(15,"积分兑换"), CFTP16(16,"现金红包"), CFTP17(17,"退款失败"), CFTP18(18,"提现失败"), 
+		 CFTP20(20,"退款服务费"),CFTP21(21,"提现申请"), CFTP22(22,"客户消费"), CFTP23(23,"资金冻结"), CFTP24(24,"投诉罚款"), CFTP25(25,"申请退款"),CFTP26(26,"交易分润"),
 		 CFTP31(31,"冻结交易买卖额"), CFTP32(32,"买单投诉冻结"), CFTP33(33,"提现冻结"), CFTP34(34,"申请退款"),
 		 CFTP41(41,"恢复可用余额"), CFTP42(42,"提现完成"), CFTP43(43,"交易完成"), CFTP44(44,"退款成功"),CFTP45(45,"退款失败");
 		

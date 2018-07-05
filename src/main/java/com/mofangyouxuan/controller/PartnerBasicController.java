@@ -245,6 +245,9 @@ public class PartnerBasicController {
 				return jsonRet.toJSONString();
 			}
 			//数据处理
+			if(basic.getUpPartnerId() == null) {
+				basic.setUpPartnerId(this.sysParamUtil.getSysPartnerId());
+			}
 			basic.setStatus("0"); //待审核
 			basic.setReviewLog("");
 			basic.setReviewOpr(null);

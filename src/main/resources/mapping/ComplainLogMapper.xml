@@ -3,7 +3,8 @@
 <mapper namespace="com.mofangyouxuan.mapper.ComplainLogMapper">
   <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.ComplainLog">
     <id column="cplan_id" jdbcType="INTEGER" property="cplanId" />
-    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="opr_id" jdbcType="INTEGER" property="oprId" />
+    <result column="opr_pid" jdbcType="INTEGER" property="oprPid" />
     <result column="cp_type" jdbcType="CHAR" property="cpType" />
     <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
     <result column="goods_id" jdbcType="INTEGER" property="goodsId" />
@@ -20,7 +21,7 @@
     <result column="revisit_log" jdbcType="LONGVARCHAR" property="revisitLog" />
   </resultMap>
   <sql id="Base_Column_List">
-    cplan_id, user_id, cp_type,partner_id, goods_id, order_id, content, phone, create_time, deal_time, 
+    cplan_id, opr_id, opr_pid,cp_type,partner_id, goods_id, order_id, content, phone, create_time, deal_time, 
     deal_opr, revisit_time, revisit_opr, status,
     deal_log, revisit_log
   </sql>
@@ -38,13 +39,13 @@
   </delete>
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.ComplainLog" keyProperty="cplanId" useGeneratedKeys="true">
-    insert into tb_complain_log (cplan_id, user_id, cp_type,partner_id, 
+    insert into tb_complain_log (cplan_id,opr_id,opr_pid, cp_type,partner_id, 
       goods_id, order_id, content, 
       phone, create_time, deal_time, 
       deal_opr, revisit_time, revisit_opr, 
       status, deal_log, revisit_log
       )
-    values (#{cplanId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER},#{cpType,jdbcType=CHAR}, #{partnerId,jdbcType=INTEGER}, 
+    values (#{cplanId,jdbcType=INTEGER}, #{oprId,jdbcType=INTEGER},#{oprPid,jdbcType=INTEGER},#{cpType,jdbcType=CHAR}, #{partnerId,jdbcType=INTEGER}, 
       #{goodsId,jdbcType=INTEGER}, #{orderId,jdbcType=VARCHAR}, #{content,jdbcType=VARCHAR}, 
       #{phone,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{dealTime,jdbcType=TIMESTAMP}, 
       #{dealOpr,jdbcType=INTEGER}, #{revisitTime,jdbcType=DATE}, #{revisitOpr,jdbcType=INTEGER}, 
@@ -103,8 +104,11 @@
       <if test="params.cplanId != null">
         and cplan_id = #{params.cplanId,jdbcType=INTEGER}
       </if>
-      <if test="params.userId != null">
-        and user_id = #{params.userId,jdbcType=INTEGER}
+      <if test="params.oprId != null">
+        and opr_id = #{params.oprId,jdbcType=INTEGER}
+      </if>
+      <if test="params.oprPid != null">
+        and opr_pid = #{params.oprPid,jdbcType=INTEGER}
       </if>
       <if test="params.cpType != null">
         and cp_type = #{params.cpType,jdbcType=CHAR}

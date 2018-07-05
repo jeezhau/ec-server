@@ -268,6 +268,9 @@ public class OrderServiceImpl implements OrderService{
 		if(jsonParams.containsKey("partnerId")) {//查询指定合作伙伴
 			params.put("partnerId", jsonParams.getInteger("partnerId"));
 		}
+		if(jsonParams.containsKey("upPartnerId")) {//查询指定上级合作伙伴
+			params.put("upPartnerId", jsonParams.getInteger("upPartnerId"));
+		}
 		if(jsonParams.containsKey("keywords")) {//使用关键字查询
 			params.put("goodsName", jsonParams.getString("keywords"));
 			params.put("orderId", jsonParams.getString("keywords"));
@@ -438,7 +441,11 @@ public class OrderServiceImpl implements OrderService{
 			totalAmount = amount.longValue() + fee.longValue();//支付金额
 			JSONObject wxRet = wXPay.createPrePay(payType,order,flowId, totalAmount, user.getOpenId(), ip);
 			if(wxRet.containsKey("prepay_id")) {//成功
-				payAccount = user.getOpenId();
+				if(user.getOpenId() != null) {
+					payAccount = user.getOpenId();
+				}else {
+					payAccount = userVip.getVipId() + "";
+				}
 				outTradeNo = wxRet.getString("prepay_id");
 				if(wxRet.getString("code_url") != null) {  //扫码支付
 					outPayUrl = wxRet.getString("code_url");
@@ -744,7 +751,7 @@ public class OrderServiceImpl implements OrderService{
 	
 	
 	/**
-	 * 订单退款执行
+	 * 订单退款申请
 	 * 1、向第三方支付申请退款，或余额退款；
 	 * 2、保存退款流水；
 	 * 3、更新订单售后信息；
@@ -759,7 +766,7 @@ public class OrderServiceImpl implements OrderService{
 	 * @throws Exception 
 	 */
 	@Override
-	public JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,JSONObject reason) throws Exception {
+	public synchronized JSONObject applyRefund(boolean isMcht,Order order,PayFlow payFlow,Integer userVipId,Integer mchtVipId,JSONObject reason) throws Exception {
 		JSONObject jsonRet = new JSONObject();
 	
 		String refundFlowId = CommonUtil.genPayFlowId(payFlow.getOrderId(), payFlow.getFlowId()); //退款流水ID
@@ -994,9 +1001,9 @@ public class OrderServiceImpl implements OrderService{
 			updOdr.setSignTime(currTime);
 			updOdr.setSignUser(order.getNickname());
 		}
-		if(updOdr.getAppraiseStatus() == null || "0".equals(updOdr.getAppraiseStatus())) {
+		//if(updOdr.getAppraiseStatus() == null || "0".equals(updOdr.getAppraiseStatus())) {
 			updOdr.setAppraiseStatus("1");
-		}
+		//}
 		updOdr.setOrderId(order.getOrderId());
 		updOdr.setScoreGoods(scoreGoods);
 		updOdr.setScoreLogistics(scoreLogistics);
@@ -1011,6 +1018,7 @@ public class OrderServiceImpl implements OrderService{
 			asrArr.add(0, asr);
 			updOdr.setAppraiseInfo(asrArr.toJSONString());
 		}
+		//更新商户积分
 		this.partnerBasicService.updScore(order.getPartnerId(), scoreLogistics, scoreMerchant, scoreGoods);
 		int cnt = this.orderMapper.updateByPrimaryKeySelective(updOdr);
 		if(cnt >0) {
@@ -1039,9 +1047,9 @@ public class OrderServiceImpl implements OrderService{
 		updOdr.setOrderId(order.getOrderId());
 		updOdr.setScoreUser(score);
 		updOdr.setApprUserTime(currTime);
-		if(updOdr.getAppraiseStatus() == null || "0".equals(updOdr.getAppraiseStatus())) {
-			updOdr.setAppraiseStatus("1");
-		}
+		//if(updOdr.getAppraiseStatus() == null || "0".equals(updOdr.getAppraiseStatus())) {
+			updOdr.setAppraiseStatus("2");
+		//}
 		if(content != null && content.length()>1) {
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
@@ -1063,5 +1071,31 @@ public class OrderServiceImpl implements OrderService{
 		return jsonRet;
 	}
 	
+	/**
+	 * 记录评价审批结果
+	 * @param orderId
+	 * @param rewPartnerId
+	 * @param oprId
+	 * @param result 审批结果：1-审核通过，2-审核拒绝
+	 * @param review
+	 * @return
+	 */
+	public JSONObject review(String orderId,Integer rewPartnerId,Integer oprId,String result,String review) {
+		JSONObject jsonRet = new JSONObject();
+		//更新订单信息
+		Order updOdr = new Order();
+		updOdr.setOrderId(orderId);
+		updOdr.setAppraiseStatus(result);
+		
+		int cnt = this.orderMapper.updateByPrimaryKeySelective(updOdr);
+		if(cnt >0) {
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+		}else {
+			jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+			jsonRet.put("errmsg", "数据库保存数据出错！");
+		}
+		return jsonRet;
+	}
 	
 }

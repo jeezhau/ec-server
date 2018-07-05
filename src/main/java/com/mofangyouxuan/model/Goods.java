@@ -313,4 +313,22 @@ public class Goods {
 		this.partner = partner;
 	}
     
+	public static enum REWSTAT{
+		forreview("0","待审核"),
+		normal("S","正常"),
+		refuse("R","审核拒绝");
+		private String value;
+		private String desc;
+		
+		private REWSTAT(String value,String desc) {
+			this.value = value;
+			this.desc = desc;
+		}
+		public String getValue() {
+			return this.value;
+		}
+		public String getDesc() {
+			return this.desc;
+		}
+	}
 }

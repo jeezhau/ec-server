@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
@@ -126,7 +127,7 @@ public class OrderController {
 			//商品、配送信息检查
 			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
 			if(goods == null || !"S".equals(goods.getPartner().getStatus()) || 
-					!"1".equals(goods.getStatus()) || !"1".equals(goods.getReviewResult())) {
+					!"1".equals(goods.getStatus()) || !Goods.REWSTAT.normal.getValue().equals(goods.getReviewResult())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
 				jsonRet.put("errmsg", "该商品当前不支持下单购买！");
 				return jsonRet.toString();
@@ -232,7 +233,7 @@ public class OrderController {
 	 * @param recvId		收货信息ID
 	 * @param goodsId	商品ID
 	 * @param goodsSpec		商品数量
-	 * @return {"errcode":0,"errmsg":"ok",match:[{postageId:'',mode:'',carrage:''}...]}
+	 * @return {"errcode":0,"errmsg":"ok",match:[{postageId,mode,carrage}...]}
 	 */
 	@RequestMapping("/{userId}/checkData")
 	public String checkDataAndMatch(@PathVariable("userId")Integer userId,
@@ -267,16 +268,18 @@ public class OrderController {
 //				return jsonRet.toString();
 //			}
 			if(goods == null || !"S".equals(goods.getPartner().getStatus()) || 
-					!"1".equals(goods.getStatus()) || !"1".equals(goods.getReviewResult())) {
+					!"1".equals(goods.getStatus()) || 
+					!user.getUserId().equals(goods.getPartner().getVipId()) && !Goods.REWSTAT.normal.getValue().equals(goods.getReviewResult())
+					) {
 				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
 				jsonRet.put("errmsg", "该商品当前不支持下单购买！");
 				return jsonRet.toString();
 			}
-			if(user.getUserId().equals(goods.getPartner().getVipId())) {
-				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
-				jsonRet.put("errmsg", "您不可以购买自己的商品！");
-				return jsonRet.toString();
-			}
+//			if(user.getUserId().equals(goods.getPartner().getVipId())) {
+//				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
+//				jsonRet.put("errmsg", "您不可以购买自己的商品！");
+//				return jsonRet.toString();
+//			}
 			//订单数据检查
 			String errStr = this.checkOrderData(goods, applySpec, userId, buyStatistics);
 			if(errStr != null) {
@@ -667,7 +670,7 @@ public class OrderController {
 	 * 查询指定查询条件、排序条件、分页条件的订单信息；
 	 * 商品ID与合作伙伴ID不可都为空
 	 * @param jsonShowGroups		显示字段分组:{needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser}
-	 * @param jsonSearchParams	查询条件:{userId: ,goodsId:, partnerId: ,status:'',keywords:'',categoryId:,dispatchMode:'',postageId:,appraiseStatus:''}
+	 * @param jsonSearchParams	查询条件:{userId,goodsId, partnerId,upPartnerId,status,keywords,categoryId:,dispatchMode,postageId:,appraiseStatus,appr4User}
 	 * @param jsonSortParams		排序条件:{createTime:"N#0/1",sendTime:"N#0/1",signTime:"N#0/1",appraiseTime:"N#0/1",aftersalesApplyTime:"N#0/1",aftersalesDealTime:"N#0/1"}
 	 * @param jsonPageCond		分页信息:{begin:, pageSize:}
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
@@ -679,7 +682,8 @@ public class OrderController {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			JSONObject jsonSearch = JSONObject.parseObject(jsonSearchParams);
-			if(!jsonSearch.containsKey("goodsId") && !jsonSearch.containsKey("partnerId") && !jsonSearch.containsKey("userId")) {
+			if(!jsonSearch.containsKey("goodsId") && !jsonSearch.containsKey("partnerId") && 
+					!jsonSearch.containsKey("userId") && !jsonSearch.containsKey("upPartnerId")) {
 				jsonRet.put("errcode", ErrCodes.ORDER_SEARCH_PARAM);
 				jsonRet.put("errmsg", "下单用户ID、商品ID和合作伙伴ID不可都为空！");
 				return jsonRet.toString();
@@ -1950,6 +1954,97 @@ public class OrderController {
 				}
 			}
 			jsonRet = this.orderService.appraise2User(order, score, content,updateOpr);
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	/**
+	 * 评价审核
+	 * @param orderId	订单ID
+	 * @param rewPartnerId	审批者合作伙伴
+	 * @param operator	审批人
+	 * @param review 	审批意见
+	 * @param result 	审批结果：S-通过，R-拒绝
+	 * 
+	 * @return {errcode:0,errmsg:"ok"}
+	 * @throws JSONException
+	 */
+	@RequestMapping("/appraise/review")
+	public String reviewAppraise(@RequestParam(value="orderId",required=true)String orderId,
+			@RequestParam(value="review",required=true)String review,
+			@RequestParam(value="result",required=true)String result,
+			@RequestParam(value="rewPartnerId",required=true)Integer rewPartnerId,
+			@RequestParam(value="operator",required=true)Integer operator,
+			@RequestParam(value="passwd",required=true)String passwd){
+		JSONObject jsonRet = new JSONObject();
+		try {
+			if(!"S".equals(result) && !"R".equals(result)) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "审批结果不正确（S-通过，R-拒绝）！");
+				return jsonRet.toString();
+			}
+			if(review == null || review.length()<2 || review.length()>600) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "审批意见：长度2-600字符！");
+				return jsonRet.toString();
+			}
+			//数据检查
+			PartnerBasic rewPartner = this.partnerBasicService.getByID(rewPartnerId);
+			if(rewPartner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+				jsonRet.put("errmsg", "审核者合作伙伴不存在！");
+				return jsonRet.toString();
+			}
+			Order order = this.orderService.get(null, null, true, null, true,orderId);
+			if(order == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "系统中没有该订单信息！");
+				return jsonRet.toJSONString();
+			}
+			PartnerBasic partner = this.partnerBasicService.getByID(order.getPartnerId());
+			if(partner == null || (!rewPartnerId.equals(this.sysParamUtil.getSysPartnerId()) && !rewPartnerId.equals(partner.getUpPartnerId()))) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权限执行该操作！");
+				return jsonRet.toString();
+			}
+			
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(operator.equals(rewPartner.getVipId())) { //绑定会员
+				VipBasic vip = this.vipBasicService.get(operator);
+				if(vip == null || !"1".equals(vip.getStatus()) ) {
+					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+					return jsonRet.toString();
+				}
+				if(signPwd.equals(vip.getPasswd())) {
+					isPass = true;
+				}
+			}
+			if(isPass != true) {
+				PartnerStaff staff = this.partnerStaffService.get(rewPartnerId, operator);
+				if(staff != null && staff.getTagList() != null && 
+						staff.getTagList().contains(PartnerStaff.TAG.reviewappr.getValue()) && signPwd.equals(staff.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			
+			if(null == order.getAppraiseStatus() || "0".equals(order.getAppraiseStatus())) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "该订单当前不可进行评价审核！");
+				return jsonRet.toString();
+			}
+			jsonRet = this.orderService.review(orderId, rewPartnerId, operator, result, review);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);

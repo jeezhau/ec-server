@@ -181,6 +181,17 @@ public interface OrderService {
 	 * @throws Exception 
 	 */
 	public String closePay(String payFlowId,Long totalAmount,String outFinishId) throws Exception;
+
+	/**
+	 * 记录评价审批结果
+	 * @param orderId
+	 * @param rewPartnerId
+	 * @param oprId
+	 * @param result 审批结果：1-审核通过，2-审核拒绝
+	 * @param review
+	 * @return
+	 */
+	public JSONObject review(String orderId,Integer rewPartnerId,Integer oprid,String result,String review);
 	
 }
 

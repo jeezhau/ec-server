@@ -184,5 +184,33 @@ public class PartnerStaff {
 		this.updateOpr = updateOpr;
 	}
     
-    
+	public static enum TAG{
+		pimage("pimage","图库管理"),
+		goods("goods","商品管理"),
+		basic("basic","合作伙伴基本信息管理"),
+		postage("postage","邮费模板管理"),
+		saleorder("saleorder","销售订单管理"),
+		aftersale("aftersale","售后管理"),
+		mypartners("mypartners","下级合作伙伴管理"),
+		reviewgds("reviewgds","商品审核"),
+		reviewappr("reviewappr","评价审核"),
+		complain4p("reviewappr","投诉上级"),
+		
+		ComplainDeal("ComplainDeal","投诉处理"),
+		ComplainRevisit("ComplainRevisit","投诉回访"),
+		;
+		private String value;
+		private String desc;
+		
+		private TAG(String value,String desc) {
+			this.value = value;
+			this.desc = desc;
+		}
+		public String getValue() {
+			return this.value;
+		}
+		public String getDesc() {
+			return this.desc;
+		}
+	}
 }

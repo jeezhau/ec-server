@@ -51,6 +51,7 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 	public Integer add(PartnerBasic basic) {
 		basic.setPartnerId(null);
 		basic.setUpdateTime(new Date());
+		
 		int cnt = this.partnerBasicMapper.insert(basic);
 		if(cnt>0) {
 			return basic.getPartnerId();

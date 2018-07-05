@@ -14,7 +14,9 @@ public class ComplainLog {
     private Integer cplanId;
 
 	@NotNull(message="投诉人ID：不可为空！")
-    private Integer userId;
+    private Integer oprId;
+	
+	private Integer oprPid;
 
 	@NotNull(message="投诉对象类型：不可为空！")
 	@Pattern(regexp="[12]",message="投诉对象类型：取值为【1-商品订单，2-合作伙伴】！")
@@ -73,15 +75,23 @@ public class ComplainLog {
         this.cplanId = cplanId;
     }
 
-    public Integer getUserId() {
-        return userId;
-    }
+    public Integer getOprId() {
+		return oprId;
+	}
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
+	public void setOprId(Integer oprId) {
+		this.oprId = oprId;
+	}
 
-    public Integer getPartnerId() {
+	public Integer getOprPid() {
+		return oprPid;
+	}
+
+	public void setOprPid(Integer oprPid) {
+		this.oprPid = oprPid;
+	}
+
+	public Integer getPartnerId() {
         return partnerId;
     }
 

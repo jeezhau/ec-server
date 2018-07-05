@@ -1,6 +1,7 @@
 package com.mofangyouxuan.service.impl;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.mapper.GoodsMapper;
@@ -37,8 +40,8 @@ public class GoodsServiceImpl implements GoodsService{
 	/**
 	 * 根据ID获取指定商品信息
 	 * @param needPartner 是否包含合作伙伴信息
-	 * @param isSelf 是否时合作伙伴自己
 	 * @param id
+	 * @param isSelf 是否时合作伙伴自己
 	 * @return
 	 */
 	@Override
@@ -63,8 +66,8 @@ public class GoodsServiceImpl implements GoodsService{
 		}
 		goods.setGoodsId(null);
 		goods.setUpdateTime(currTime);
-		goods.setReviewLog(null);
-		goods.setReviewResult("1");
+		//goods.setReviewLog(null);
+		//goods.setReviewResult("1");
 		int cnt = this.goodsMapper.insert(goods);
 		if(cnt>0) {
 			Long goodsId = goods.getGoodsId();
@@ -90,8 +93,8 @@ public class GoodsServiceImpl implements GoodsService{
 		Date currTime = new Date();
 		
 		goods.setUpdateTime(new Date());
-		goods.setReviewLog(null);
-		goods.setReviewResult("1");
+		//goods.setReviewLog(null);
+		//goods.setReviewResult("1");
 		//重置规格库存
 		this.goodsSpecMapper.deleteAll(goods.getGoodsId());
 		List<GoodsSpec> specList = goods.getSpecDetail();
@@ -181,16 +184,25 @@ public class GoodsServiceImpl implements GoodsService{
 	/**
 	 * 记录商品审批结果
 	 * @param goods
+	 * @param rewPartnerId
+	 * @param oprId
 	 * @param result
 	 * @param review
 	 * @return 更新记录数
 	 */
 	@Override
-	public int review(Goods goods,Integer oprid,String result,String review) {
-		Long id = goods.getGoodsId();
+	public int review(Goods goods,Integer rewPartnerId,Integer oprId,String result,String review) {
 		Goods g = new Goods();
-		g.setGoodsId(id);
-		g.setReviewLog(review);
+		g.setGoodsId(goods.getGoodsId());
+		JSONArray rewLog = JSONArray.parseArray(goods.getReviewLog() == null? "[]":goods.getReviewLog());
+		JSONObject jobj = new JSONObject();
+		jobj.put("partnerId", rewPartnerId);
+		jobj.put("operator", oprId);
+		jobj.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()));
+		jobj.put("result", result);
+		jobj.put("content", review);
+		rewLog.add(0, jobj);
+		g.setReviewLog(rewLog.toJSONString());
 		g.setReviewResult(result);
 		g.setReviewTime(new Date());
 		int cnt = this.goodsMapper.updateByPrimaryKey(g);

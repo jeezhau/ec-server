@@ -26,7 +26,7 @@ public class SysParamUtil {
 		return this.sysPartnerId;
 	}
 	
-	//微信手续费费率
+	//微信支付手续费费率
 	@Value("${wxpay.fee-rate-use-wxpay}")
 	private BigDecimal wxFeeRate;		
 	public BigDecimal getWxFeeRate() {
@@ -41,7 +41,7 @@ public class SysParamUtil {
 		return wxFeeRate;
 	}
 	
-	//微信手续费费率
+	//支付宝支付手续费费率
 	@Value("${alipay.fee-rate-use-alipay}")
 	private BigDecimal aliFeeRate;		
 	public BigDecimal getAliFeeRate() {
@@ -56,6 +56,7 @@ public class SysParamUtil {
 		return aliFeeRate;
 	}
 	
+	//激活VIP需要积分数量
 	@Value("${sys.vip_activate_need_score}")
 	private Integer activateVipNeedScore;	
 	public Integer getActivateVipNeedScore() {
@@ -69,6 +70,7 @@ public class SysParamUtil {
 		}
 		return activateVipNeedScore;
 	}
+	
 	//
 	//=============图片相关默认参数=======
 	//
@@ -118,7 +120,7 @@ public class SysParamUtil {
 				Integer newParam = new Integer(this.getSysParam("image-folder-file-limit"));
 				return newParam;
 			}catch(Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		return imageFolderFileLimit;
@@ -136,7 +138,7 @@ public class SysParamUtil {
 				Integer newParam = new Integer(this.getSysParam("order-4pay-cnt-all-limit"));
 				return newParam;
 			}catch(Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		return orderForPayCntAllLimit;
@@ -151,7 +153,7 @@ public class SysParamUtil {
 				Integer newParam = new Integer(this.getSysParam("order-4pay-cnt-goods-limit"));
 				return newParam;
 			}catch(Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		return orderForPayCntGoodsLimit;
@@ -166,7 +168,7 @@ public class SysParamUtil {
 				Integer newParam = new Integer(this.getSysParam("order-sign-prolong-days"));
 				return newParam;
 			}catch(Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		return orderSignProlongDays;
@@ -181,7 +183,7 @@ public class SysParamUtil {
 				Integer newParam = new Integer(this.getSysParam("order-nodelivery-days-4refund"));
 				return newParam;
 			}catch(Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		return noDeliveryDates4Refund;
@@ -196,7 +198,7 @@ public class SysParamUtil {
 				Integer newParam = new Integer(this.getSysParam("order-nosign-days-4refund"));
 				return newParam;
 			}catch(Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		return noSignDates4Refund;
@@ -210,12 +212,12 @@ public class SysParamUtil {
 			Integer newParam = new Integer(this.getSysParam("user-collection-limit"));
 			return newParam;
 		}catch(Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return collectionLimit;
 	}
 
-	//会员用户的每类通道的账户数量限制
+	//会员用户的账户数量限制
 	@Value("${sys.vip-account-cnt-limit}")
 	private int vipAccountCntLimit;
 	public int getVipAccountCntLimit() {
@@ -223,13 +225,13 @@ public class SysParamUtil {
 			Integer newParam = new Integer(this.getSysParam("vip-account-cnt-limit"));
 			return newParam;
 		}catch(Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return vipAccountCntLimit;
 	}
 
 	
-	//会员用户的每类通道的账户数量限制
+	//会员开通合作伙伴需要的积分数量
 	@Value("${sys.partner_open_need_socre}")
 	private int partner_open_need_socre;
 	public int getPartnerOpenNeedSocre() {
@@ -237,7 +239,7 @@ public class SysParamUtil {
 			Integer newParam = new Integer(this.getSysParam("partner_open_need_socre"));
 			return newParam;
 		}catch(Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return partner_open_need_socre;
 	}
@@ -250,23 +252,38 @@ public class SysParamUtil {
 			BigDecimal newParam = new BigDecimal(this.getSysParam("spread_user_profit_ratio"));
 			return newParam;
 		}catch(Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return spread_user_profit_ratio;
 	}
 	
+	
 	//推广商家可获得所推广商家交易额的分润利率
-	@Value("${sys.spread_user_profit_ratio}")
+	@Value("${sys.spread_mcht_profit_ratio}")
 	private BigDecimal spread_mcht_profit_ratio;
 	public BigDecimal getSpreadMchtProfitRatio() {
 		try {
 			BigDecimal newParam = new BigDecimal(this.getSysParam("spread_mcht_profit_ratio"));
 			return newParam;
 		}catch(Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return spread_mcht_profit_ratio;
 	}
+	
+	//平台收取服务费费率
+	@Value("${sys.platform_service_fee_ratio}")
+	private BigDecimal platform_service_fee_ratio;
+	public BigDecimal getPlatformServiceFeeRatio() {
+		try {
+			BigDecimal newParam = new BigDecimal(this.getSysParam("platform_service_fee_ratio"));
+			return newParam;
+		}catch(Exception e) {
+			//e.printStackTrace();
+		}
+		return platform_service_fee_ratio;
+	}
+	
 	
 	/**
 	 * 获取系统配置参数

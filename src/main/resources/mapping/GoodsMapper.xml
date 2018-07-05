@@ -58,6 +58,7 @@
 	    <id column="partner_id" jdbcType="INTEGER" property="partnerId" />
 	    <result column="vip_id" jdbcType="INTEGER" property="vipId" />
 	    <result column="pb_tp" jdbcType="VARCHAR" property="pbTp" />
+	    <result column="up_partnerId" jdbcType="INTEGER" property="upPartnerId" />
 	    <result column="country" jdbcType="VARCHAR" property="country" />
 	    <result column="province" jdbcType="VARCHAR" property="province" />
 	    <result column="city" jdbcType="VARCHAR" property="city" />
@@ -98,7 +99,7 @@
     g.review_result, g.review_log, g.review_time, g.status, g.memo
   </sql>
   <sql id="Base_Column_Partner">
-    p.vip_id, pb_tp,p.country, p.province, p.city, p.area, p.addr, p.busi_name, p.legal_pername, p.legal_peridno, 
+    p.vip_id, pb_tp,p.up_partnerId,p.country, p.province, p.city, p.area, p.addr, p.busi_name, p.legal_pername, p.legal_peridno, 
     p.comp_type, p.comp_name, p.licence_no, p.phone, p.location_x, p.location_y, p.introduce,p.status partner_status
 
   </sql>
@@ -119,7 +120,7 @@
     join tb_partner_basic p on g.partner_id = p.partner_id
     where g.goods_id = #{goodsId,jdbcType=INTEGER}
     <if test="isSelf == null or isSelf == false">
-    and p.status = 'S' and g.status='1' and g.review_result = '1'
+    and p.status = 'S' and g.status='1' and g.review_result = 'S'
     </if>
   </select>
    
@@ -228,6 +229,9 @@
       </if>
       <if test="params.partnerId != null">
         and g.partner_id = #{params.partnerId,jdbcType=INTEGER}
+      </if>
+      <if test="params.upPartnerId != null">
+        and p.up_partnerId = #{params.upPartnerId,jdbcType=INTEGER}
       </if>
       <if test="params.categoryId != null">
         and g.category_id = #{params.categoryId,jdbcType=INTEGER}

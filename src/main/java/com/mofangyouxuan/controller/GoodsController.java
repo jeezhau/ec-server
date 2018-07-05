@@ -30,17 +30,16 @@ import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.PartnerStaff;
-import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.PartnerStaffService;
-import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.SignUtils;
 
@@ -64,8 +63,7 @@ public class GoodsController {
 	@Autowired
 	private PartnerStaffService partnerStaffService;
 	@Autowired
-	private UserBasicService userBasicService;
-	
+	private SysParamUtil sysParamUtil;
 	
 	@InitBinder
 	protected void initBinder(WebDataBinder binder) {
@@ -157,7 +155,7 @@ public class GoodsController {
 			//数据处理保存
 			goods.setSaledCnt(0);
 			goods.setUpdateOpr(updateOpr);
-			goods.setReviewResult("1"); 
+			goods.setReviewResult(Goods.REWSTAT.forreview.getValue()); 
 			goods.setReviewLog(null);
 			goods.setReviewTime(null);
 			Long id = this.goodsService.add(goods);
@@ -274,11 +272,9 @@ public class GoodsController {
 			//更新其他信息
 			goods.setSaledCnt(old.getSaledCnt());
 			goods.setUpdateOpr(updateOpr);
-			goods.setReviewResult("1"); 
+			goods.setReviewResult(Goods.REWSTAT.forreview.getValue()); 
 			goods.setReviewLog("");
 			goods.setReviewTime(null);
-			//goods.setStockSum(null);
-			//goods.setPriceLowest(null);
 			int id = this.goodsService.update(goods);
 			if(id <1 ) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
@@ -403,7 +399,7 @@ public class GoodsController {
 	
 	/**
 	 * 获取所有商品：不包含合作伙伴信息
-	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,city,postageId,currUserLocX,currUserLocY}
+	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,upPartnerId,keywords,category,dispatchMode,city,postageId,currUserLocX,currUserLocY}
 	 * @param jsonSortParams  排序条件 {time:"N#0/1",dist:"N#0",sale:"N"#0/1}；time 表示按更新上架时间排序，N为排序位置，0为升序，1为降序；dist表示按距离排序，仅对有同城条件使用;sale 为按销量
 	 * @param pageCond 分页条件 
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
@@ -415,7 +411,7 @@ public class GoodsController {
 
 	/**
 	 * 获取所有商品：包含合作伙伴信息
-	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,keywords,category,dispatchMode,city,postageId,currUserLocX,currUserLocY}
+	 * @param jsonSearchParams 查询条件 {isSelf,reviewResult,status,partnerId,upPartnerId,keywords,category,dispatchMode,city,postageId,currUserLocX,currUserLocY}
 	 * @param jsonSortParams  排序条件 {time:"N#0/1",dist:"N#0",sale:"N"#0/1}；time 表示按更新上架时间排序，N为排序位置，0为升序，1为降序；dist表示按距离排序，仅对有同城条件使用;sale 为按销量
 	 * @param pageCond 分页条件 
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
@@ -520,39 +516,80 @@ public class GoodsController {
 	/**
 	 * 商品审核
 	 * 
-	 * @param goodsId	待审批商品ID
-	 * @param currUserId	审批人
-	 * @param review 审批意见
-	 * @param result 审批结果：S-通过，R-拒绝
+	 * @param goodsId		待审批商品ID
+	 * @param rewPartnerId	审批者合作伙伴
+	 * @param operator	审批人
+	 * @param review 	审批意见
+	 * @param result 	审批结果：S-通过，R-拒绝
 	 * 
 	 * @return {errcode:0,errmsg:"ok"}
 	 * @throws JSONException
 	 */
 	@RequestMapping("/review")
 	public String review(@RequestParam(value="goodsId",required=true)Long goodsId,
-			@RequestParam(value="currUserId",required=true)Integer currUserId,
 			@RequestParam(value="review",required=true)String review,
-			@RequestParam(value="result",required=true)String result){
+			@RequestParam(value="result",required=true)String result,
+			@RequestParam(value="rewPartnerId",required=true)Integer rewPartnerId,
+			@RequestParam(value="operator",required=true)Integer operator,
+			@RequestParam(value="passwd",required=true)String passwd){
 		JSONObject jsonRet = new JSONObject();
 		try {
-			UserBasic user = this.userBasicService.get(currUserId);
-			if(user == null || user.getUserId()<100 || user.getUserId()>=1000) {
-				jsonRet.put("errcode", ErrCodes.USER_NOT_REVIEW_ADMIN);
-				jsonRet.put("errmsg", "该用户不是审核管理员！");
-				return jsonRet.toString();
-			}
-			Goods old = this.goodsService.get(false,goodsId,true);
-			if(old == null || !"0".equals(old.getReviewResult())) {
-				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
-				jsonRet.put("errmsg", "该商品不存在或状态不正确！");
-				return jsonRet.toString();
-			}
 			if(!"S".equals(result) && !"R".equals(result)) {
-				jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
-				jsonRet.put("errmsg", "审批结果取值不正确（S-通过，R-拒绝）！");
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "审批结果不正确（S-通过，R-拒绝）！");
 				return jsonRet.toString();
 			}
-			int cnt = this.goodsService.review(old, currUserId, result, review);
+			if(review == null || review.length()<2 || review.length()>600) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
+				jsonRet.put("errmsg", "审批意见：长度2-600字符！");
+				return jsonRet.toString();
+			}
+			//数据检查
+			Goods old = this.goodsService.get(true,goodsId,true);
+			if(old == null) {
+				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
+				jsonRet.put("errmsg", "该商品不存在于系统中！");
+				return jsonRet.toString();
+			}
+			PartnerBasic rewPartner = this.partnerBasicService.getByID(rewPartnerId);
+			if(rewPartner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+				jsonRet.put("errmsg", "审核者合作伙伴不存在！");
+				return jsonRet.toString();
+			}
+			if(!rewPartnerId.equals(this.sysParamUtil.getSysPartnerId()) && !rewPartnerId.equals(old.getPartner().getUpPartnerId())) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权限执行该操作！");
+				return jsonRet.toString();
+			}
+			
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			if(operator.equals(rewPartner.getVipId())) { //绑定会员
+				VipBasic vip = this.vipBasicService.get(operator);
+				if(vip == null || !"1".equals(vip.getStatus()) ) {
+					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+					return jsonRet.toString();
+				}
+				if(signPwd.equals(vip.getPasswd())) {
+					isPass = true;
+				}
+			}
+			if(isPass != true) {
+				PartnerStaff staff = this.partnerStaffService.get(rewPartnerId, operator);
+				if(staff != null && staff.getTagList() != null && staff.getTagList().contains(PartnerStaff.TAG.reviewappr.getValue()) && signPwd.equals(staff.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+				return jsonRet.toString();
+			}
+			
+			int cnt = this.goodsService.review(old, rewPartnerId,operator, result, review);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
@@ -667,7 +704,7 @@ public class GoodsController {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			Map<String,Object> params = new HashMap<String,Object>();
-			params.put("reviewResult", "1");	//默认审核通过
+			params.put("reviewResult", Goods.REWSTAT.normal.getValue());	//默认审核通过
 			params.put("status", "1");	//默认已上架
 			params.put("partnerStatus", "S"); //合作伙伴状态为审核通过
 			if(jsonSearchParams != null && jsonSearchParams.length()>0) {
@@ -685,6 +722,9 @@ public class GoodsController {
 				}
 				if(jsonSearch.containsKey("partnerId")) {
 					params.put("partnerId", jsonSearch.getInteger("partnerId"));
+				}
+				if(jsonSearch.containsKey("upPartnerId")) {
+					params.put("upPartnerId", jsonSearch.getInteger("upPartnerId"));
 				}
 				if(jsonSearch.containsKey("keywords")) {//使用关键字查询
 					params.put("goodsName", jsonSearch.getString("keywords"));

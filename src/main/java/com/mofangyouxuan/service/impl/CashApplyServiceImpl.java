@@ -30,7 +30,7 @@ public class CashApplyServiceImpl implements CashApplyService{
 	@Autowired
 	private ChangeFlowService changeFlowService;
 	
-	BigDecimal cashFeeRate = new BigDecimal(0.02); //提现费率2%，手续费不足1元按照1元计算
+	BigDecimal cashFeeRate = new BigDecimal(0);
 	
 	/**
 	 * 添加申请记录
@@ -42,10 +42,8 @@ public class CashApplyServiceImpl implements CashApplyService{
 	public JSONObject add(VipBasic vip,CashApply apply)	{
 		JSONObject jsonRet = new JSONObject();
 		Map<String,Object> params = new HashMap<String,Object>();
-		Long fee = this.cashFeeRate.multiply(new BigDecimal(apply.getCashAmount())).longValue();
-		if(fee<100) {
-			fee = 100l;
-		}
+		//计算手续费
+		Long fee = 0l;
 		//可提现检查
 		if((apply.getCashAmount() + fee)> vip.getBalance()) {
 			jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);

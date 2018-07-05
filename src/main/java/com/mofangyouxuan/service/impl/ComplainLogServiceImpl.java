@@ -34,7 +34,7 @@ public class ComplainLogServiceImpl implements ComplainLogService{
 	public JSONObject add(ComplainLog log) {
 		JSONObject jsonRet = new JSONObject();
 		Map<String,Object> params = new HashMap<String,Object>();
-		params.put("userId", log.getUserId());
+		params.put("oprId", log.getOprId());
 		params.put("goodsId", log.getGoodsId());
 		params.put("orderId", log.getOrderId());
 		params.put("status", "0,1");
@@ -65,7 +65,7 @@ public class ComplainLogServiceImpl implements ComplainLogService{
 	public JSONObject updateContent(ComplainLog log) {
 		JSONObject jsonRet = new JSONObject();
 		Map<String,Object> params = new HashMap<String,Object>();
-		params.put("userId", log.getUserId());
+		params.put("oprId", log.getOprId());
 		params.put("goodsId", log.getGoodsId());
 		params.put("orderId", log.getOrderId());
 		params.put("status", "0,1");
