@@ -17,9 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
+import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.CashApply;
+import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.CashApplyService;
+import com.mofangyouxuan.service.PartnerBasicService;
+import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.SignUtils;
 
@@ -31,6 +36,12 @@ public class CashApplyController {
 	private CashApplyService cashApplyService;
 	@Autowired
 	private VipBasicService vipBasicService;
+	@Autowired
+	private PartnerBasicService partnerBasicService;
+	@Autowired
+	private PartnerStaffService partnerStaffService;
+	@Autowired
+	private SysParamUtil sysParamUtil;
 	
 	/**
 	 * 提交提现申请
@@ -142,21 +153,25 @@ public class CashApplyController {
 	/**
 	 * 业务管理人员更新提现申请结果
 	 * 【权限人】
-	 * 业务管理人员
-	 * @param settleId
-	 * @param userId
+	 * 业务管理人员 
+	 * @param vipId
+	 * @param applyId
+	 * @param stat
+	 * @param memo
+	 * @param operator
+	 * @param passwd
 	 * @return
 	 */
 	@RequestMapping("/updateStat")
 	public Object updateStat(@RequestParam(value="vipId",required=true)Integer vipId,
 			@RequestParam(value="applyId",required=true)String applyId,
-			@RequestParam(value="amount",required=true)Long amount,
 			@RequestParam(value="stat",required=true)String stat,
 			@RequestParam(value="memo",required=true)String memo,
-			@RequestParam(value="updateOpr",required=true)Integer updateOpr) {
+			@RequestParam(value="operator",required=true)Integer operator,
+			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			if(!"1".equals(stat) && "S".equals(stat) && !"F".equals(stat)) {
+			if(!"1".equals(stat) && !"S".equals(stat) && !"F".equals(stat)) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				jsonRet.put("errmsg", "处理结果：取值【1-已受理，S-成功，F-失败】！");
 				return jsonRet.toString();
@@ -166,24 +181,46 @@ public class CashApplyController {
 				jsonRet.put("errmsg", "处理备注：长度不可超过1000字符！");
 				return jsonRet.toString();
 			}
-			VipBasic vipBasic = this.vipBasicService.get(vipId);
-			if(vipBasic == null || !"1".equals(vipBasic.getStatus()) ) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员信息或未激活！");
+			//操作员与密码验证
+			Boolean isPass = false;
+			String signPwd = SignUtils.encodeSHA256Hex(passwd);
+			PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
+			if(sysPartner == null) {
+				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
+				jsonRet.put("errmsg", "获取合作伙伴信息失败！");
 				return jsonRet.toString();
 			}
-			if(updateOpr>600000) {
+			if(operator.equals(sysPartner.getVipId())) { //绑定会员
+				VipBasic vip = this.vipBasicService.get(operator);
+				if(vip == null || !"1".equals(vip.getStatus()) ) {
+					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
+					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+					return jsonRet.toString();
+				}
+				if(signPwd.equals(vip.getPasswd())) {
+					isPass = true;
+				}
+			}
+			if(isPass != true) {
+				PartnerStaff staff = this.partnerStaffService.get(this.sysParamUtil.getSysPartnerId(), operator);
+				if(staff != null && staff.getTagList() != null && 
+						staff.getTagList().contains(PartnerStaff.TAG.ComplainDeal.getValue()) && signPwd.equals(staff.getPasswd())) { //员工密码验证
+					isPass = true;
+				}
+			}
+			if(!isPass) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权执行该操作！");
+				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
 				return jsonRet.toString();
 			}
 			//数据处理
+			VipBasic vipBasic = this.vipBasicService.get(vipId);
 			CashApply old = this.cashApplyService.get(applyId);
-			if(old == null || !old.getVipId().equals(vipId)) {
+			if(vipBasic == null || old == null || !old.getVipId().equals(vipId)) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数不正确！");
 			}else {
-				jsonRet = this.cashApplyService.updateStat(vipBasic, old, stat, updateOpr, memo);
+				jsonRet = this.cashApplyService.updateStat(vipBasic, old, stat, operator, memo);
 			}
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -191,7 +228,7 @@ public class CashApplyController {
 			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
 		}
 		return jsonRet;
-	}	
+	}
 	
 	/**
 	 * 获取会员的所有提现充值信息

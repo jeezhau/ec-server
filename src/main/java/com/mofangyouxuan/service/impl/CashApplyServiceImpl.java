@@ -147,6 +147,11 @@ public class CashApplyServiceImpl implements CashApplyService{
 				return jsonRet;
 			}
 		}else if("F".equals(stat)) {
+			if(!"0".equals(old.getStatus()) && !"1".equals(old.getStatus())) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "该提现申请当前不可处理为提现失败 ！");
+				return jsonRet;
+			}
 			if("1".equals(old.getStatus())) { //已受理
 				String ret = this.changeFlowService.cashFinish(false, amount, old.getVipId(), updateOpr, "提现失败");
 				if(!"00".equals(ret)) {

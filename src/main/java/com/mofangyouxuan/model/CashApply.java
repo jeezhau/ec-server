@@ -25,7 +25,7 @@ public class CashApply {
     private String idNo;
 
     @NotNull(message="通道类型：不可为空！")
-    @Pattern(regexp="[1]",message="通道类型：取值为【1-银行】！")
+    @Pattern(regexp="[123]",message="通道类型：取值为【1-银行，2-微信，3-支付宝】！")
     private String channelType;
 
     @NotNull(message="账户名称：不可为空！")
