@@ -15,6 +15,7 @@ import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.ChangeFlowMapper;
 import com.mofangyouxuan.model.ChangeFlow;
+import com.mofangyouxuan.model.OrderBal;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
@@ -118,16 +119,16 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		if(sysPartner == null || buyUser == null || partner == null) {
 			throw new Exception("获取用户或商家信息失败！");
 		}
-		//收回交易服务费
-		params.put("vipId", sysPartner.getVipId());
-		params.put("changeType", CashFlowTP.CFTP10.value); 
-		List<ChangeFlow> serviceList = this.changeFlowMapper.selectAll(params, new PageCond(0,1), null);
-		if(serviceList != null && serviceList.size()>0) {
-			ret = this.subBal(serviceList.get(0).getAmount(), sysPartner.getVipId(), oprId, reason, CashFlowTP.CFTP20, orderId);
-			if(!"00".equals(ret)) {
-				throw new Exception(ret);
-			}
-		}
+		//不退服务费
+//		params.put("vipId", sysPartner.getVipId());
+//		params.put("changeType", CashFlowTP.CFTP10.value); 
+//		List<ChangeFlow> serviceList = this.changeFlowMapper.selectAll(params, new PageCond(0,1), null);
+//		if(serviceList != null && serviceList.size()>0) {
+//			ret = this.subBal(serviceList.get(0).getAmount(), sysPartner.getVipId(), oprId, reason, CashFlowTP.CFTP20, orderId);
+//			if(!"00".equals(ret)) {
+//				throw new Exception(ret);
+//			}
+//		}
 		//收回推广用户分润奖励
 		params.put("vipId", buyUser.getSenceId());
 		params.put("changeType", CashFlowTP.CFTP12.value); 
@@ -205,10 +206,10 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @return 00-成功，其他-失败信息
 	 * @throws Exception 
 	 */
-	public String paySuccess(boolean useVipPay,Long amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId,String orderId) throws Exception{
+	public String paySuccess(boolean useVipPay,Long amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId,String orderId) throws Exception{
 		if(useVipPay) {
 			//客户消费
-			String ret = this.subBal(amount, userVip.getVipId(), oprId, reason, CashFlowTP.CFTP22,orderId);
+			String ret = this.subBal(amount, userVipId, oprId, reason, CashFlowTP.CFTP22,orderId);
 			if(!"00".equals(ret)) {
 				throw new Exception(ret);
 			}
@@ -226,7 +227,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * 1、减少冻结余额，增加可用余额；
 	 * 2、执行推广用户系统分润；
 	 * 3、执行推广卖家系统分润；
-	 * @param amount		交易金额
+	 * @param orderBal	订单对账结果
 	 * @param userId		买家ID
 	 * @param mchtVipId	商家会员账户
 	 * @param oprId 		操作员ID
@@ -236,7 +237,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @return 00-成功，其他-失败信息
 	 * @throws Exception 
 	 */
-	public String dealFinish(Long amount,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId) throws Exception {
+	public String dealFinish(OrderBal orderBal,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId) throws Exception {
 		UserBasic buyUser = this.userBasicService.get(userId);
 		PartnerBasic partner = this.partnerBasicService.getByBindUser(mchtVipId);
 		PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
@@ -252,7 +253,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 			throw new Exception("该订单没有交易成功流水信息");
 		}
 		//商家卖款解冻
-		String ret = this.doubleUnFreeze(amount, mchtVipId, oprId, reason, CashFlowTP.CFTP14, reason, CashFlowTP.CFTP43,orderId);
+		String ret = this.doubleUnFreeze(orderBal.getPayAmount().multiply(new BigDecimal(100)).longValue(), mchtVipId, oprId, reason, CashFlowTP.CFTP14, reason, CashFlowTP.CFTP43,orderId);
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
 		}
@@ -260,8 +261,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		if(buyUser != null && buyUser.getSenceId()!=null) {
 			VipBasic spreadVip = this.vipBasicService.get(buyUser.getSenceId());
 			if(spreadVip != null) {
-				BigDecimal spreadUserProfitRate = this.sysParamUtil.getSpreadUserProfitRatio();
-				Long profit = spreadUserProfitRate.multiply(new BigDecimal(amount)).setScale(0, BigDecimal.ROUND_FLOOR).longValue();
+				Long profit = orderBal.getSpreaderUSettle().multiply(new BigDecimal(100)).longValue();
 				ret = this.shareProfit(sysPartner,profit, spreadVip.getVipId(), oprId, "推广用户购买商品获得奖励",orderId);
 				if(!"00".equals(ret)) {
 					throw new Exception(ret);
@@ -272,22 +272,24 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		if(partner.getUpPartnerId() != null) {
 			PartnerBasic spPartner = this.partnerBasicService.getByID(partner.getUpPartnerId());
 			if(spPartner != null) {
-				BigDecimal spreadMchtProfitRate = this.sysParamUtil.getSpreadMchtProfitRatio();
-				Long profit = spreadMchtProfitRate.multiply(new BigDecimal(amount)).setScale(0, BigDecimal.ROUND_FLOOR).longValue();
+				Long profit = orderBal.getSpreaderPSettle().multiply(new BigDecimal(100)).longValue();
 				ret = this.shareProfit(sysPartner,profit, spPartner.getVipId(), oprId, "推广商家出售商品获得奖励",orderId);
 				if(!"00".equals(ret)) {
 					throw new Exception(ret);
 				}
 			}
 		}
-		//收取服务费
-		BigDecimal platformServiceFeeRate = this.sysParamUtil.getPlatformServiceFeeRatio();
-		Long profit = platformServiceFeeRate.multiply(new BigDecimal(amount)).setScale(0, BigDecimal.ROUND_CEILING).longValue();
-		ret = this.addBal(profit, sysPartner.getVipId(), oprId, reason, CashFlowTP.CFTP10, orderId);
+		//系统收取服务费
+		Long syssrvFee = orderBal.getSyssrvSettle().multiply(new BigDecimal(100)).longValue();
+		ret = this.addBal(syssrvFee, sysPartner.getVipId(), oprId, reason, CashFlowTP.CFTP10, orderId);
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
 		}
-		
+		//商家支付服务费
+		ret = this.subBal(syssrvFee, mchtVipId, oprId, reason, CashFlowTP.CFTP20, orderId);
+		if(!"00".equals(ret)) {
+			throw new Exception(ret);
+		}
 		return "00";
 	}
 	
@@ -659,8 +661,8 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @author jeekhan
 	 */
 	public static enum CashFlowTP{
-		 CFTP10(10,"服务费"),CFTP11(11,"客户退款"),CFTP12(12,"交易分润"),CFTP13(13,"平台奖励"), CFTP14(14,"资金解冻"), CFTP15(15,"积分兑换"), CFTP16(16,"现金红包"), CFTP17(17,"退款失败"), CFTP18(18,"提现失败"), 
-		 CFTP20(20,"退款服务费"),CFTP21(21,"提现申请"), CFTP22(22,"客户消费"), CFTP23(23,"资金冻结"), CFTP24(24,"投诉罚款"), CFTP25(25,"申请退款"),CFTP26(26,"交易分润"),
+		 CFTP10(10,"服务费(收取)"),CFTP11(11,"客户退款"),CFTP12(12,"交易分润"),CFTP13(13,"平台奖励"), CFTP14(14,"资金解冻"), CFTP15(15,"积分兑换"), CFTP16(16,"现金红包"), CFTP17(17,"退款失败"), CFTP18(18,"提现失败"), 
+		 CFTP20(20,"服务费(支付)"),CFTP21(21,"提现申请"), CFTP22(22,"客户消费"), CFTP23(23,"资金冻结"), CFTP24(24,"投诉罚款"), CFTP25(25,"申请退款"),CFTP26(26,"交易分润"),
 		 CFTP31(31,"冻结交易买卖额"), CFTP32(32,"买单投诉冻结"), CFTP33(33,"提现冻结"), CFTP34(34,"申请退款"),
 		 CFTP41(41,"恢复可用余额"), CFTP42(42,"提现完成"), CFTP43(43,"交易完成"), CFTP44(44,"退款成功"),CFTP45(45,"退款失败");
 		

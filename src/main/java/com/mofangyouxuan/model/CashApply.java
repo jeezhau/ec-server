@@ -155,7 +155,7 @@ public class CashApply {
 		if(applyTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(applyTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(applyTime);
     }
 
     public void setApplyTime(Date applyTime) {
@@ -179,7 +179,7 @@ public class CashApply {
 		if(updateTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(updateTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(updateTime);
 	}
 
 	public void setUpdateTime(Date updateTime) {

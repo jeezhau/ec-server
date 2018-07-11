@@ -72,7 +72,7 @@ public class AutoAppraiseSchedule {
 					}else {
 						signTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(order.getAftersalesDealTime());
 					}
-					long gapDays = (new Date().getTime() - signTime.getTime())/1000/3600/24 +10; //单位天
+					long gapDays = (new Date().getTime() - signTime.getTime())/1000/3600/24; //单位天
 					if(gapDays > this.autoApprDays) { //超时
 						if(order.getAppraiseTime() == null || order.getApprUserTime() == null) {
 							Integer scoreLogis =10, scoreServ =10, scoreGoods=10;

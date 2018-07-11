@@ -15,6 +15,7 @@ spring:
         # 使用druid数据源
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.jdbc.Driver    
+  
   servlet: 
     multipart:
       max-file-size: 10Mb
@@ -47,6 +48,7 @@ wxpay:
   refund-notify-url: '/wxpay/notify/refund'
   fee-rate-use-wxpay: 0.27   #微信支付手续费
   cert-key-dir: '/var/mfpay/wxpay/'
+  
 #支付宝支付参数
 alipay:
   appid: '2018061260389188'
@@ -56,6 +58,7 @@ alipay:
   pay-return-url: '/pay/finish/{orderId}'
   fee-rate-use-alipay: 0.007   #支付宝支付手续费
   cert-key-dir: '/var/mfpay/alipay/'
+  seller-email: 'zhaofachun@mofangyouxuan.com'
   
 #信息管理平台
 messmp:
@@ -71,6 +74,7 @@ logistics:
  
 ######系统参数############  
 sys:
+  pay-bills-dir: '/var/mfyx/paybills/'  #支付对账单
   tmp-file-dir: '/var/mfyx/tmp/'  #系统临时目录
   user-img-path: '/var/mfyx/user-img/' #用户图片主目录
   partner-img-dir: '/var/mfyx/partner-img/'   #合作伙伴照片主目录

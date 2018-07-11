@@ -3,8 +3,7 @@
 <mapper namespace="com.mofangyouxuan.mapper.SumBalLogMapper">
   <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.SumBalLog">
     <result column="vip_id" jdbcType="INTEGER" property="vipId" />
-    <result column="begin_flow" jdbcType="VARCHAR" property="beginFlow" />
-    <result column="end_flow" jdbcType="VARCHAR" property="endFlow" />
+    <result column="flow_time" jdbcType="VARCHAR" property="flowTime" />
     <result column="amount_addbal" jdbcType="DECIMAL" property="amountAddbal" />
     <result column="amount_subbal" jdbcType="DECIMAL" property="amountSubbal" />
     <result column="amount_addfrz" jdbcType="DECIMAL" property="amountAddfrz" />
@@ -13,19 +12,34 @@
   </resultMap>
   
   <insert id="insert" parameterType="com.mofangyouxuan.model.SumBalLog">
-    insert into tb_sumbal_log (vip_id, begin_flow, end_flow, 
+    insert into tb_sumbal_log (vip_id, flow_time, 
       amount_addbal, amount_subbal, amount_addfrz, 
       amount_subfrz, create_time)
-    values (#{vipId,jdbcType=INTEGER}, #{beginFlow,jdbcType=VARCHAR}, #{endFlow,jdbcType=VARCHAR}, 
+    values (#{vipId,jdbcType=INTEGER}, #{flowTime,jdbcType=VARCHAR},
       #{amountAddbal,jdbcType=DECIMAL}, #{amountSubbal,jdbcType=DECIMAL}, #{amountAddfrz,jdbcType=DECIMAL}, 
       #{amountSubfrz,jdbcType=DECIMAL}, #{createTime,jdbcType=TIMESTAMP})
   </insert>
 
-  <select id="selectAll">
+  <insert id="updateAmount" parameterType="com.mofangyouxuan.model.SumBalLog">
+    update tb_sumbal_log 
+    set amount_addbal = #{amountAddbal,jdbcType=DECIMAL}, 
+        amount_subbal = #{amountSubbal,jdbcType=DECIMAL}, 
+        amount_addfrz = #{amountAddfrz,jdbcType=DECIMAL}, 
+        amount_subfrz = #{amountSubfrz,jdbcType=DECIMAL},
+       create_time = #{createTime,jdbcType=TIMESTAMP}
+      where vip_id = #{vipId,jdbcType=INTEGER} and flow_time = #{flowTime,jdbcType=VARCHAR}
+  </insert>
+  
+  <select id="selectAll" parameterType="map">
     select * 
     from tb_sumbal_log t
     where t.vip_id = #{vipId,jdbcType=INTEGER}
-  	
+  </select>
+  
+  <select id="selectByVipAndTime" parameterType="map" resultMap="BaseResultMap">
+   select * 
+    from tb_sumbal_log t
+    where t.vip_id = #{vipId,jdbcType=INTEGER} and t.flow_time = #{flowTime,jdbcType=VARCHAR} 
   </select>
   
 </mapper>

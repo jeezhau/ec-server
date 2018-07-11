@@ -267,6 +267,81 @@
     	</if>
   </select>
   
+  <sql id="whereSql">
+    <where>
+      <if test="params.userId != null">
+        and user_id = #{params.userId,jdbcType=INTEGER}
+      </if>
+      <if test="params.goodsId != null">
+        and goods_id = #{params.goodsId,jdbcType=INTEGER}
+      </if>
+      <if test="params.orderId != null">
+        and order_id = #{params.orderId,jdbcType=VARCHAR}
+      </if>
+      <if test="params.flowType != null">
+        and flow_type = #{params.flowType,jdbcType=CHAR}
+      </if>
+      <if test="params.payType != null">
+        and pay_type = #{params.payType,jdbcType=VARCHAR}
+      </if>
+      <if test="params.payAccount != null">
+        and pay_account = #{params.payAccount,jdbcType=VARCHAR}
+      </if>
+      <if test="params.currencyType != null">
+        and currency_type = #{params.currencyType,jdbcType=VARCHAR}
+      </if>
+      <if test="params.payAmount != null">
+        and pay_amount = #{params.payAmount,jdbcType=DECIMAL}
+      </if>
+      <if test="params.feeAmount != null">
+        and fee_amount = #{params.feeAmount,jdbcType=DECIMAL}
+      </if>
+      <if test="params.beginCreateTime != null">
+        and create_time &gt;= concat(#{params.beginCreateTime,jdbcType=TIMESTAMP},' 00:00:00')
+      </if>
+      <if test="params.endCreateTime != null">
+        and create_time &lt;= concat(#{params.endCreateTime,jdbcType=TIMESTAMP},' 23:59:59')
+      </if>      
+      <if test="params.incomeAmount != null">
+        and income_amount = #{params.incomeAmount,jdbcType=DECIMAL}
+      </if>
+      <if test="params.beginIncomeTime != null">
+        and income_time &gt;= concat(#{params.beginIncomeTime,jdbcType=TIMESTAMP},' 00:00:00')
+      </if>
+       <if test="params.endIncomeTime != null">
+        and income_time &lt;= concat(#{params.endIncomeTime,jdbcType=TIMESTAMP},' 23:59:59')
+      </if>   
+      <if test="params.status != null">
+        and LOCATE(status,#{params.status,jdbcType=VARCHAR}) &gt; 0
+      </if>
+      <if test="params.outTradeNo != null">
+        and out_trade_no = #{params.outTradeNo,jdbcType=VARCHAR}
+      </if>
+      <if test="params.outTradeUrl != null">
+        and out_trade_url = #{params.outTradeUrl,jdbcType=VARCHAR}
+      </if>
+      <if test="params.outFinishId != null">
+        and out_finish_id = #{params.outFinishId,jdbcType=VARCHAR}
+      </if>
+
+    </where>
+  </sql>
+  
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" /> 
+    from tb_pay_flow f
+    <include refid="whereSql" /> 
+    limit #{pageCond.begin},#{pageCond.pageSize}
+    order by create_time desc
+  </select>
+
+  <select id="countAll" parameterType="map" resultType="int">
+    select 
+    <include refid="Base_Column_List" /> 
+    from tb_pay_flow f
+    <include refid="whereSql" />
+  </select>  
   
 </mapper>
 

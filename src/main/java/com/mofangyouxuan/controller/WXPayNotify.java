@@ -102,4 +102,6 @@ public class WXPayNotify {
 		log.info("返回微信退款通知：" + retStr);
 		return retStr;
 	}
+	
+	
 }

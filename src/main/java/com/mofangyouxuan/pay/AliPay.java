@@ -1,6 +1,10 @@
 package com.mofangyouxuan.pay;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -14,12 +18,14 @@ import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
+import com.alipay.api.request.AlipayDataDataserviceBillDownloadurlQueryRequest;
 import com.alipay.api.request.AlipayTradeCloseRequest;
 import com.alipay.api.request.AlipayTradeFastpayRefundQueryRequest;
 import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.alipay.api.request.AlipayTradeQueryRequest;
 import com.alipay.api.request.AlipayTradeRefundRequest;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
+import com.alipay.api.response.AlipayDataDataserviceBillDownloadurlQueryResponse;
 import com.alipay.api.response.AlipayTradeCloseResponse;
 import com.alipay.api.response.AlipayTradeFastpayRefundQueryResponse;
 import com.alipay.api.response.AlipayTradePagePayResponse;
@@ -29,6 +35,7 @@ import com.alipay.api.response.AlipayTradeWapPayResponse;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.model.Order;
 import com.mofangyouxuan.service.OrderService;
+import com.mofangyouxuan.utils.HttpUtils;
 
 @Component
 public class AliPay {
@@ -41,7 +48,7 @@ public class AliPay {
 	public String returnServerUrl; //本地接收通知的服务器：给外网使用
 	
 	@Value("${alipay.appid}")
-	public String APP_ID;		//支付宝分配给开发者的应用ID
+	public String APP_ID="2018061260389188";		//支付宝分配给开发者的应用ID
 	
 	@Value("${alipay.pay-notify-url}")
 	public String payNotifyUrl;		//支付宝支付回调地址
@@ -51,13 +58,15 @@ public class AliPay {
 	
 	@Value("${alipay.cert-key-dir}")
 	public String certKeyDir;
-	
-	public String SELLER_EMAIL = "1079946866@qq.com";		//收款支付宝账户email
+	@Value("${alipay.seller-email}")
+	public String SELLER_EMAIL = "zhaofachun@mofangyouxuan.com";		//收款支付宝账户email
 	public String APP_PRIVATE_KEY = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCEI8O4DtgTkKjcf4BBJzpnG9c52xNnOlHu5wK8Qyjs0RImXSD7aXChxrxDyl0KRWhGorPkFZEcCPa5oZyQ4RsfcdVDrIoukHo57XgpUbH+T18fT0I2+bxr+mogZoAMuKzHumf9fuMFcZEnTHUdVwgzKwW0fHuAClopoYmCGhgDvJ6p1YhJTijOPiQlYntWsWNkWFlJ3YSdn6U1UDrzTvd7MQ8VjxWcFBSKZGTOkXSw7+Sqma/VCDq1oAgU26/0gj+4zpXFgBVldntIZ5nTumrfFILp+xzaA+t9Ok3CF2V0EGoNqzgkb/dsoJQGDc1LlaEW3k1HipY2LpqpGYnP907bAgMBAAECggEAOx9xc8oYffCMzVOzA/PUWswHKZjO/rIGdNkhzTBTgFovP8ENf8/2mDu+gqpppK3XcTtdN+E6cwvDsN0Rm3VM2G3rWQM7NIhqV77bs8kc1ceXrP+ehdCJsNpzX5ndE1QR4q+R1cdPNmFQ6/92qzEEtzg5rj7AV1LKcrQXPYIFWq4Gr9xOG/ek9hhuo5tiQI4PvuAXB4BvMzMTBEkKx0qOaCgnHVSyqDdlhjnbyq6KAGZEhghXEnzj5n44dAZhIhDn2YXGme9s/TzzHhLYzPI92tzC6Q8Pk3na0ymRFXX27/wevbK/V/yaudawQGCT/Ah3Vd8ouNjG0fmMvNsgGIoqSQKBgQC+9H9wYmaRPj0uDLDYmLEGLj8h5LKl+XR7NiGKLBA2vMeQkoKNYf6f/MwgII13R2yn/Zi1dEOZVwbrP4ATNe84m1YF/02JXS88AoqMeWPlINT2JHu/7GfLcke0yN+rjBE/ewmw046x5hoPL8/ta/e+OHY19BEt4i7uxuX7yAXLzwKBgQCxJn/H8nLFmZPXz3+acurtsL5uKgqfVP2drfRn+1PUolAc2ZpvcTKyC1NwJLggPPEeK1nBi4DjYFfWFtq5ir3t8RkM71xdtAxmyUgfS6lx7KLMaJbiwEB/XomNRkwpFDTr4/VozkHHhDnLugtOH60VIF5ppzhaFRWoLarvG1BTNQKBgEZ0xhS8aeXLVh2IlzPD2wVRyP+Dd5sf2KehiGyH54+axfOE62CpOJ7lUpfECw5oryGow1CoTkzkvGvOaT4tV0/GmM3rrjsxw7zbny1HmOEw5QLQ4UwmOQHq76Q3vbd5HeATULcKyArBwPm7hXevr6BjCtLLdA8+9lwpzS/CVMknAoGAUWkl9BeBkzm+7cDYHXyOZmmBOlNryklevCYDWf3wSpnFQ1zlUi2tZJE76R+W1onrLTgy6XVY6CWQeDzMi9Qs8LqKDp25zv49bMc3s9orpsVfE51FKjO78Ezb3ebefUph/74lO+L969jiTrPTGjYIbtsPSHKmvQ9PgphqI7Rjt7kCgYEArwJVNJ8aGHC9eQY3yTJRCUKPVttgxZmsytgx1tdfzZrDBuPYx6LKCT2MH1PqaQJKJGRt0IWOqGMHSYPXjsi1DhOGmWMTq4CjNIpQSw8TW9/XwhAPztQgJXgebUG8OquUyZ8w+bp5tbWHBsjzOTQP0YeOhFRtQeS4RXevFiNmt5c=";
 	public String ALIPAY_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqrFdUy1gA3RN/qwDW1LbDky+EnnV+caQFidn1WwIND/etxDJWzlofJPw8S/MFvHLMpXyBKpGStM83dTVCMzXyhvavn5HzOVfPPtcVQTh8oAjn5N5V5usE04rdpsl96QkyUsUfUO62EsppF+LVBKHgY6hgOwQic89hwR4svA04kGEZtz0bsMiXck9l1tykz0F6yrZ731GtzRVTxWJPvFO40WrnchVH52gjjD7o9rRJ9lWTSK5T8vFNeIgMsNzl7MXTdfW5Ma0r7IE0h32d/nmKDK493PTTC6Yg/jR4+XxlKo0nA1PlGGerFVp7brkbzLyBBVmzSk9EPYpFBIhYURjvwIDAQAB";	
 	public String CHARSET = "UTF-8";
 	public String SIGN_TYPE = "RSA2";
 	
+	@Value("${sys.pay-bills-dir}")
+	public String payBillsDir="/Users/jeekhan/mfyx/paybills/";	//支付账单保存路径
 
 	@Autowired
 	private OrderService orderService;
@@ -335,6 +344,56 @@ public class AliPay {
 	}
 	
 	
+	/**
+	 * 下载支付账单
+	 * @param billDate	账单日期
+	 * @return {errcode,errmsg}
+	 */
+	public JSONObject downloadBill(Date billDate) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			if(billDate == null) {
+				billDate = new Date();
+			}
+			String strBDate = new SimpleDateFormat("yyyy-MM-dd").format(billDate);
+			AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do",APP_ID,APP_PRIVATE_KEY,"json",CHARSET,ALIPAY_PUBLIC_KEY,"RSA2");
+			AlipayDataDataserviceBillDownloadurlQueryRequest request = new AlipayDataDataserviceBillDownloadurlQueryRequest();
+			JSONObject bizContent = new JSONObject();
+			bizContent.put("bill_type", "trade");
+			bizContent.put("bill_date", strBDate);
+			request.setBizContent(bizContent.toJSONString());
+			AlipayDataDataserviceBillDownloadurlQueryResponse response = alipayClient.execute(request);
+			if(response.isSuccess()){
+				String url = response.getBillDownloadUrl();
+				int findex = url.indexOf("fileType=") + "fileType=".length();
+				int lindex = url.indexOf("&", findex);
+				String fileType = url.substring(findex, lindex);
+				File file = HttpUtils.downloadFileSSL(this.payBillsDir, url);
+				file.renameTo(new File(this.payBillsDir,"alipay"+ new SimpleDateFormat("yyyyMMdd").format(billDate) + "_1." + fileType));
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			} else {
+				logger.info("支付宝账单下载，调用失败，失败信息：" + response.getMsg());
+				jsonRet.put("errcode", -1);
+				jsonRet.put("errmsg","支付宝账单下载，调用失败，失败信息：" + response.getMsg());
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", -1);
+			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
+			logger.info("支付宝账单下载，出现异常：" + e.getMessage());
+		}
+		return jsonRet;
+	}
+	
+	public static void main(String[] args) throws Exception {
+		AliPay alipay = new AliPay();
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		cal.add(Calendar.DAY_OF_MONTH, -2);
+		alipay.downloadBill(new SimpleDateFormat("yyyy-MM-dd").parse("2018-06-12"));
+		
+	}
 	
 }
 

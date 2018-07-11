@@ -10,7 +10,7 @@ import javax.validation.constraints.Size;
 
 public class UserBasic {
 	
-	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
     private Integer userId;
 

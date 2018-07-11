@@ -5,9 +5,7 @@ import java.util.Date;
 public class SumBalLog {
     private Integer vipId;
 
-    private String beginFlow;
-
-    private String endFlow;
+    private String flowTime;
 
     private Long amountAddbal;
 
@@ -27,20 +25,12 @@ public class SumBalLog {
         this.vipId = vipId;
     }
 
-    public String getBeginFlow() {
-        return beginFlow;
+    public String getFlowTime() {
+        return flowTime;
     }
 
-    public void setBeginFlow(String beginFlow) {
-        this.beginFlow = beginFlow == null ? null : beginFlow.trim();
-    }
-
-    public String getEndFlow() {
-        return endFlow;
-    }
-
-    public void setEndFlow(String endFlow) {
-        this.endFlow = endFlow == null ? null : endFlow.trim();
+    public void setFlowTime(String flowTime) {
+        this.flowTime = flowTime == null ? null : flowTime.trim();
     }
 
     public Long getAmountAddbal() {

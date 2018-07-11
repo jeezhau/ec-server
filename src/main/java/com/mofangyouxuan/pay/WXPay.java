@@ -8,6 +8,7 @@ import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -59,10 +60,10 @@ public class WXPay {
 	public String notifyServerUrl; //本地接收通知的服务器：给外网使用
 	
 	@Value("${wxpay.mchtid}")
-	public String wxMchtId;	//微信支付商户号
+	public String wxMchtId="1503812541";	//微信支付商户号
 	
 	@Value("${wxpay.appid}")
-	public String appId;			//微信公众号APPID
+	public String appId="wx34a58dad7a6542ca";			//微信公众号APPID
 	
 	@Value("${wxpay.pay-notify-url}")
 	public String payNotifyUrl;		//微信支付回调地址
@@ -72,7 +73,10 @@ public class WXPay {
 	
 	public String SecretKEY;			//微信支付商户密钥,保存于服务器本地
 	@Value("${wxpay.cert-key-dir}")
-	public String certKeyDir;
+	public String certKeyDir="/Users/jeekhan/mfpay/wxpay/";
+	
+	@Value("${sys.pay-bills-dir}")
+	public String payBillsDir="/Users/jeekhan/mfyx/paybills/";	//支付账单保存路径
 	
 	
 	@Autowired
@@ -113,7 +117,7 @@ public class WXPay {
 			params.put("mch_id", wxMchtId);
 			params.put("nonce_str", nonceStr);
 			params.put("sign_type", "MD5");
-			params.put("out_trade_no", flowId);	//用户支付流水号
+			params.put("out_trade_no", flowId);	//订单号
 			
 			//获取签名
 			String sign = signMap(params);
@@ -217,14 +221,7 @@ public class WXPay {
 	 */
 	public JSONObject createPrePay(String payType,Order order,String payFlowId,Long totalAmount,String openId,String userIP) {
 		JSONObject jsonRet = new JSONObject();
-		String tradeType;
-		if("21".equals(payType)) {
-			tradeType = "JSAPI";
-		}else if("22".equals(payType)){
-			tradeType = "MWEB";	//H5支付
-		}else {
-			tradeType = "NATIVE";	//扫码支付
-		}
+		String tradeType = this.getPayTypeName(payType);
 		JSONObject wxRet = unifiedOrder(tradeType,order,payFlowId, totalAmount, openId, userIP);
 		if(wxRet.containsKey("prepay_id")) {//成功
 			wxRet.put("payFlowId", payFlowId);
@@ -291,8 +288,8 @@ public class WXPay {
 			params.put("sign_type", "MD5");
 			params.put("body", order.getPartnerBusiName() + "-" + order.getGoodsName());
 			params.put("detail", "<![CDATA[{ \"goods_detail\":" + order.getGoodsSpec() + "]]>");
-			//params.put("attach", "");//附加数据
-			params.put("out_trade_no", payFlowId);	//用户支付流水号
+			params.put("attach", payFlowId);//附加数据
+			params.put("out_trade_no", payFlowId);	//支付流水号
 			params.put("fee_type", "CNY");		//标价币种
 			params.put("total_fee", "" + totalAmount);	//订单总金额，单位为分
 			params.put("spbill_create_ip", ip);	//APP和网页支付提交用户端ip
@@ -372,11 +369,12 @@ public class WXPay {
 	 * 微信申请退款
 	 * 同一退款单号多次请求只退一笔
 	 * @param flowId
-	 * @param totalAmount
+	 * @param totalAmount	总支付金额
+	 * @param refundAmount	退款金额
 	 * @param wxFinishOrderNo
 	 * @return {errcode,errmsg,refund_id,refund_fee}
 	 */
-	public JSONObject applyRefund(String flowId,Long totalAmount,String wxFinishOrderNo) {
+	public JSONObject applyRefund(String flowId,Long totalAmount,Long refundAmount,String wxFinishOrderNo) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			Map<String,String> params = new HashMap<String,String>();
@@ -386,9 +384,9 @@ public class WXPay {
 			params.put("nonce_str", nonceStr);
 			params.put("sign_type", "MD5");
 			params.put("transaction_id", wxFinishOrderNo);	//微信生成的订单号，在支付通知中有返回
-			params.put("out_refund_no", flowId);				//商户系统内部的退款单号
+			params.put("out_refund_no", flowId);			//商户系统内部的退款单号
 			params.put("total_fee", totalAmount + "");		//订单总金额，单位为分，只能为整数
-			params.put("refund_fee", totalAmount + "");	//退款总金额，订单总金额，单位为分，只能为整数
+			params.put("refund_fee", refundAmount + "");	//退款总金额，订单总金额，单位为分，只能为整数
 			params.put("refund_fee_type", "CNY" );	//退款货币类型，需与支付一致，或者不填。
 			//params.put("refund_desc", "");		//若商户传入，会在下发给用户的退款消息中体现退款原因
 			//params.put("refund_account","");	//退款资金来源
@@ -454,7 +452,7 @@ public class WXPay {
 	
 	/**
 	 * 支付结果查询
-	 * @param flowId		系统支付单号
+	 * @param 		系统支付单号
 	 * @return {errcode,errmsg,transaction_id,total_fee,cash_fee}
 	 */
 	public JSONObject queryOrder(String flowId) {
@@ -752,6 +750,65 @@ public class WXPay {
 	}
 	
 	/**
+	 * 下载历史交易清单。比如掉单、系统错误等导致商户侧和微信侧数据不一致，通过对账单核对后可校正支付状态。
+	 * 1、微信侧未成功下单的交易不会出现在对账单中。支付成功后撤销的交易会出现在对账单中，跟原支付单订单号一致；
+	 * 2、微信在次日9点启动生成前一天的对账单，建议商户10点后再获取；
+	 * 3、对账单中涉及金额的字段单位为“元”。
+	 * 4、对账单接口只能下载三个月以内的账单。
+	 * 5、对账单是以商户号纬度来生成的，如一个商户号与多个appid有绑定关系，则使用其中任何一个appid都可以请求下载对账单。对账单中的appid取自交易时候提交的appid，与请求下载对账单时使用的appid无关。
+	 * @param billDate	账单日期
+	 * @return
+	 */
+	public JSONObject downloadBill(Date billDate) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			if(billDate == null) {
+				billDate = new Date();
+			}
+			String strBDate = new SimpleDateFormat("yyyyMMdd").format(billDate);
+			Map<String,String> params = new HashMap<String,String>();
+			String nonceStr = NonceStrUtil.getNonceStr(20);
+			params.put("appid", appId);
+			params.put("mch_id", wxMchtId);
+			params.put("nonce_str", nonceStr);
+			params.put("sign_type", "MD5");
+			params.put("bill_date",strBDate);	//下载对账单的日期(交易产生日期)，格式：20140603
+			params.put("bill_type","ALL");	//ALL，返回当日所有订单信息，默认值，REFUND，返回当日退款订单，RECHARGE_REFUND，返回当日充值退款订单
+			params.put("tar_type","GZIP");	//非必传参数，固定值：GZIP，返回格式为.gzip的压缩包账单。不传则默认为数据流形式。
+			//获取签名
+			String sign = signMap(params);
+			params.put("sign", sign);
+			
+			Element root = DocumentHelper.createElement("xml");
+			for(Map.Entry<String, String> entry:params.entrySet()) {
+				root.addElement(entry.getKey()).addText(entry.getValue());
+			}
+			
+			logger.info("微信对账单下载，发送请求：" + root.asXML());
+			String url = "https://api.mch.weixin.qq.com/pay/downloadbill";
+			//String strRet = HttpUtils.doPostTextSSL(url, root.asXML());
+			File file = HttpUtils.downloadFileSSL(this.payBillsDir, url, "text/plain", root.asXML());
+			String filename = file.getName();
+			if(filename.endsWith("txt")) {
+				logger.info("下载对账单失败，失败信息!" );
+				file.renameTo(new File(this.payBillsDir,"wxpay"+ strBDate + "_1.txt"));
+				jsonRet.put("errcode", -1);
+				jsonRet.put("errmsg", "下载对账单失败，失败信息!");
+			}else {
+				file.renameTo(new File(this.payBillsDir,"wxpay"+ strBDate + "_1.gzip"));
+			}
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", -1);
+			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
+			logger.info("微信订单查询，出现异常：" + e.getMessage());
+		}
+		return jsonRet;
+	}
+
+	/**
 	 * 生成签名
 	 * @param map	待签名数据
 	 * @return
@@ -817,26 +874,56 @@ public class WXPay {
 	    cipher.init(Cipher.DECRYPT_MODE, secretKey);
 	    return cipher.doFinal(data);
 	}
+	
+	public String getPayTypeCode(String payTypeName) {
+		if(payTypeName.contains("JSAPI")) {
+			 return "21";
+		}else if(payTypeName.contains("MWEB")) {
+			return "22";
+		}else if(payTypeName.contains("NATIVE")) {
+			return "23";
+		}
+		return "20";
+	}
+	
+	public String getPayTypeName(String payTypeCode) {
+		if(payTypeCode.contains("21")) {
+			 return "JSAPI";
+		}else if(payTypeCode.contains("22")) {
+			return "MWEB";
+		}else if(payTypeCode.contains("23")) {
+			return "NATIVE";
+		}
+		return payTypeCode;
+	}
+	
 	static {  
 		Security.addProvider(new BouncyCastleProvider()); 
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String str = "<xml><return_code>SUCCESS</return_code><appid><![CDATA[wx34a58dad7a6542ca]]></appid><mch_id><![CDATA[1503812541]]></mch_id><nonce_str><![CDATA[b57912754356f8a562c2f550b5a3a195]]></nonce_str><req_info><![CDATA[L6QuVIicbZ8WmxteS6/ITA3a7jUzchfHeT8reXQov+8NrG6kxC4AUi1edErJOzwbqSE8T8QMY8Ua8KqkHKzIBimWvLKT3/dbum1UaicL9IJW+xRQ0Ut5PsJR0Iki8j+5LA5zusOfxQFMl4WkeZSseUG4WuhBCXACTLE8R2BXUufyrpoaFGkTQt7hXJD1I08JfaxliN3h9TbpT7f59dbrVQHDHXh1DPZVGzJdbUaTTa+6k8MRHeaT2nDz7gqPUkHqkcy86GEdzYcUift4SMRoh2cuX3T1oaczFsY9wHPKr3NOfdK7KVmDgv9T1S4r6TyCuZscyq/PNwAc0VQuJnesZrbHIsFuF5h6T/qcTMfTxuRjchp1axOmkur8WlpilLsmPp2r6+ZjyvTCkSJJXCxbiNFoz6R40qXxeC/ReYxrIqLZHuuoTruDGdXcXq+SQ4gFhuaKudeslhHX+Sf9WmEec233AiVKPDMq/3JxmHMHj7QR8nm/EX0NVo8bIQkTpYQ0cF8ukvPzV1/TmVEyvrPoYgRFVDOW2G9oNuAmKW+jzX7A9l9ky0OvQOSHT6IkhO8hyP2jAer4oK/+KbCah6RJFslsjJJap2mqI3fFUxsFdI30HF5txxYoCLGfF53wz2e1rQaC7QVKSYbK+/Keinfj5DOyUlZqbuTdvyy/eAjUsiX/aNK2FyfeajZvFjQ5JZYz+tzbzp8B31h+1xImB5kJgHUa6qpAHrAUmU8kEm73LQ34dwkYciQfv3etU/mHABYw2G9iF3CcH93AtvHnI/m3dG79Y92FKDbHVqMpMH9Hjmg4S4l9XaZDflRfGo3Mc+gEAGE0zNEiybV2rCVzdU4KQvXLbRNTYSXy7kdneACZKmJqh2QcMaKorEOx3+Yfw1BgiU89dLXrBtLSlWJlRD22+XuJHL/ZwaM0wRpgoxySmBeoR4b5qFjvV7fJXH/tjov8x6BllsMDNpIfNrvS0YjUliieKmgUQgan8n4ZbSOzO+uPcpu3TrLRnPRl6+DUbE9k0od50PmOpwXWx84XUa6CX4EVUtf5pFs7FLOvcUgPU/JVVqu8igMnXH8SBrNqNuQ7iwcXkhG1Ls13qyuwwMUUJg==]]></req_info></xml>";
-		Document doc = DocumentHelper.parseText(str);
-		Element xml = doc.getRootElement();
-		Map<String,String> retMap = new HashMap<String,String>();
-		for(Object ele : xml.elements()){
-			String name = ((Node)ele).getName();
-			String value = ((Node)ele).getText();
-			retMap.put(name, value);
-		}
-		String secrectReqInfo = retMap.remove("req_info");  //加密信息
-		byte[] desecInfo = Base64.decodeBase64(secrectReqInfo.getBytes("utf8"));
-		String signKey = SignUtils.encodeMD5Hex("qerwseqsDRTdg455656564cxgxgggddd").toLowerCase();
-		byte[] byteDesecInfo = decryptAES(signKey.getBytes("utf8"), desecInfo);
-		String retStr = new String(byteDesecInfo,"utf8");
-		System.out.println("退款通知解析结果：" + retStr);
+//		String str = "<xml><return_code>SUCCESS</return_code><appid><![CDATA[wx34a58dad7a6542ca]]></appid><mch_id><![CDATA[1503812541]]></mch_id><nonce_str><![CDATA[b57912754356f8a562c2f550b5a3a195]]></nonce_str><req_info><![CDATA[L6QuVIicbZ8WmxteS6/ITA3a7jUzchfHeT8reXQov+8NrG6kxC4AUi1edErJOzwbqSE8T8QMY8Ua8KqkHKzIBimWvLKT3/dbum1UaicL9IJW+xRQ0Ut5PsJR0Iki8j+5LA5zusOfxQFMl4WkeZSseUG4WuhBCXACTLE8R2BXUufyrpoaFGkTQt7hXJD1I08JfaxliN3h9TbpT7f59dbrVQHDHXh1DPZVGzJdbUaTTa+6k8MRHeaT2nDz7gqPUkHqkcy86GEdzYcUift4SMRoh2cuX3T1oaczFsY9wHPKr3NOfdK7KVmDgv9T1S4r6TyCuZscyq/PNwAc0VQuJnesZrbHIsFuF5h6T/qcTMfTxuRjchp1axOmkur8WlpilLsmPp2r6+ZjyvTCkSJJXCxbiNFoz6R40qXxeC/ReYxrIqLZHuuoTruDGdXcXq+SQ4gFhuaKudeslhHX+Sf9WmEec233AiVKPDMq/3JxmHMHj7QR8nm/EX0NVo8bIQkTpYQ0cF8ukvPzV1/TmVEyvrPoYgRFVDOW2G9oNuAmKW+jzX7A9l9ky0OvQOSHT6IkhO8hyP2jAer4oK/+KbCah6RJFslsjJJap2mqI3fFUxsFdI30HF5txxYoCLGfF53wz2e1rQaC7QVKSYbK+/Keinfj5DOyUlZqbuTdvyy/eAjUsiX/aNK2FyfeajZvFjQ5JZYz+tzbzp8B31h+1xImB5kJgHUa6qpAHrAUmU8kEm73LQ34dwkYciQfv3etU/mHABYw2G9iF3CcH93AtvHnI/m3dG79Y92FKDbHVqMpMH9Hjmg4S4l9XaZDflRfGo3Mc+gEAGE0zNEiybV2rCVzdU4KQvXLbRNTYSXy7kdneACZKmJqh2QcMaKorEOx3+Yfw1BgiU89dLXrBtLSlWJlRD22+XuJHL/ZwaM0wRpgoxySmBeoR4b5qFjvV7fJXH/tjov8x6BllsMDNpIfNrvS0YjUliieKmgUQgan8n4ZbSOzO+uPcpu3TrLRnPRl6+DUbE9k0od50PmOpwXWx84XUa6CX4EVUtf5pFs7FLOvcUgPU/JVVqu8igMnXH8SBrNqNuQ7iwcXkhG1Ls13qyuwwMUUJg==]]></req_info></xml>";
+//		Document doc = DocumentHelper.parseText(str);
+//		Element xml = doc.getRootElement();
+//		Map<String,String> retMap = new HashMap<String,String>();
+//		for(Object ele : xml.elements()){
+//			String name = ((Node)ele).getName();
+//			String value = ((Node)ele).getText();
+//			retMap.put(name, value);
+//		}
+//		String secrectReqInfo = retMap.remove("req_info");  //加密信息
+//		byte[] desecInfo = Base64.decodeBase64(secrectReqInfo.getBytes("utf8"));
+//		String signKey = SignUtils.encodeMD5Hex("qerwseqsDRTdg455656564cxgxgggddd").toLowerCase();
+//		byte[] byteDesecInfo = decryptAES(signKey.getBytes("utf8"), desecInfo);
+//		String retStr = new String(byteDesecInfo,"utf8");
+//		System.out.println("退款通知解析结果：" + retStr);
+		
+		WXPay wxpay = new WXPay();
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		cal.add(Calendar.DAY_OF_MONTH, -2);
+		wxpay.downloadBill(new SimpleDateFormat("yyyy-MM-dd").parse("2018-05-30"));
+		
 	}
 }
 

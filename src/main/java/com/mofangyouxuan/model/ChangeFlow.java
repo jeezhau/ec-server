@@ -60,7 +60,7 @@ public class ChangeFlow {
     		if( createTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(createTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(createTime);
     }
 
     public void setCreateTime(Date createTime) {
@@ -95,7 +95,7 @@ public class ChangeFlow {
 		if( sumTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(sumTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(sumTime);
 	}
 
 	public void setSumTime(Date sumTime) {

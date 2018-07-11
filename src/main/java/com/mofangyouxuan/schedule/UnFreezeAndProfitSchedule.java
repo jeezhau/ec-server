@@ -71,10 +71,10 @@ public class UnFreezeAndProfitSchedule {
 					}else {
 						apprTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(order.getAftersalesDealTime());
 					}
-					long gapDays = (new Date().getTime() - apprTime.getTime())/1000/3600/24 +11; //单位天
+					long gapDays = (new Date().getTime() - apprTime.getTime())/1000/3600/24; //单位天
 					if(gapDays > this.uFreezeDays) { //超时
 						Long amount = order.getAmount().multiply(new BigDecimal(100)).longValue();
-						this.changeFlowService.dealFinish(amount, order.getUserId(), order.getMchtUId(), 1, "商家卖款资金解冻【订单号：" + order.getOrderId() + "】", order.getOrderId());
+						//this.changeFlowService.dealFinish(amount, order.getUserId(), order.getMchtUId(), 1, "商家卖款资金解冻【订单号：" + order.getOrderId() + "】", order.getOrderId());
 						
 						Order updOrder = new Order();
 						updOrder.setOrderId(order.getOrderId());

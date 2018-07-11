@@ -135,7 +135,7 @@ public class ComplainLog {
     		if(createTime == null) {
     			return null;
     		}
-        return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(createTime);
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(createTime);
     }
 
     public void setCreateTime(Date createTime) {
@@ -146,7 +146,7 @@ public class ComplainLog {
 	    	if(dealTime == null) {
 				return null;
 			}
-	    return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(dealTime);
+	    return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(dealTime);
     }
 
     public void setDealTime(Date dealTime) {
@@ -165,7 +165,7 @@ public class ComplainLog {
 	    	if(revisitTime == null) {
 				return null;
 			}
-	    return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(revisitTime);
+	    return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(revisitTime);
     }
 
     public void setRevisitTime(Date revisitTime) {

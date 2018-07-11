@@ -989,7 +989,7 @@ public class OrderController {
 				jsonRet.put("errmsg", "您的资金操作密码输入不正确！");
 				return jsonRet.toJSONString();
 			}
-			this.orderService.execPaySucc(true,payFlow, userVip,order, goods.getPartner().getVipId(),"");
+			this.orderService.execPaySucc(true,payFlow, userVip.getVipId(),order, goods.getPartner().getVipId(),"");
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
 		}catch(Exception e) {

@@ -182,7 +182,7 @@ public class Order {
     		if(createTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(createTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(createTime);
     }
 
     public void setCreateTime(Date createTime) {
@@ -306,7 +306,7 @@ public class Order {
     		if(sendTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(sendTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(sendTime);
     }
 
     public void setSendTime(Date sendTime) {
@@ -325,7 +325,7 @@ public class Order {
     		if(signTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(signTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(signTime);
     }
 
     public void setSignTime(Date signTime) {
@@ -377,7 +377,7 @@ public class Order {
     		if(appraiseTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(appraiseTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(appraiseTime);
     }
 
     public void setAppraiseTime(Date appraiseTime) {
@@ -388,7 +388,7 @@ public class Order {
     		if(aftersalesApplyTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(aftersalesApplyTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(aftersalesApplyTime);
     }
 
     public void setAftersalesApplyTime(Date aftersalesApplyTime) {
@@ -399,7 +399,7 @@ public class Order {
     	    if(aftersalesDealTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(aftersalesDealTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(aftersalesDealTime);
     }
 
     public void setAftersalesDealTime(Date aftersalesDealTime) {
@@ -453,7 +453,7 @@ public class Order {
 		if(apprUserTime == null) {
 			return null;
 		}
-		return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(apprUserTime);
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(apprUserTime);
 	}
 
 	public void setApprUserTime(Date apprUserTime) {

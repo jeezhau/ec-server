@@ -1,7 +1,7 @@
 package com.mofangyouxuan.service;
 
 import com.mofangyouxuan.model.ChangeFlow;
-import com.mofangyouxuan.model.VipBasic;
+import com.mofangyouxuan.model.OrderBal;
 
 /**
  * 会员账户资金变动流水
@@ -65,7 +65,7 @@ public interface ChangeFlowService {
 	 * 
 	 * @param useVipPay	是否使用会员余额支付
 	 * @param amount		交易金额
-	 * @param userVip	买家会员账户
+	 * @param userVipId	买家会员账户
 	 * @param reason		成功明细
 	 * @param oprId		操作员ID
 	 * @param mchtVipId	卖家会员账户ID
@@ -74,12 +74,12 @@ public interface ChangeFlowService {
 	 *  @return 00-成功，其他-失败信息
 	 * @throws Exception 
 	 */
-	public String paySuccess(boolean useVipPay,Long amount,VipBasic userVip,String reason,Integer oprId,Integer mchtVipId,String orderId) throws Exception;
+	public String paySuccess(boolean useVipPay,Long amount,Integer userVipId,String reason,Integer oprId,Integer mchtVipId,String orderId) throws Exception;
 	
 	/**
 	 * 解冻商家
 	 * 1、减少冻结余额，增加可用余额；
-	 * @param amount	交易金额
+	 * @param orderBal	交易金额
 	 * @param userId		买家ID 
 	 * @param mchtVipId	商家会员账户
 	 * @param oprId 		操作员ID
@@ -89,7 +89,7 @@ public interface ChangeFlowService {
 	 * @return 00-成功，其他-失败信息 
 	 * @throws Exception 
 	 */
-	public String dealFinish(Long amount,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId)throws Exception;
+	public String dealFinish(OrderBal orderBal,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId)throws Exception;
 	
 
 	/**

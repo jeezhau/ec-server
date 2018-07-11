@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.OrderBalMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.OrderBal">
+    <id column="order_id" jdbcType="VARCHAR" property="orderId" />
+    <result column="pay_amount" jdbcType="DECIMAL" property="payAmount" />
+    <result column="pay_fee" jdbcType="DECIMAL" property="payFee" />
+    <result column="pay_type" jdbcType="VARCHAR" property="payType" />
+    <result column="partner_settle" jdbcType="DECIMAL" property="partnerSettle" />
+    <result column="syssrv_settle" jdbcType="DECIMAL" property="syssrvSettle" />
+    <result column="spreader_u_settle" jdbcType="DECIMAL" property="spreaderUSettle" />
+    <result column="spreader_p_settle" jdbcType="DECIMAL" property="spreaderPSettle" />
+    <result column="ptools_fee" jdbcType="DECIMAL" property="ptoolsFee" />
+    <result column="refund_time" jdbcType="TIMESTAMP" property="refundTime" />
+    <result column="refund_user_settle" jdbcType="DECIMAL" property="refundUserSettle" />
+    <result column="refund_partner_settle" jdbcType="DECIMAL" property="refundPartnerSettle" />
+    <result column="bal_time" jdbcType="TIMESTAMP" property="balTime" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    order_id, pay_amount, pay_fee, pay_type, partner_settle, syssrv_settle, spreader_u_settle, 
+    spreader_p_settle, ptools_fee, refund_time, refund_user_settle, refund_partner_settle, 
+    bal_time, status
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_order_bal
+    where order_id = #{orderId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from tb_order_bal
+    where order_id = #{orderId,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.mofangyouxuan.model.OrderBal">
+    insert into tb_order_bal (order_id, pay_amount, pay_fee, 
+      pay_type, partner_settle, syssrv_settle, 
+      spreader_u_settle, spreader_p_settle, ptools_fee, 
+      refund_time, refund_user_settle, refund_partner_settle, 
+      bal_time, status)
+    values (#{orderId,jdbcType=VARCHAR}, #{payAmount,jdbcType=DECIMAL}, #{payFee,jdbcType=DECIMAL}, 
+      #{payType,jdbcType=VARCHAR}, #{partnerSettle,jdbcType=DECIMAL}, #{syssrvSettle,jdbcType=DECIMAL}, 
+      #{spreaderUSettle,jdbcType=DECIMAL}, #{spreaderPSettle,jdbcType=DECIMAL}, #{ptoolsFee,jdbcType=DECIMAL}, 
+      #{refundTime,jdbcType=TIMESTAMP}, #{refundUserSettle,jdbcType=DECIMAL}, #{refundPartnerSettle,jdbcType=DECIMAL}, 
+      #{balTime,jdbcType=TIMESTAMP}, #{status,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.OrderBal">
+    insert into tb_order_bal
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="orderId != null">
+        order_id,
+      </if>
+      <if test="payAmount != null">
+        pay_amount,
+      </if>
+      <if test="payFee != null">
+        pay_fee,
+      </if>
+      <if test="payType != null">
+        pay_type,
+      </if>
+      <if test="partnerSettle != null">
+        partner_settle,
+      </if>
+      <if test="syssrvSettle != null">
+        syssrv_settle,
+      </if>
+      <if test="spreaderUSettle != null">
+        spreader_u_settle,
+      </if>
+      <if test="spreaderPSettle != null">
+        spreader_p_settle,
+      </if>
+      <if test="ptoolsFee != null">
+        ptools_fee,
+      </if>
+      <if test="refundTime != null">
+        refund_time,
+      </if>
+      <if test="refundUserSettle != null">
+        refund_user_settle,
+      </if>
+      <if test="refundPartnerSettle != null">
+        refund_partner_settle,
+      </if>
+      <if test="balTime != null">
+        bal_time,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="orderId != null">
+        #{orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="payAmount != null">
+        #{payAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="payFee != null">
+        #{payFee,jdbcType=DECIMAL},
+      </if>
+      <if test="payType != null">
+        #{payType,jdbcType=VARCHAR},
+      </if>
+      <if test="partnerSettle != null">
+        #{partnerSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="syssrvSettle != null">
+        #{syssrvSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="spreaderUSettle != null">
+        #{spreaderUSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="spreaderPSettle != null">
+        #{spreaderPSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="ptoolsFee != null">
+        #{ptoolsFee,jdbcType=DECIMAL},
+      </if>
+      <if test="refundTime != null">
+        #{refundTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="refundUserSettle != null">
+        #{refundUserSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="refundPartnerSettle != null">
+        #{refundPartnerSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="balTime != null">
+        #{balTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.OrderBal">
+    update tb_order_bal
+    <set>
+      <if test="payAmount != null">
+        pay_amount = #{payAmount,jdbcType=DECIMAL},
+      </if>
+      <if test="payFee != null">
+        pay_fee = #{payFee,jdbcType=DECIMAL},
+      </if>
+      <if test="payType != null">
+        pay_type = #{payType,jdbcType=VARCHAR},
+      </if>
+      <if test="partnerSettle != null">
+        partner_settle = #{partnerSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="syssrvSettle != null">
+        syssrv_settle = #{syssrvSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="spreaderUSettle != null">
+        spreader_u_settle = #{spreaderUSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="spreaderPSettle != null">
+        spreader_p_settle = #{spreaderPSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="ptoolsFee != null">
+        ptools_fee = #{ptoolsFee,jdbcType=DECIMAL},
+      </if>
+      <if test="refundTime != null">
+        refund_time = #{refundTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="refundUserSettle != null">
+        refund_user_settle = #{refundUserSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="refundPartnerSettle != null">
+        refund_partner_settle = #{refundPartnerSettle,jdbcType=DECIMAL},
+      </if>
+      <if test="balTime != null">
+        bal_time = #{balTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where order_id = #{orderId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.OrderBal">
+    update tb_order_bal
+    set pay_amount = #{payAmount,jdbcType=DECIMAL},
+      pay_fee = #{payFee,jdbcType=DECIMAL},
+      pay_type = #{payType,jdbcType=VARCHAR},
+      partner_settle = #{partnerSettle,jdbcType=DECIMAL},
+      syssrv_settle = #{syssrvSettle,jdbcType=DECIMAL},
+      spreader_u_settle = #{spreaderUSettle,jdbcType=DECIMAL},
+      spreader_p_settle = #{spreaderPSettle,jdbcType=DECIMAL},
+      ptools_fee = #{ptoolsFee,jdbcType=DECIMAL},
+      refund_time = #{refundTime,jdbcType=TIMESTAMP},
+      refund_user_settle = #{refundUserSettle,jdbcType=DECIMAL},
+      refund_partner_settle = #{refundPartnerSettle,jdbcType=DECIMAL},
+      bal_time = #{balTime,jdbcType=TIMESTAMP},
+      status = #{status,jdbcType=VARCHAR}
+    where order_id = #{orderId,jdbcType=VARCHAR}
+  </update>
+</mapper>

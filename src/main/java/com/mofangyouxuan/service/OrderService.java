@@ -101,12 +101,12 @@ public interface OrderService {
 	 * 执行支付处理
 	 * @param useBal		是否使用余额支付
 	 * @param payFlow
-	 * @param userVip
+	 * @param userVipId
 	 * @param order
 	 * @param mchtVipId
 	 * @throws Exception 
 	 */
-	public void execPaySucc(boolean useBal,PayFlow payFlow,VipBasic userVip,Order order,Integer mchtVipId,String outFinishId) throws Exception;
+	public void execPaySucc(boolean useBal,PayFlow payFlow,Integer userVipId,Order order,Integer mchtVipId,String outFinishId) throws Exception;
 	
 	/**
 	 * 客户端支付完成
@@ -192,6 +192,25 @@ public interface OrderService {
 	 * @return
 	 */
 	public JSONObject review(String orderId,Integer rewPartnerId,Integer oprid,String result,String review);
+	
+	/**
+	 * 根据对账单数据指定订单支付对账
+	 * @param isRefund	是否为退款
+	 * @param outTrdaeNo	外部单号
+	 * @param flowId		系统支付流水号
+	 * @param payType	支付方式
+	 * @param status		外部交易状态
+	 * @param amount		外部交易金额，元
+	 * @param fee		外部手续费，元
+	 * @return
+	 * @throws Exception
+	 */
+	public void balanceBill(boolean isRefund,String outTradeNo,String flowId,
+			String payType,String status,String amount,String fee) throws Exception;
+	
+	public List<PayFlow> getAllPayFlow(Map<String,Object> params,PageCond pageCond);
+	
+	public int countPayFlow(Map<String,Object> params);
 	
 }
 

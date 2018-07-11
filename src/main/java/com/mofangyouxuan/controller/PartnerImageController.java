@@ -147,6 +147,7 @@ public class PartnerImageController {
 			}
 			String filename = System.currentTimeMillis() + "." + imgType.toLowerCase();
 			File newFile = new File(fileDir,filename);
+			//System.out.println("filename:" + filename);
 			FileUtils.copyInputStreamToFile(image.getInputStream(), newFile);
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");

@@ -194,7 +194,10 @@ public class GoodsServiceImpl implements GoodsService{
 	public int review(Goods goods,Integer rewPartnerId,Integer oprId,String result,String review) {
 		Goods g = new Goods();
 		g.setGoodsId(goods.getGoodsId());
-		JSONArray rewLog = JSONArray.parseArray(goods.getReviewLog() == null? "[]":goods.getReviewLog());
+		JSONArray rewLog = JSONArray.parseArray(goods.getReviewLog());
+		if(rewLog == null) {
+			rewLog = new JSONArray();
+		}
 		JSONObject jobj = new JSONObject();
 		jobj.put("partnerId", rewPartnerId);
 		jobj.put("operator", oprId);

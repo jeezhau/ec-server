@@ -809,10 +809,34 @@ public class HttpUtils {
             InputStream in = entity.getContent();
             Header fileHead= httpResponse.getFirstHeader("filename");
             String typeHead = entity.getContentType().getValue();
-            String type = typeHead.substring(typeHead.lastIndexOf("/"));
+            String type = "tmp";
+            if(typeHead != null) {
+            		if(typeHead.contains("text/plain")) {
+            			type = "txt";
+            		}else {
+            			if(typeHead.contains(";")) {
+            				typeHead = typeHead.substring(typeHead.indexOf(";"));
+            			}
+            			if(typeHead.contains("/")) {
+            				type = typeHead.substring(typeHead.lastIndexOf("/")+1);
+            			}
+            		}
+            }
             String fileName = UUID.randomUUID().toString() + "." +type;
             if(fileHead != null){
-            	fileName = fileHead.getValue();
+            		fileName = fileHead.getValue();
+            }else {
+            		fileHead = httpResponse.getFirstHeader("Content-Disposition");
+            		if(fileHead != null) {
+            			if(fileHead.getValue() != null) {
+            				String fname = fileHead.getValue();
+            				if(fname.contains("filename=")) {
+            					int index = fname.indexOf("filename=") + "filename=".length();
+            					fname = fname.substring(index);
+            					fileName = fname;
+            				}
+            			}
+            		}
             }
             File file = new File(fileSaveDir + fileName);
             FileUtils.copyInputStreamToFile(in, file);
@@ -838,19 +862,20 @@ public class HttpUtils {
      * 下载文件（SSL POST），JSON形式参数
      * @param fileSaveDir 文件本地保存目录
      * @param apiUrl API接口URL
-     * @param json JSON对象
+     * @param contentType	文本类型：text/plain、application/json;
+     * @param params xml、json、txt等字符串，具体格式由contentType确定
      * @return
      * @throws IOException 
      */
-    public static File downloadFileSSL(String fileSaveDir,String apiUrl, Object json) {
+    public static File downloadFileSSL(String fileSaveDir,String apiUrl, String contentType,String params) {
         CloseableHttpClient httpClient = createSSLConnSocketFactory();
         HttpPost httpPost = new HttpPost(apiUrl);
         CloseableHttpResponse response = null;
         try {
             httpPost.setConfig(requestConfig);
-            StringEntity stringEntity = new StringEntity(json.toString(),"UTF-8");//解决中文乱码问题
+            StringEntity stringEntity = new StringEntity(params,"UTF-8");//解决中文乱码问题
             stringEntity.setContentEncoding("UTF-8");
-            stringEntity.setContentType("application/json");
+            stringEntity.setContentType(contentType);
             httpPost.setEntity(stringEntity);
             response = httpClient.execute(httpPost);
             int statusCode = response.getStatusLine().getStatusCode();
@@ -864,10 +889,34 @@ public class HttpUtils {
             InputStream in = entity.getContent();
             Header fileHead= response.getFirstHeader("filename");
             String typeHead = entity.getContentType().getValue();
-            String type = typeHead.substring(typeHead.lastIndexOf("/"));
+            String type = "tmp";
+            if(typeHead != null) {
+            		if(typeHead.contains("text/plain")) {
+            			type = "txt";
+            		}else {
+            			if(typeHead.contains(";")) {
+            				typeHead = typeHead.substring(typeHead.indexOf(";"));
+            			}
+            			if(typeHead.contains("/")) {
+            				type = typeHead.substring(typeHead.lastIndexOf("/")+1);
+            			}
+            		}
+            }
             String fileName = UUID.randomUUID().toString() + "." +type;
             if(fileHead != null){
-            	fileName = fileHead.getValue();
+            		fileName = fileHead.getValue();
+            }else {
+            		fileHead = response.getFirstHeader("Content-Disposition");
+            		if(fileHead != null) {
+            			if(fileHead.getValue() != null) {
+            				String fname = fileHead.getValue();
+            				if(fname.contains("filename=")) {
+            					int index = fname.indexOf("filename=") + "filename=".length();
+            					fname = fname.substring(index);
+            					fileName = fname;
+            				}
+            			}
+            		}
             }
             File file = new File(fileSaveDir + fileName);
             FileUtils.copyInputStreamToFile(in, file);
@@ -890,4 +939,5 @@ public class HttpUtils {
         }
         return null;
     }
+    
 }

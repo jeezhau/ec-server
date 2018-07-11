@@ -33,8 +33,8 @@ logging:
 ######业务参数############
 #访问微信管理平台服务接口
 wxmp:
-  wxmp-server-url: 'http://localhost:9000'
-  wxmp-server-url-4user: 'http://localhost:9000'
+  wxmp-server-url: 'http://192.168.0.101:9000'
+  wxmp-server-url-4user: 'http://192.168.0.101:9000'
   qrcode-apply-url: '/qrcode/createTmp'
   qrcode-get-url: '/qrcode/getqrcode'
   qrcode-show-url: '/qrcode/show/'
@@ -46,8 +46,9 @@ wxpay:
   notify-server-url: 'https://pay.mofangyouxuan.com'
   pay-notify-url: '/wxpay/notify/pay'
   refund-notify-url: '/wxpay/notify/refund'
-  fee-rate-use-wxpay: 0.27   #微信支付手续费
+  fee-rate-use-wxpay: 0.037   #微信支付手续费
   cert-key-dir: '/Users/jeekhan/mfpay/wxpay/'
+
 #支付宝支付参数
 alipay:
   appid: '2018061260389188'
@@ -57,10 +58,11 @@ alipay:
   pay-return-url: '/pay/finish/{orderId}'
   fee-rate-use-alipay: 0.007   #支付宝支付手续费
   cert-key-dir: '/Users/jeekhan/mfpay/alipay/'
-
+  seller-email: 'zhaofachun@mofangyouxuan.com'
+  
 #信息管理平台
 messmp:
-  messmp-server-url: 'http://localhost:8888'
+  messmp-server-url: 'http://192.168.0.101:8888'
   verify-phone-vericode: '/sms/vericode/verify'
   verify-email-vericode: '/email/vericode/verify'
   send-phone-resetpwd: '/sms/resetpwd/send'
@@ -72,6 +74,7 @@ logistics:
 
 ######系统参数############  
 sys:
+  pay-bills-dir: '/Users/jeekhan/mfyx/paybills/'  #支付对账单
   tmp-file-dir: '/Users/jeekhan/mfyx/tmp/'  #系统临时目录
   user-img-path: '/Users/jeekhan/mfyx/user-img/' #用户图片主目录
   partner-img-dir: '/Users/jeekhan/mfyx/partner-img/'   #合作伙伴照片主目录

@@ -60,7 +60,7 @@ public class Collection {
     		if(this.createTime == null) {
     			return null;
     		}
-        return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(createTime);
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(createTime);
     }
 
     public void setCreateTime(Date createTime) {

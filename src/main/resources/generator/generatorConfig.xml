@@ -18,16 +18,16 @@
             <property name="forceBigDecimals" value="false"/>
         </javaTypeResolver>
         <!-- 生成模型的包名和位置-->
-        <javaModelGenerator targetPackage="com.mofangyouxuan.model" targetProject="mfyx-server/src/main/java">
+        <javaModelGenerator targetPackage="com.mofangyouxuan.model" targetProject="mfyxsc/src/main/java">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
         </javaModelGenerator>
          <!-- 生成映射文件的包名和位置-->
-        <sqlMapGenerator targetPackage="mapping" targetProject="mfyx-server/src/main/resources">
+        <sqlMapGenerator targetPackage="mapping" targetProject="mfyxsc/src/main/resources">
             <property name="enableSubPackages" value="true"/>
         </sqlMapGenerator>
         <!-- 生成DAO的包名和位置-->
-        <javaClientGenerator type="XMLMAPPER" targetPackage="com.mofangyouxuan.mapper" targetProject="mfyx-server/src/main/java">
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.mofangyouxuan.mapper" targetProject="mfyxsc/src/main/java">
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
         <!-- 要生成的表 tableName是数据库中的表名或视图名 domainObjectName是实体类名-->
@@ -54,11 +54,12 @@
         <table tableName="tb_partner_staff" domainObjectName="PartnerStaff" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
         <table tableName="tb_sumbal_log" domainObjectName="SumBalLog" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
         <table tableName="tb_cash_apply" domainObjectName="CashApply" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
-                    
+        <table tableName="tb_goods_spec" domainObjectName="GoodsSpec" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
+                            
             
             -->                 
        
-        <table tableName="tb_goods_spec" domainObjectName="GoodsSpec" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
+        <table tableName="tb_order_bal" domainObjectName="OrderBal" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
                                         
     </context>
     

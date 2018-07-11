@@ -1,5 +1,7 @@
 package com.mofangyouxuan.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,10 +21,13 @@ import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.PayFlowMapper;
+import com.mofangyouxuan.mapper.OrderBalMapper;
 import com.mofangyouxuan.mapper.OrderMapper;
 import com.mofangyouxuan.model.PayFlow;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.Order;
+import com.mofangyouxuan.model.OrderBal;
+import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.pay.AliPay;
@@ -31,7 +36,9 @@ import com.mofangyouxuan.service.ChangeFlowService;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.OrderService;
 import com.mofangyouxuan.service.PartnerBasicService;
+import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.service.impl.ChangeFlowServiceImpl.CashFlowTP;
 import com.mofangyouxuan.utils.CommonUtil;
 
 @Service
@@ -40,7 +47,8 @@ public class OrderServiceImpl implements OrderService{
 	
 	@Autowired
 	private OrderMapper orderMapper;
-	
+	@Autowired
+	private OrderBalMapper orderBalMapper;
 	@Autowired
 	private PayFlowMapper payFlowMapper;
 	@Autowired
@@ -55,6 +63,8 @@ public class OrderServiceImpl implements OrderService{
 	private AliPay aliPay;
 	@Autowired
 	private VipBasicService vipBasicService;
+	@Autowired
+	private UserBasicService userBasicService;
 	@Autowired
 	private SysParamUtil sysParamUtil;
 	/**
@@ -525,13 +535,13 @@ public class OrderServiceImpl implements OrderService{
 	 * @throws Exception 
 	 */
 	@Override
-	public void execPaySucc(boolean useBal,PayFlow oldPayFlow,VipBasic userVip,Order order,Integer mchtVipId,String outFinishId) throws Exception {
+	public void execPaySucc(boolean useBal,PayFlow oldPayFlow,Integer userVipId,Order order,Integer mchtVipId,String outFinishId) throws Exception {
 		//添加现金余额流水
-		this.changeFlowService.paySuccess(useBal, oldPayFlow.getPayAmount(), userVip, 
+		this.changeFlowService.paySuccess(useBal, oldPayFlow.getPayAmount(), userVipId, 
 				"商品购买【订单号:" + oldPayFlow.getOrderId() + "】", 
 				oldPayFlow.getUserId(), mchtVipId,oldPayFlow.getOrderId());
 		//更新会员积分
-		this.vipBasicService.updScore(userVip.getVipId(), (int)(oldPayFlow.getPayAmount()/100));
+		this.vipBasicService.updScore(userVipId, (int)(oldPayFlow.getPayAmount()/100));
 		//更新支付流水
 		PayFlow updPayFow = new PayFlow();
 		updPayFow.setFlowId(oldPayFlow.getFlowId());
@@ -578,7 +588,7 @@ public class OrderServiceImpl implements OrderService{
 		if("00".equals(stat) || "10".equals(stat)) {
 			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
 			VipBasic vip = this.vipBasicService.get(payFlow.getUserId());
-			this.execPaySucc(false, payFlow,vip, order, order.getMchtUId(),outFinishId);
+			this.execPaySucc(false, payFlow,vip.getVipId(), order, order.getMchtUId(),outFinishId);
 		}else if(!"11".equals(stat)) {
 			return "订单支付状态有误！";
 		}
@@ -685,7 +695,7 @@ public class OrderServiceImpl implements OrderService{
 				JSONObject queryRet = this.wXPay.queryOrder(oldFlow.getFlowId());
 				if(queryRet.containsKey("total_fee")) { //已经成功
 					if(queryRet.getLong("total_fee") == oldFlow.getPayAmount() + oldFlow.getFeeAmount()) {
-						this.execPaySucc(false, oldFlow, userVip, order, order.getMchtUId(), queryRet.getString("transaction_id"));
+						this.execPaySucc(false, oldFlow, userVip.getVipId(), order, order.getMchtUId(), queryRet.getString("transaction_id"));
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "支付成功！");
 						return jsonRet;
@@ -695,7 +705,7 @@ public class OrderServiceImpl implements OrderService{
 				JSONObject queryRet = this.aliPay.queryOrder(oldFlow.getFlowId());
 				if(queryRet.containsKey("total_fee")) { //已经成功
 					if(queryRet.getLong("total_fee") == oldFlow.getPayAmount() + oldFlow.getFeeAmount()) {
-						this.execPaySucc(false, oldFlow, userVip, order, order.getMchtUId(), queryRet.getString("transaction_id"));
+						this.execPaySucc(false, oldFlow, userVip.getVipId(), order, order.getMchtUId(), queryRet.getString("transaction_id"));
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "支付成功！");
 						return jsonRet;
@@ -770,16 +780,17 @@ public class OrderServiceImpl implements OrderService{
 		JSONObject jsonRet = new JSONObject();
 	
 		String refundFlowId = CommonUtil.genPayFlowId(payFlow.getOrderId(), payFlow.getFlowId()); //退款流水ID
-		Long totalAmount = null;//退款总金额，分
+		Long totalAmount = payFlow.getPayAmount() + payFlow.getFeeAmount();//支付总金额，分
+		Long refundAmount = null;	//退款金额
 		PayFlow refundFlow = null;
 		Date currTime = new Date();
 		String changeReason = ""; //资金变更流水理由前缀
 		if(!isMcht) {
 			changeReason = "买家取消全额退款";	//手续费由买家承担
-			totalAmount = payFlow.getPayAmount();
+			refundAmount = payFlow.getPayAmount();
 		}else { //卖家申请退款
 			changeReason = "卖家申请全额退款";
-			totalAmount = payFlow.getPayAmount() + payFlow.getFeeAmount(); //手续费由卖家承担
+			refundAmount = payFlow.getPayAmount() + payFlow.getFeeAmount(); //手续费由卖家承担
 		}
 		if("1".equals(payFlow.getPayType())) {
 			//余额支付退款
@@ -787,7 +798,7 @@ public class OrderServiceImpl implements OrderService{
 			refundFlow.setPayType("1");
 		}else if(payFlow.getPayType().startsWith("2")){
 			//微信退款
-			JSONObject wxRet = this.wXPay.applyRefund(refundFlowId, totalAmount, payFlow.getOutFinishId());
+			JSONObject wxRet = this.wXPay.applyRefund(refundFlowId, totalAmount,refundAmount, payFlow.getOutFinishId());
 			if(wxRet.containsKey("refund_id")) {//申请成功
 				refundFlow = new PayFlow();
 				refundFlow.setPayType(payFlow.getPayType());
@@ -799,7 +810,7 @@ public class OrderServiceImpl implements OrderService{
 			}
 		}else if(payFlow.getPayType().startsWith("3")) {
 			//支付宝退款
-			JSONObject aliRet = this.aliPay.applyRefund(refundFlowId, new BigDecimal(totalAmount).divide(new BigDecimal(100)), payFlow.getOutFinishId());
+			JSONObject aliRet = this.aliPay.applyRefund(refundFlowId, new BigDecimal(refundAmount).divide(new BigDecimal(100)), payFlow.getOutFinishId());
 			if(aliRet.containsKey("refund_id")) {//申请成功
 				refundFlow = new PayFlow();
 				refundFlow.setPayType(payFlow.getPayType());
@@ -853,7 +864,7 @@ public class OrderServiceImpl implements OrderService{
 			this.orderMapper.updateByPrimaryKeySelective(updOrder);
 			
 			//资金冻结
-			this.changeFlowService.refundApply(payFlow.getPayAmount(), mchtVipId, changeReason+"【订单号："+order.getOrderId()+"】", mchtVipId,payFlow.getOrderId());
+			this.changeFlowService.refundApply(payFlow.getPayAmount(), mchtVipId, changeReason + "【订单号："+order.getOrderId()+"】", mchtVipId,payFlow.getOrderId());
 			if("1".equals(payFlow.getPayType())) {//余额退款，执行退款成功
 				this.execRefundSucc(true, refundFlow, userVipId, updOrder, mchtVipId, changeReason, null);
 			}
@@ -1098,4 +1109,196 @@ public class OrderServiceImpl implements OrderService{
 		return jsonRet;
 	}
 	
+	
+	/**
+	 * 根据对账单数据指定订单支付对账
+	 * @param isRefund	是否为退款
+	 * @param outTrdaeNo	外部单号
+	 * @param flowId		系统支付流水号
+	 * @param payType	支付方式
+	 * @param status		外部交易状态
+	 * @param amount		外部交易金额，元
+	 * @param fee		外部手续费，元
+	 * @return
+	 * @throws Exception
+	 */
+	public void balanceBill(boolean isRefund,String outTradeNo,String flowId,
+			String payType,String status,String amount,String fee) throws Exception {
+		String orderId = flowId.substring(0, 30);
+		Order order = this.get(false, false, false, false, true, orderId);
+		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(flowId);
+		boolean isBalOK = true; 	//是否对账成功
+		if(payFlow == null) {//没有支付流水信息
+			payFlow = new PayFlow();
+			payFlow.setFlowId(flowId);
+			if(isRefund) {//退款
+				payFlow.setFlowType("2");
+				if(order.getAmount().compareTo(new BigDecimal(amount)) > 0) { //金额有误
+					payFlow.setStatus("2F");
+					isBalOK = false;
+				}else {
+					payFlow.setStatus("21");
+				}
+			}else {
+				payFlow.setFlowType("1");
+				if(order.getAmount().compareTo(new BigDecimal(amount)) > 0) {
+					payFlow.setStatus("1F");
+					isBalOK = false;
+				}else {
+					payFlow.setStatus("11");
+				}
+			}
+			payFlow.setGoodsId(order.getGoodsId());
+			payFlow.setOrderId(order.getOrderId());
+			payFlow.setPayAccount(order.getUserId()+"");
+			payFlow.setPayAmount(order.getAmount().multiply(new BigDecimal(100)).longValue()); //订单额
+			payFlow.setUserId(order.getUserId());
+			payFlow.setPayType(payType);
+			payFlow.setFeeAmount((new BigDecimal(amount).subtract(order.getAmount())).multiply(new BigDecimal(100)).longValue());
+			payFlow.setCreateTime(new Date());
+			payFlow.setCurrencyType("CNY");
+			payFlow.setIncomeAmount(new BigDecimal(amount).multiply(new BigDecimal(100)).longValue());
+			payFlow.setIncomeTime(new Date());
+			payFlow.setOutFinishId(outTradeNo);
+			payFlow.setMemo("系统无，微信有，对账插入");
+			this.payFlowMapper.insert(payFlow);
+			if(isRefund) {
+				this.execRefundSucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), "退款成功", outTradeNo);
+				if(order.getAmount().compareTo(new BigDecimal(amount)) > 0) {
+					Order updOrder = new Order();
+					updOrder.setOrderId(orderId);
+					updOrder.setStatus("B2");
+					this.orderMapper.updateByPrimaryKeySelective(updOrder);
+				}
+			}else {
+				this.execPaySucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), outTradeNo);
+				if(order.getAmount().compareTo(new BigDecimal(amount)) > 0) {
+					Order updOrder = new Order();
+					updOrder.setOrderId(orderId);
+					updOrder.setStatus("B1");
+					this.orderMapper.updateByPrimaryKeySelective(updOrder);
+				}
+			}
+		}else {
+			//金额检查、状态检查
+			BigDecimal totalAmount = new BigDecimal(payFlow.getPayAmount() + payFlow.getFeeAmount());
+			Order updOrder = new Order();
+			PayFlow updFlow = new PayFlow();
+			updOrder.setOrderId(orderId);
+			updFlow.setFlowId(flowId);
+			if(totalAmount.compareTo(new BigDecimal(amount)) != 0) {
+				if(isRefund) {
+					updFlow.setStatus("2F"); //金额有误，需要手工处理
+					updOrder.setStatus("B2");
+					isBalOK = false;
+				}else {
+					updFlow.setStatus("1F"); //金额有误，需要手工处理
+					updOrder.setStatus("B1");
+					isBalOK = false;
+				}
+				updFlow.setMemo("金额有误，需要手工处理");
+				this.orderMapper.updateByPrimaryKeySelective(updOrder);
+				this.payFlowMapper.updateByPrimaryKeySelective(updFlow);
+			}else {//金额检查通过
+				if(isRefund) {
+					if("20".equals(payFlow.getStatus())) {
+						updFlow.setStatus("21");
+						updFlow.setMemo("系统状态有误，对账更新");
+						this.execRefundSucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), "退款成功", outTradeNo);
+					}
+				}else {
+					if("00".equals(payFlow.getStatus()) || "01".equals(payFlow.getStatus()) || "10".equals(payFlow.getStatus())) {
+						updFlow.setStatus("11");
+						updFlow.setMemo("系统状态有误，对账更新");
+						this.execPaySucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), outTradeNo);
+					}
+				}
+			}
+		}
+		//保存对账结果
+		OrderBal obal = this.orderBalMapper.selectByPrimaryKey(orderId);
+		//分润数据
+		UserBasic buyUser = this.userBasicService.get(order.getUserId());
+		PartnerBasic partner = this.partnerBasicService.getByBindUser(order.getMchtUId());
+		PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
+		if(sysPartner == null || buyUser == null || partner == null) {
+			throw new Exception("获取用户或商家信息失败！");
+		}
+		BigDecimal spreadUserProfit = new BigDecimal(0);
+		BigDecimal spreadPartnerProfit = new BigDecimal(0);
+		BigDecimal sysSrvFee = new BigDecimal(0);
+		if(!isRefund) {
+			if(buyUser != null && buyUser.getSenceId()!=null) {
+				VipBasic spreadVip = this.vipBasicService.get(buyUser.getSenceId());
+				if(spreadVip != null) {
+					BigDecimal spreadUserProfitRate = this.sysParamUtil.getSpreadUserProfitRatio();
+					spreadUserProfit = spreadUserProfitRate.multiply(order.getAmount()).setScale(0, BigDecimal.ROUND_FLOOR);
+				}
+			}
+			//推广商家分润
+			if(partner.getUpPartnerId() != null) {
+				PartnerBasic spPartner = this.partnerBasicService.getByID(partner.getUpPartnerId());
+				if(spPartner != null) {
+					BigDecimal spreadMchtProfitRate = this.sysParamUtil.getSpreadMchtProfitRatio();
+					spreadPartnerProfit = spreadMchtProfitRate.multiply(order.getAmount()).setScale(0, BigDecimal.ROUND_FLOOR);
+				}
+			}
+			//收取服务费
+			BigDecimal platformServiceFeeRate = this.sysParamUtil.getPlatformServiceFeeRatio();
+			sysSrvFee = platformServiceFeeRate.multiply(order.getAmount()).setScale(0, BigDecimal.ROUND_CEILING);
+		}
+		if(obal == null) {
+			obal = new OrderBal();
+			obal.setBalTime(new Date());
+			obal.setOrderId(orderId);
+			obal.setPayType(payType);
+			obal.setPartnerSettle(order.getAmount().subtract(sysSrvFee));
+			obal.setPayAmount(new BigDecimal(amount));
+			obal.setPayFee(new BigDecimal(payFlow.getFeeAmount()).divide(new BigDecimal(100)));
+			obal.setPtoolsFee(new BigDecimal(fee));
+			obal.setSpreaderPSettle(spreadPartnerProfit);
+			obal.setSpreaderUSettle(spreadUserProfit);
+			obal.setSyssrvSettle(sysSrvFee);
+			if(isRefund) {//退款不退服务费
+				obal.setRefundPartnerSettle(new BigDecimal(amount));
+				obal.setRefundTime(payFlow.getCreateTime());
+				obal.setRefundUserSettle(new BigDecimal(amount));
+				obal.setStatus("0");
+			}else {
+				obal.setStatus("S");
+			}
+			if(isBalOK) {
+				obal.setStatus("1");
+			}
+			this.orderBalMapper.insert(obal);
+		}else {
+			obal.setBalTime(new Date());
+			if(isRefund) {//退款不退服务费
+				obal.setRefundPartnerSettle(new BigDecimal(amount));
+				obal.setRefundTime(payFlow.getCreateTime());
+				obal.setRefundUserSettle(new BigDecimal(amount));
+			}else {
+				obal.setPartnerSettle(order.getAmount().subtract(sysSrvFee));
+				obal.setPayAmount(new BigDecimal(amount));
+				obal.setPayFee(new BigDecimal(payFlow.getFeeAmount()).divide(new BigDecimal(100)));
+				obal.setPtoolsFee(new BigDecimal(fee));
+				obal.setSpreaderPSettle(spreadPartnerProfit);
+				obal.setSpreaderUSettle(spreadUserProfit);
+				obal.setSyssrvSettle(sysSrvFee);
+			}
+			obal.setStatus("S");
+			if(isBalOK) {
+				obal.setStatus("1");
+			}
+			this.orderBalMapper.updateByPrimaryKeySelective(obal);
+		}
+	}
+	
+	public List<PayFlow> getAllPayFlow(Map<String,Object> params,PageCond pageCond){
+		return this.payFlowMapper.selectAll(params, pageCond);
+	}
+	
+	public int countPayFlow(Map<String,Object> params) {
+		return this.payFlowMapper.countAll(params);
+	}
 }

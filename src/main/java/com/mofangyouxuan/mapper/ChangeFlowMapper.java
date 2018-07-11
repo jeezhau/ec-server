@@ -24,4 +24,8 @@ public interface ChangeFlowMapper {
    
     int countAll(@Param("params")Map<String,Object> params);
     
+    List<Map<String,Object>> sumAllGroupTD(@Param("params")Map<String,Object> params);
+    
+    int updateFlag(@Param("params")Map<String,Object> params);
+    
 }

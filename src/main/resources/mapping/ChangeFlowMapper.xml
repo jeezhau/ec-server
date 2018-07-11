@@ -110,4 +110,17 @@
     <include refid="whereSql4All" />
   </select>
   
+  <select id="sumAllGroupTD" parameterType="map" resultType="map">
+    select f.vip_id vipId,DATE_FORMAT(f.create_time,"%Y%m%d") time,left(f.change_type,1) ctype,sum(amount) samount
+    from tb_change_flow f
+    <include refid="whereSql4All" />
+    group by f.vip_id,DATE_FORMAT(f.create_time,"%Y%m%d") ,left(f.change_type,1)
+  </select>  
+  
+  <update id="updateFlag" parameterType="map">
+   update tb_change_flow f
+   set f.sum_flag = #{params.sumFlag,jdbcType=CHAR}
+    <include refid="whereSql4All" />
+  </update>
+  
 </mapper>

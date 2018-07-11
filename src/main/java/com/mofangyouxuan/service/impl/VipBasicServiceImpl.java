@@ -1,5 +1,7 @@
 package com.mofangyouxuan.service.impl;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSONObject;
+import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.ChangeFlowMapper;
@@ -77,71 +80,91 @@ public class VipBasicServiceImpl implements VipBasicService{
 	
 	/**
 	 * 更新会员开通与余额信息
-	 * 1、累积账户余额与积分信息 1000 条流水
-	 * 2、检查会员开通状态；
+	 * 1、检查会员开通状态；
+	 * 2、按日累积未统计的流水
 	 * @param id
 	 * @return
+	 * @throws Exception 
 	 */
-	private VipBasic sumBalance(Integer id) {
-		VipBasic vip = this.vipBasicMapper.selectByPrimaryKey(id);
-		if(vip == null) {
-			return null;
-		}
-		Map<String,Object> params = new HashMap<String,Object>();
-		params.put("vipId", id);
-		params.put("sumFlag", "0");
-		PageCond pageCond = new PageCond(0,1000);
-		String sorts = " order by create_time ";
+	public JSONObject sumDayFlow() throws Exception {
+		JSONObject jsonRet = new JSONObject();
 		Date sumTime = new Date();
-		Long addBal = 0l;
-		Long subBal = 0l;
-		Long addFreeze = 0l;
-		Long subFreeze = 0l;
-		List<ChangeFlow> list = null; 
-		
-		list = this.changeFlowMapper.selectAll(params, pageCond, sorts);
-		if(list != null && list.size()>0) {
-			String beginFlow = list.get(0).getFlowId();
-			String endFlow = list.get(list.size()-1).getFlowId();
-			for(ChangeFlow flow:list) {
-				if(flow.getChangeType().startsWith("1")) {
-					addBal += flow.getAmount();	//增加可用余额
-				}else if(flow.getChangeType().startsWith("2")) {
-					subBal += flow.getAmount();	//减少可用余额
-				}else if(flow.getChangeType().startsWith("3")) {
-					addFreeze += flow.getAmount();	//增加冻结余额
-				}else if(flow.getChangeType().startsWith("4")) {
-					subFreeze += flow.getAmount();	//增加可用余额
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("sumFlag", "1");
+		List<Map<String,Object>> list = null; 
+		list = this.changeFlowMapper.sumAllGroupTD(params);
+		if(list == null || list.size()<1) {
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+			return jsonRet;
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		for(Map<String,Object> rec:list) {
+			Integer vipId = (Integer) rec.get("vipId");
+			Date ftime = (Date) rec.get("time");
+			String ctype = (String) rec.get("ctype");
+			Long amount = (Long) rec.get("samount");
+			SumBalLog sumLog = this.sumBalLogMapper.selectByVipAndTime(vipId, sdf.format(ftime));
+			boolean noLog = false;
+			if(sumLog == null) {
+				noLog = true;
+				sumLog = new SumBalLog();
+				sumLog.setVipId(vipId);
+				sumLog.setFlowTime(sdf.format(ftime));
+				sumLog.setCreateTime(new Date());
+				sumLog.setAmountAddbal(0l);
+				sumLog.setAmountAddfrz(0l);
+				sumLog.setAmountSubbal(0l);
+				sumLog.setAmountSubfrz(0l);
+			}
+			Long addBal=0l,subBal=0l,addFreeze=0l,subFreeze=0l;
+			sumLog.setCreateTime(new Date());
+			if("1".equals(ctype)) {
+				sumLog.setAmountAddbal(sumLog.getAmountAddbal() + amount);
+				addBal += amount;
+			}else if("2".equals(ctype)) {
+				sumLog.setAmountAddfrz(sumLog.getAmountSubbal() + amount);
+				subBal += amount;
+			}else if("3".equals(ctype)) {
+				sumLog.setAmountSubbal(sumLog.getAmountAddfrz() + amount);
+				addFreeze += amount;
+			}else if("4".equals(ctype)) {
+				sumLog.setAmountSubfrz(sumLog.getAmountSubfrz() + amount);
+				subFreeze += amount;
+			}
+			if(noLog) {
+				int cnt = this.sumBalLogMapper.insert(sumLog);
+				if(cnt<0) {
+					throw new Exception("数据库数据保存出错！");
 				}
-				flow.setSumFlag("1");
-				flow.setSumTime(sumTime);
-				this.changeFlowMapper.updateSumFlag(flow);
+			}else {
+				int cnt = this.sumBalLogMapper.updateAmount(sumLog);
+				if(cnt<0) {
+					throw new Exception("数据库数据保存出错！");
+				}
 			}
-			SumBalLog sumLog = new SumBalLog();
-			sumLog.setVipId(id);
-			sumLog.setBeginFlow(beginFlow);
-			sumLog.setEndFlow(endFlow);
-			sumLog.setCreateTime(sumTime);
-			sumLog.setAmountAddbal(addBal);
-			sumLog.setAmountSubbal(subBal);
-			sumLog.setAmountAddfrz(addFreeze);
-			sumLog.setAmountSubfrz(subFreeze);
-			this.sumBalLogMapper.insert(sumLog);
-		}
-		Long balance = vip.getBalance();
-		balance = balance + addBal - subBal;
-		Long freeze = vip.getFreeze();
-		freeze = freeze + addFreeze - subFreeze;
-		vip.setBalance(balance);
-		vip.setFreeze(freeze);
-		vip.setUpdateTime(sumTime);
-		if("0".endsWith(vip.getStatus())){
-			if(vip.getScores() >= sysParamUtil.getActivateVipNeedScore()) {
-				vip.setStatus("1"); //激活会员
+			VipBasic vip = this.vipBasicMapper.selectByPrimaryKey(vipId);
+			Long balance = vip.getBalance();
+			balance = balance + addBal - subBal;
+			Long freeze = vip.getFreeze();
+			freeze = freeze + addFreeze - subFreeze;
+			vip.setBalance(balance);
+			vip.setFreeze(freeze);
+			vip.setUpdateTime(sumTime);
+			//开通会员
+			if("0".endsWith(vip.getStatus())){
+				if(vip.getScores() >= sysParamUtil.getActivateVipNeedScore()) {
+					vip.setStatus("1"); //激活会员
+				}
+			}
+			int cnt = this.vipBasicMapper.updateByPrimaryKey(vip);
+			if(cnt<0) {
+				throw new Exception("数据库数据保存出错！");
 			}
 		}
-		this.vipBasicMapper.updateByPrimaryKey(vip);
-		return vip;
+		jsonRet.put("errcode", 0);
+		jsonRet.put("errmsg", "ok");
+		return jsonRet;
 	}
 	
 	/**
@@ -151,7 +174,7 @@ public class VipBasicServiceImpl implements VipBasicService{
 	 */
 	@Override
 	public VipBasic get(Integer id) {
-		return this.sumBalance(id);
+		return this.vipBasicMapper.selectByPrimaryKey(id);
 	}
 	
 	/**
