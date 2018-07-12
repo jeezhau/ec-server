@@ -36,12 +36,12 @@ public class DownloadBillSchedule {
 	/**
 	 * 下载对账单
 	 */
-	@Scheduled(cron="0 10,20 10 * * ?")
+	@Scheduled(cron="0 56 14 * * ?")
 	public void download() {
 		try {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(new Date());
-			cal.set(Calendar.DAY_OF_MONTH, -1);
+			cal.add(Calendar.DAY_OF_MONTH, -1);
 			Date billDate = cal.getTime();
 			String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
 			//下载微信账单

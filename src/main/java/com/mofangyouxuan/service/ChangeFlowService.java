@@ -1,5 +1,9 @@
 package com.mofangyouxuan.service;
 
+import java.util.List;
+import java.util.Map;
+
+import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.ChangeFlow;
 import com.mofangyouxuan.model.OrderBal;
 
@@ -129,8 +133,34 @@ public interface ChangeFlowService {
 	 * @return
 	 */
 	public ChangeFlow get(String flowId);
+	
+	/**
+	 * 根据指定查询条件、分页信息获取变更流水信息
+	 * @param params
+	 * @param pageCond
+	 * @return
+	 */
+	public List<ChangeFlow> getAll(Map<String,Object> jsonParams,PageCond pageCond);
+	
+	/**
+	 * 根据条件统计变更流水数量
+	 */
+	public int countAll(Map<String,Object> jsonParams) ;
 
-
+	/**
+	 * 核对订单的资金流水是否正确：在支付或退款完成时执行
+	 * 1、流水总额与订单额一致则成功；
+	 * 2、对账失败则修正统计状态为：F-数据存疑，返回失败信息；
+	 * 2、对账成功则修正统计状态为：1-数据正确，返回00；
+	 * @param orderId
+	 * @param amount		订单金额，分
+	 * @param fee		买家支付手续费
+	 * @param isRefund	是否为退款信息
+	 * @param hasRefund	是否有退款
+	 * @return
+	 */
+	public String balOrderFlow(String orderId,Long amount,Long fee,boolean isRefund,boolean hasRefund) ;
+	
 }
 
 

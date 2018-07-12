@@ -26,6 +26,6 @@ public interface ChangeFlowMapper {
     
     List<Map<String,Object>> sumAllGroupTD(@Param("params")Map<String,Object> params);
     
-    int updateFlag(@Param("params")Map<String,Object> params);
+    int updateFlag(@Param("params")Map<String,Object> params,@Param("flag")String flag);
     
 }

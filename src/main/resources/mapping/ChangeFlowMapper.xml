@@ -119,7 +119,7 @@
   
   <update id="updateFlag" parameterType="map">
    update tb_change_flow f
-   set f.sum_flag = #{params.sumFlag,jdbcType=CHAR}
+   set f.sum_flag = #{flag,jdbcType=CHAR}
     <include refid="whereSql4All" />
   </update>
   

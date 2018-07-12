@@ -18,14 +18,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.PageCond;
-import com.mofangyouxuan.model.Order;
 import com.mofangyouxuan.model.PayFlow;
 import com.mofangyouxuan.pay.WXPay;
-import com.mofangyouxuan.service.ChangeFlowService;
 import com.mofangyouxuan.service.OrderService;
-import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.CHZipUtils;
 import com.mofangyouxuan.utils.FileFilter;
 
@@ -43,8 +39,6 @@ public class BalanceBillSchedule {
 	private OrderService orderService;
 
 	@Autowired
-	private VipBasicService vipBasicService;
-	@Autowired
 	private WXPay wXpay;
 	
 	@Value("${sys.pay-bills-dir}")
@@ -54,14 +48,14 @@ public class BalanceBillSchedule {
 	 * 执行订单支付对账
 	 */
 	@SuppressWarnings("unused")
-	@Scheduled(cron="0 30 11 * * ?")
+	@Scheduled(cron="0 2 23 * * ?")
 	public void balanceBill() {
 		try {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(new Date());
-			cal.set(Calendar.DAY_OF_MONTH, -1);
-			//String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
-			String strBillDate = "20180707";
+			cal.add(Calendar.DAY_OF_MONTH, -1);
+			String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
+			//String strBillDate = "20180707";
 			//微信账单
 			String wxpayBillFilename = "wxpay{strBillDate}_1.gzip";
 			wxpayBillFilename = wxpayBillFilename.replace("{strBillDate}",strBillDate);
@@ -73,7 +67,7 @@ public class BalanceBillSchedule {
 				wxFile = new File(this.payBillsDir,wxpayBillFilename.replaceAll(".gzip", ""));//解压后文件
 				FileInputStream fis = new FileInputStream(wxFile);
 				BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-				//String header = br.readLine();//文件头
+				String header = br.readLine();//文件头
 				String countHeader = null;
 				String countData = null;
 				//交易时间,公众账号ID,商户号,子商户号,设备号,微信订单号,商户订单号,用户标识,交易类型,交易状态,付款银行,货币种类,总金额,企业红包金额,微信退款单号,商户退款单号,退款金额,企业红包退款金额,退款类型,退款状态,商品名称,商户数据包,手续费,费率
@@ -91,7 +85,7 @@ public class BalanceBillSchedule {
 						if(countHeader != null) {
 							countData = line;
 						}
-						if(countData != null) {
+						if(countData == null) {
 							this.dealWXBill(line);
 						}
 					}catch(Exception e) {
@@ -108,12 +102,12 @@ public class BalanceBillSchedule {
 			if(!aliFile.exists()) {
 				logger.info("系统服务【订单对账】，没有微信的对账数据，交易日【" + strBillDate +"】！");
 			}else {
-				CHZipUtils.unZip(this.payBillsDir + alipayBillFilename, this.payBillsDir + alipayBillFilename.replace(".zip", ""));
+				CHZipUtils.unZip(this.payBillsDir + alipayBillFilename, this.payBillsDir + alipayBillFilename.replace(".zip", "/"));
 				File[] aliFileList = new File(this.payBillsDir,alipayBillFilename.replaceAll(".zip", "")).listFiles(new FileFilter("业务明细.csv"));//解压后文件
 				if(aliFileList.length>0) {
 					aliFile = aliFileList[0];
 					FileInputStream fis = new FileInputStream(aliFile);
-					BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+					BufferedReader br = new BufferedReader(new InputStreamReader(fis,"gbk"));
 					//支付宝交易号,商户订单号,业务类型,商品名称,创建时间,完成时间,门店编号,门店名称,操作员,终端号,对方账户,订单金额（元）,商家实收（元）,支付宝红包（元）,集分宝（元）,支付宝优惠（元）,商家优惠（元）,券核销金额（元）,券名称,商家红包消费金额（元）,卡消费金额（元）,退款批次号/请求号,服务费（元）,分润（元）,备注
 					//String header = br.readLine();//文件头
 					String line = null;
@@ -129,7 +123,7 @@ public class BalanceBillSchedule {
 							if(line.startsWith("支付宝交易号,")) {
 								//header = line;
 							}else{
-								this.dealAliBill(line);
+								//this.dealAliBill(line);
 							}
 						}catch(Exception e) {
 							logger.info("系统定时服务【订单支付对账】，支付宝账单处理出现异常，数据【" + line + "】");
@@ -161,7 +155,11 @@ public class BalanceBillSchedule {
 				}
 				for(PayFlow payFlow:list) {
 					try {
-						
+//						if("1".equals(payFlow.getFlowType())) {
+//							this.orderService.balanceBill(false, payFlow);
+//						}else {
+//							this.orderService.balanceBill(true, payFlow);
+//						}
 					}catch(Exception e) {
 						logger.info("系统定时服务【订单支付对账】，会员余额支付处理出现异常，数据【" + payFlow.getFlowId() + "】");
 					}
@@ -184,15 +182,15 @@ public class BalanceBillSchedule {
 		if(!this.wXpay.appId.equals(appId) && !this.wXpay.wxMchtId.equals(mchtid)) {
 			return "商户号与APPID不符！";
 		}
-		String outTradeNo = data[5];
-		String payFlowId = data[6];
-		String payType = data[8];
-		String payStatus = data[9];
-		String payAmount = data[12];
-		String refundOutNo = data[14];
-		String refundPayFlowId = data[15];
-		String refundAmount = data[16];
-		String refundStatus = data[19];
+		String outTradeNo = data[5].trim();
+		String payFlowId = data[6].trim();
+		String payType = data[8].trim();
+		String payStatus = data[9].trim();
+		String payAmount = data[12].trim();
+		String refundOutNo = data[14].trim();
+		String refundPayFlowId = data[15].trim();
+		String refundAmount = data[16].trim();
+		String refundStatus = data[19].trim();
 		String fee = data[22];
 		if(refundPayFlowId != null && refundPayFlowId.length()>30) {
 			this.orderService.balanceBill(true, refundOutNo, refundPayFlowId, this.wXpay.getPayTypeCode(payType), refundStatus, refundAmount, fee);
@@ -204,18 +202,21 @@ public class BalanceBillSchedule {
 	
 	private String dealAliBill(String dataLine) throws Exception {
 		String[] data = dataLine.split(",");
-		//0-支付宝交易号,2-商户订单号,3-业务类型,4-商品名称,5-创建时间,6-完成时间,7-门店编号,8-门店名称,9-操作员,10-终端号,
-		//11-对方账户,12-订单金额（元）,13-商家实收（元）,14-支付宝红包（元）,15-集分宝（元）,16-支付宝优惠（元）,17商家优惠（元）,
-		//18-券核销金额（元）,19-券名称,20-商家红包消费金额（元）,21-卡消费金额（元）,22-退款批次号/请求号,23-服务费（元）,24-分润（元）,25-备注
-		String outTradeNo = data[0];
-		String payFlowId = data[1];
-		String tradeType = data[2];
+		//0-支付宝交易号,1-商户订单号,2-业务类型,3-商品名称,4-创建时间,5-完成时间,6-门店编号,7-门店名称,8-操作员,9-终端号,
+		//10-对方账户,11-订单金额（元）,12-商家实收（元）,13-支付宝红包（元）,14-集分宝（元）,15-支付宝优惠（元）,16-商家优惠（元）,17-券核销金额（元）,18-券名称,19-商家红包消费金额（元）,20-卡消费金额（元）,
+		//21-退款批次号/请求号,22-服务费（元）,23-分润（元）,24-备注
+		String outTradeNo = data[0].trim();
+		String payFlowId = data[1].trim();
+		String refundId = data[21].trim();
+		String tradeType = data[2].trim();
 		String payType = "3";
 		String status = "SUCCESS";
-		String amount = data[13];
-		String fee = data[23];
+		String amount = data[12].trim();
+		String fee = data[23].trim();
 		if("退款".equals(tradeType)) {
-			this.orderService.balanceBill(true, outTradeNo, payFlowId, payType, status, amount, fee);
+			fee = fee.replace("-", "");
+			amount = amount.replace("-", "");
+			this.orderService.balanceBill(true, outTradeNo, refundId, payType, status, amount, fee);
 		}else {
 			this.orderService.balanceBill(false, outTradeNo, payFlowId, payType, status, amount, fee);
 		}

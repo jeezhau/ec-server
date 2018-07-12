@@ -710,4 +710,113 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		}
 	}
 	
+	/**
+	 * 根据指定查询条件、分页信息获取变更流水信息
+	 * @param params
+	 * @param pageCond
+	 * @return
+	 */
+	@Override
+	public List<ChangeFlow> getAll(Map<String,Object> params,PageCond pageCond){
+		String sorts = " order by create_time desc ";
+		return this.changeFlowMapper.selectAll(params, pageCond, sorts);
+	}
+
+	/**
+	 * 根据条件统计变更流水数量
+	 */
+	@Override
+	public int countAll(Map<String,Object> params) {
+		return this.changeFlowMapper.countAll(params);
+	}
+	
+	
+	/**
+	 * 核对订单的资金流水是否正确：在支付或退款完成时执行
+	 * 1、流水总额与订单额一致则成功；
+	 * 2、对账失败则修正统计状态为：F-数据存疑，返回失败信息；
+	 * 2、对账成功则修正统计状态为：1-数据正确，返回00；
+	 * @param orderId
+	 * @param amount		订单金额，分
+	 * @param fee		买家支付手续费
+	 * @param isRefund	是否为退款信息
+	 * @param hasRefund	是否有退款
+	 * @return
+	 */
+	@SuppressWarnings("unused")
+	public String balOrderFlow(String orderId,Long amount,Long fee,boolean isRefund,boolean hasRefund) {
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("orderId", orderId);
+		List<ChangeFlow> cfList = getAll(params, new PageCond(0,1000));
+		if(cfList == null || cfList.size()<1) {
+			return "系统错误，没有该支付订单的商家资金流水信息！";
+		}else {
+			Long addBal=0l,subBal=0l,addFrz=0l,subFrz=0l;
+			for(ChangeFlow cflow:cfList) {
+				if(cflow.getChangeType().startsWith("1")) {
+					if(CashFlowTP.CFTP11.getValue().equals(new Integer(cflow.getChangeType()))) {
+						if(isRefund) {
+							addBal += cflow.getAmount();
+						}
+					}else {
+						addBal += cflow.getAmount();
+					}
+				}else if(cflow.getChangeType().startsWith("2")) {
+					if(CashFlowTP.CFTP25.getValue().equals(new Integer(cflow.getChangeType()))) {
+						if(isRefund) {
+							subBal += cflow.getAmount();
+						}
+					}else {
+						subBal += cflow.getAmount();
+					}
+				}else if(cflow.getChangeType().startsWith("3")) {
+					if(CashFlowTP.CFTP34.getValue().equals(new Integer(cflow.getChangeType()))) {
+						if(isRefund) {
+							addFrz += cflow.getAmount();
+						}
+					}else {
+						addFrz += cflow.getAmount();
+					}
+				}else if(cflow.getChangeType().startsWith("4")) {
+					if(CashFlowTP.CFTP44.getValue().equals(new Integer(cflow.getChangeType())) ||
+							CashFlowTP.CFTP45.getValue().equals(new Integer(cflow.getChangeType()))) {
+						if(isRefund) {
+							subFrz += cflow.getAmount();
+						}
+					}else {
+						subFrz += cflow.getAmount();
+					}
+				}
+			}
+			Map<String,Object>  rfsParams = new HashMap<String,Object>();
+			rfsParams.put("orderId", orderId);
+			rfsParams.put("changeType", CashFlowTP.CFTP45.value); 
+			int cnt1 = this.changeFlowMapper.countAll(rfsParams); //退款失败记录数
+			Long bal = addBal-subBal+addFrz-subFrz;
+			boolean isok = false;
+			if(isRefund) {//退款
+				if(cnt1 > 0) {//退款失败
+					if(bal == amount) {
+						isok = true;
+					}
+				}else {//退款成功，在退款完成时执行
+					if(bal==0 || bal == -fee) {
+						isok = true;
+					}
+				}
+			}else {//支付
+				if(hasRefund == false && bal == amount) {//支付无退款
+					isok = true;
+				}
+			}
+			if(!isok) {
+				int cnt = this.changeFlowMapper.updateFlag(params,"F");
+				return "资金流水对账错误，流水信息金额与订单信息不匹配！";
+			}else {
+				int cnt = this.changeFlowMapper.updateFlag(params,"1");
+			}
+		}
+		return "00";
+	}
+	
 }

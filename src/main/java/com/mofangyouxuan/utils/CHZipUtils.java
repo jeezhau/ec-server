@@ -122,7 +122,7 @@ public class CHZipUtils {
 			BufferedInputStream bis = null;
 			FileOutputStream fos = null;
 			BufferedOutputStream bos = null;
-			zipFile = new ZipFile(zipFilePath);
+			zipFile = new ZipFile(zipFilePath,Charset.forName("gbk"));
 			Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
 			File file, parentFile;
 			ZipEntry entry;
@@ -199,10 +199,10 @@ public class CHZipUtils {
 //		String sourceFolder = "D:/test/1.txt";
 //		String sourceFolder = "D:/test/中文名.txt";
 		//String sourceFolder = "D:/test/cms";
-		String zipFilePath = "/Users/jeekhan/mfyx/paybills/wxpay20180707_1.gzip";
-		String destDir = "/Users/jeekhan/mfyx/paybills/wxpay20180707_1";
-		//CHZipUtils.zip(sourceFolder, zipFilePath);
-		CHZipUtils.unGzip(zipFilePath, destDir);
+		String zipFilePath = "/Users/jeekhan/mfyx/paybills/alipay20180711_1.csv.zip";
+		String destDir = "/Users/jeekhan/mfyx/paybills/alipay20180711_1.csv/";
+		CHZipUtils.unZip(zipFilePath, destDir);
+		//CHZipUtils.unGzip(zipFilePath, destDir);
 		System.out.println("********执行成功**********");
 	}
  

@@ -1,7 +1,6 @@
 package com.mofangyouxuan.service.impl;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -12,13 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSONObject;
-import com.mofangyouxuan.common.ErrCodes;
-import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.ChangeFlowMapper;
 import com.mofangyouxuan.mapper.SumBalLogMapper;
 import com.mofangyouxuan.mapper.VipBasicMapper;
-import com.mofangyouxuan.model.ChangeFlow;
 import com.mofangyouxuan.model.SumBalLog;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.VipBasicService;
@@ -177,72 +173,6 @@ public class VipBasicServiceImpl implements VipBasicService{
 		return this.vipBasicMapper.selectByPrimaryKey(id);
 	}
 	
-	/**
-	 * 根据指定查询条件、分页信息获取变更流水信息
-	 * @param jsonParams
-	 * @param pageCond
-	 * @return
-	 */
-	@Override
-	public List<ChangeFlow> getAll(JSONObject jsonParams,PageCond pageCond){
-		String sorts = " order by create_time desc ";
-		Map<String,Object> params = getSearParamsMap(jsonParams);
-		return this.changeFlowMapper.selectAll(params, pageCond, sorts);
-	}
-
-	/**
-	 * 根据条件统计变更流水数量
-	 */
-	@Override
-	public int countAll(JSONObject jsonParams) {
-		Map<String,Object> params = getSearParamsMap(jsonParams);
-		return this.changeFlowMapper.countAll(params);
-	}
-	
-	/**
-	 * 解析查询条件
-	 * @param jsonParams
-	 * @return
-	 */
-	public Map<String,Object> getSearParamsMap(JSONObject jsonParams){
-		Map<String,Object> params = new HashMap<String,Object>();
- 
-		if(jsonParams.containsKey("vipId")) { //会员ID
-			params.put("vipId", jsonParams.getInteger("vipId"));
-		}
-		if(jsonParams.containsKey("changeType")) {//变更类型
-			params.put("changeType", jsonParams.getString("changeType"));
-		}
-		if(jsonParams.containsKey("amountDown")) { //金额下限
-			params.put("amountDown", jsonParams.getDouble("amountDown"));
-		}
-		if(jsonParams.containsKey("amountUp")) {//金额上限
-			params.put("amountUp", jsonParams.getDouble("amountUp"));
-		}
-		if(jsonParams.containsKey("beginCrtTime")) { //创建开始时间
-			params.put("beginCrtTime", jsonParams.getString("beginCrtTime"));
-		}
-		if(jsonParams.containsKey("endCrtTime")) { //创建结束时间
-			params.put("endCrtTime", jsonParams.getString("endCrtTime"));
-		}
-		if(jsonParams.containsKey("beginSumTime")) { //累积开始时间
-			params.put("beginSumTime", jsonParams.getString("beginSumTime"));
-		}
-		if(jsonParams.containsKey("endSumTime")) { //累积结束时间
-			params.put("endSumTime", jsonParams.getString("endSumTime"));
-		}
-		if(jsonParams.containsKey("createOpr")) { //创建人
-			params.put("createOpr", jsonParams.getInteger("createOpr"));
-		}
-		if(jsonParams.containsKey("reason")) { //理由
-			params.put("reason", jsonParams.getString("reason"));
-		}
-		if(jsonParams.containsKey("sumFlag")) { //累积标志
-			params.put("sumFlag", jsonParams.getString("sumFlag"));
-		}
-
-		return params;
-	}
 	
 	/**
 	 * 更新资金密码

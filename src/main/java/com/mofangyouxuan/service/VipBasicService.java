@@ -1,10 +1,5 @@
 package com.mofangyouxuan.service;
 
-import java.util.List;
-
-import com.alibaba.fastjson.JSONObject;
-import com.mofangyouxuan.common.PageCond;
-import com.mofangyouxuan.model.ChangeFlow;
 import com.mofangyouxuan.model.VipBasic;
 
 public interface VipBasicService {
@@ -29,19 +24,6 @@ public interface VipBasicService {
 	 * @return
 	 */
 	public VipBasic get(Integer id);
-	
-	/**
-	 * 根据指定查询条件、分页信息获取变更流水信息
-	 * @param jsonParams
-	 * @param pageCond
-	 * @return
-	 */
-	public List<ChangeFlow> getAll(JSONObject jsonParams,PageCond pageCond);
-	
-	/**
-	 * 根据条件统计变更流水数量
-	 */
-	public int countAll(JSONObject jsonParams) ;
 	
 	/**
 	 * 更新资金密码

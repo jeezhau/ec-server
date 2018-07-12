@@ -20,6 +20,7 @@ import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.ChangeFlow;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
+import com.mofangyouxuan.service.ChangeFlowService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
 import com.mofangyouxuan.utils.HttpUtils;
@@ -40,7 +41,9 @@ public class VipBasicController {
 	private VipBasicService vipBasicService;
 	@Autowired
 	private UserBasicService userBasicService;
-
+	@Autowired
+	private ChangeFlowService changFlowService;
+	
 	@Value("${messmp.messmp-server-url}")
 	private String messmpServerUrl;
 	@Value("${messmp.verify-phone-vericode}")
@@ -113,14 +116,14 @@ public class VipBasicController {
 					pageCond.setPageSize(100);
 				}
 			}
-
-			int cnt = this.vipBasicService.countAll(jsonSearch);
+			Map<String,Object> search = this.getSearchParamsMap(jsonSearch);
+			int cnt = this.changFlowService.countAll(search);
 			pageCond.setCount(cnt);
 			jsonRet.put("pageCond", pageCond);
 			jsonRet.put("errcode", ErrCodes.GOODS_NO_GOODS);
 			jsonRet.put("errmsg", "没有获取到订单信息！");
 			if(cnt>0) {
-				List<ChangeFlow> list = this.vipBasicService.getAll(jsonSearch, pageCond);
+				List<ChangeFlow> list = this.changFlowService.getAll(search, pageCond);
 				if(list != null && list.size()>0) {
 					jsonRet.put("datas", list);
 					jsonRet.put("errcode", 0);
@@ -326,6 +329,54 @@ public class VipBasicController {
 		}
 		return null;
 	}
+	
+	/**
+	 * 解析查询条件
+	 * @param jsonParams
+	 * @return
+	 */
+	private Map<String,Object> getSearchParamsMap(JSONObject jsonParams){
+		Map<String,Object> params = new HashMap<String,Object>();
+ 
+		if(jsonParams.containsKey("vipId")) { //会员ID
+			params.put("vipId", jsonParams.getInteger("vipId"));
+		}
+		if(jsonParams.containsKey("changeType")) {//变更类型
+			params.put("changeType", jsonParams.getString("changeType"));
+		}
+		if(jsonParams.containsKey("amountDown")) { //金额下限
+			params.put("amountDown", jsonParams.getDouble("amountDown"));
+		}
+		if(jsonParams.containsKey("amountUp")) {//金额上限
+			params.put("amountUp", jsonParams.getDouble("amountUp"));
+		}
+		if(jsonParams.containsKey("beginCrtTime")) { //创建开始时间
+			params.put("beginCrtTime", jsonParams.getString("beginCrtTime"));
+		}
+		if(jsonParams.containsKey("endCrtTime")) { //创建结束时间
+			params.put("endCrtTime", jsonParams.getString("endCrtTime"));
+		}
+		if(jsonParams.containsKey("beginSumTime")) { //累积开始时间
+			params.put("beginSumTime", jsonParams.getString("beginSumTime"));
+		}
+		if(jsonParams.containsKey("endSumTime")) { //累积结束时间
+			params.put("endSumTime", jsonParams.getString("endSumTime"));
+		}
+		if(jsonParams.containsKey("createOpr")) { //创建人
+			params.put("createOpr", jsonParams.getInteger("createOpr"));
+		}
+		if(jsonParams.containsKey("reason")) { //理由
+			params.put("reason", jsonParams.getString("reason"));
+		}
+		if(jsonParams.containsKey("sumFlag")) { //累积标志
+			params.put("sumFlag", jsonParams.getString("sumFlag"));
+		}
+		if(jsonParams.containsKey("orderId")) { //订单ID
+			params.put("orderId", jsonParams.getString("orderId"));
+		}
+		return params;
+	}
+	
 	
 }
 

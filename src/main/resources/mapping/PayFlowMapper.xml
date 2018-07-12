@@ -337,8 +337,7 @@
   </select>
 
   <select id="countAll" parameterType="map" resultType="int">
-    select 
-    <include refid="Base_Column_List" /> 
+    select count(1) cnt
     from tb_pay_flow f
     <include refid="whereSql" />
   </select>  

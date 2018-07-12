@@ -207,6 +207,7 @@ public interface OrderService {
 	 */
 	public void balanceBill(boolean isRefund,String outTradeNo,String flowId,
 			String payType,String status,String amount,String fee) throws Exception;
+
 	
 	public List<PayFlow> getAllPayFlow(Map<String,Object> params,PageCond pageCond);
 	
