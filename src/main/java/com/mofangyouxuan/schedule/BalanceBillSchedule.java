@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -48,14 +47,14 @@ public class BalanceBillSchedule {
 	 * 执行订单支付对账
 	 */
 	@SuppressWarnings("unused")
-	@Scheduled(cron="0 2 23 * * ?")
+	@Scheduled(cron="0 42 18 * * ?")
 	public void balanceBill() {
 		try {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(new Date());
 			cal.add(Calendar.DAY_OF_MONTH, -1);
-			String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
-			//String strBillDate = "20180707";
+			//String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
+			String strBillDate = "20180711";
 			//微信账单
 			String wxpayBillFilename = "wxpay{strBillDate}_1.gzip";
 			wxpayBillFilename = wxpayBillFilename.replace("{strBillDate}",strBillDate);
@@ -123,7 +122,7 @@ public class BalanceBillSchedule {
 							if(line.startsWith("支付宝交易号,")) {
 								//header = line;
 							}else{
-								//this.dealAliBill(line);
+								this.dealAliBill(line);
 							}
 						}catch(Exception e) {
 							logger.info("系统定时服务【订单支付对账】，支付宝账单处理出现异常，数据【" + line + "】");
@@ -155,11 +154,11 @@ public class BalanceBillSchedule {
 				}
 				for(PayFlow payFlow:list) {
 					try {
-//						if("1".equals(payFlow.getFlowType())) {
-//							this.orderService.balanceBill(false, payFlow);
-//						}else {
-//							this.orderService.balanceBill(true, payFlow);
-//						}
+						if("1".equals(payFlow.getFlowType())) {
+							this.orderService.balanceBill(false, payFlow);
+						}else {
+							this.orderService.balanceBill(true, payFlow);
+						}
 					}catch(Exception e) {
 						logger.info("系统定时服务【订单支付对账】，会员余额支付处理出现异常，数据【" + payFlow.getFlowId() + "】");
 					}

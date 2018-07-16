@@ -730,22 +730,137 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		return this.changeFlowMapper.countAll(params);
 	}
 	
+	/**
+	 * 核对使用预付支付的订单的资金流水是否正确
+	 * @param orderId	订单ID
+	 * @param uVipId		买家VIP
+	 * @param pVipId		卖家VIP
+	 * @param amount		实付总额（含手续费），分
+	 * @param fee		支付的手续费，分
+	 * @param isRefund	是否退款流水
+	 * @param hasRefund	是否存在退款
+	 * @return
+	 */
+	public String balVOrderFlow(String orderId,Integer uVipId,Integer pVipId,Long amount,Long fee,boolean isRefund,boolean hasRefund) {
+		String ret1 = this.balUOrderFlow(orderId, uVipId, amount, fee, isRefund, hasRefund);
+		String ret2 = this.balPOrderFlow(orderId, pVipId, amount, fee, isRefund, hasRefund);
+		if("00".equals(ret1) && "00".equals(ret2) ) {
+			return "00";
+		}else {
+			return ret1 + ret2;
+		}
+	}
 	
 	/**
-	 * 核对订单的资金流水是否正确：在支付或退款完成时执行
+	 * 核对买家余额支付的订单的资金流水是否正确
+	 * @param orderId	订单ID
+	 * @param uVipId		买家VIP
+	 * @param amount		实付总额（含手续费），分
+	 * @param fee		支付的手续费，分
+	 * @param isRefund	是否退款流水
+	 * @param hasRefund	是否存在退款
+	 * @return
+	 */
+	@SuppressWarnings("unused")
+	public String balUOrderFlow(String orderId,Integer uVipId,Long amount,Long fee,boolean isRefund,boolean hasRefund) {
+		//买家检查
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("vipId", uVipId);
+		params.put("orderId", orderId);
+		List<ChangeFlow> cfList = getAll(params, new PageCond(0,1000));
+		if(cfList == null || cfList.size()<1) {
+			return "系统错误，没有该支付订单的买家资金流水信息！";
+		}else {
+			Long addBal=0l,subBal=0l,addFrz=0l,subFrz=0l;
+			for(ChangeFlow cflow:cfList) {
+				if(cflow.getChangeType().startsWith("1")) {
+					if(CashFlowTP.CFTP11.getValue().equals(new Integer(cflow.getChangeType()))) {
+						if(isRefund) {
+							addBal += cflow.getAmount();
+						}
+					}else {
+						addBal += cflow.getAmount();
+					}
+				}else if(cflow.getChangeType().startsWith("2")) {
+					if(CashFlowTP.CFTP25.getValue().equals(new Integer(cflow.getChangeType()))) {
+						if(isRefund) {
+							subBal += cflow.getAmount();
+						}
+					}else {
+						subBal += cflow.getAmount();
+					}
+				}else if(cflow.getChangeType().startsWith("3")) {
+					if(CashFlowTP.CFTP34.getValue().equals(new Integer(cflow.getChangeType()))) {
+						if(isRefund) {
+							addFrz += cflow.getAmount();
+						}
+					}else {
+						addFrz += cflow.getAmount();
+					}
+				}else if(cflow.getChangeType().startsWith("4")) {
+					if(CashFlowTP.CFTP44.getValue().equals(new Integer(cflow.getChangeType())) ||
+							CashFlowTP.CFTP45.getValue().equals(new Integer(cflow.getChangeType()))) {
+						if(isRefund) {
+							subFrz += cflow.getAmount();
+						}
+					}else {
+						subFrz += cflow.getAmount();
+					}
+				}
+			}
+			Map<String,Object>  rfsParams = new HashMap<String,Object>();
+			rfsParams.put("orderId", orderId);
+			rfsParams.put("changeType", CashFlowTP.CFTP45.value); 
+			int cnt1 = this.changeFlowMapper.countAll(rfsParams); //退款失败记录数
+			Long bal = addBal-subBal+addFrz-subFrz;
+			boolean isok = false;
+			if(isRefund) {//退款
+				if(cnt1 > 0) {//退款失败
+					if(bal == -amount) {
+						isok = true;
+					}
+				}else {//退款成功，在退款完成时执行
+					if(bal==0 || bal == -fee) {
+						isok = true;
+					}
+				}
+			}else {//支付
+				if(bal == -amount) {//支付无退款
+					isok = true;
+					if(hasRefund == true) {
+						return "00";
+					}
+				}
+			}
+			if(!isok) {
+				int cnt = this.changeFlowMapper.updateFlag(params,"F");
+				return "资金流水对账错误，流水信息金额与订单信息不匹配！";
+			}else {
+				int cnt = this.changeFlowMapper.updateFlag(params,"1");
+			}
+		}
+		return "00";
+		
+	}
+	
+	
+	/**
+	 * 核对商家订单的资金流水是否正确：在支付或退款完成时执行
 	 * 1、流水总额与订单额一致则成功；
 	 * 2、对账失败则修正统计状态为：F-数据存疑，返回失败信息；
 	 * 2、对账成功则修正统计状态为：1-数据正确，返回00；
 	 * @param orderId
-	 * @param amount		订单金额，分
+	 * @param pVipId		卖家VIP
+	 * @param amount		支付总金额（包含手续费），分
 	 * @param fee		买家支付手续费
 	 * @param isRefund	是否为退款信息
 	 * @param hasRefund	是否有退款
 	 * @return
 	 */
 	@SuppressWarnings("unused")
-	public String balOrderFlow(String orderId,Long amount,Long fee,boolean isRefund,boolean hasRefund) {
+	public String balPOrderFlow(String orderId,Integer pVipId,Long amount,Long fee,boolean isRefund,boolean hasRefund) {
 		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("vipId", pVipId);
 		params.put("orderId", orderId);
 		List<ChangeFlow> cfList = getAll(params, new PageCond(0,1000));
 		if(cfList == null || cfList.size()<1) {
@@ -796,7 +911,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 			boolean isok = false;
 			if(isRefund) {//退款
 				if(cnt1 > 0) {//退款失败
-					if(bal == amount) {
+					if(bal == amount || bal+fee==amount) {
 						isok = true;
 					}
 				}else {//退款成功，在退款完成时执行
@@ -805,8 +920,11 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 					}
 				}
 			}else {//支付
-				if(hasRefund == false && bal == amount) {//支付无退款
+				if(bal == amount) {//支付无退款
 					isok = true;
+					if(hasRefund == true ) {
+						return "00";
+					}
 				}
 			}
 			if(!isok) {

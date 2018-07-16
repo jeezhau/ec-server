@@ -990,6 +990,7 @@ public class OrderController {
 				return jsonRet.toJSONString();
 			}
 			this.orderService.execPaySucc(true,payFlow, userVip.getVipId(),order, goods.getPartner().getVipId(),"");
+			this.orderService.balanceBill(false, payFlow);
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
 		}catch(Exception e) {

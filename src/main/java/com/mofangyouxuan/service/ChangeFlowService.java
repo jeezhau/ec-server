@@ -153,13 +153,27 @@ public interface ChangeFlowService {
 	 * 2、对账失败则修正统计状态为：F-数据存疑，返回失败信息；
 	 * 2、对账成功则修正统计状态为：1-数据正确，返回00；
 	 * @param orderId
-	 * @param amount		订单金额，分
+	 * @param pVipId		商家VIP
+	 * @param amount		支付金额（含手续费），分
 	 * @param fee		买家支付手续费
 	 * @param isRefund	是否为退款信息
 	 * @param hasRefund	是否有退款
 	 * @return
 	 */
-	public String balOrderFlow(String orderId,Long amount,Long fee,boolean isRefund,boolean hasRefund) ;
+	public String balPOrderFlow(String orderId,Integer pVipId,Long amount,Long fee,boolean isRefund,boolean hasRefund) ;
+	
+	/**
+	 * 核对使用预付支付的订单的资金流水是否正确
+	 * @param orderId	订单ID
+	 * @param uVipId		买家VIP
+	 * @param pVipId		卖家VIP
+	 * @param amount		实付总额（含手续费），分
+	 * @param fee		支付的手续费，分
+	 * @param isRefund	是否退款流水
+	 * @param hasRefund	是否存在退款
+	 * @return
+	 */
+	public String balVOrderFlow(String orderId,Integer uVipId,Integer pVipId,Long amount,Long fee,boolean isRefund,boolean hasRefund);
 	
 }
 

@@ -193,7 +193,7 @@ public class AliPay {
 			if(response.isSuccess()){
 				jsonRet.put("errcode", 0);
 				jsonRet.put("errmsg", "ok");
-				jsonRet.put("refund_id", response.getOutTradeNo());
+				jsonRet.put("refund_id", response.getTradeNo());
 				jsonRet.put("refund_fee", refundFee);
 			}else {//业务失败
 				jsonRet.put("errcode", -1);
@@ -220,25 +220,19 @@ public class AliPay {
 			AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do", APP_ID, APP_PRIVATE_KEY, "json", CHARSET, ALIPAY_PUBLIC_KEY, "RSA2"); //获得初始化的AlipayClient
 			AlipayTradeFastpayRefundQueryRequest request = new AlipayTradeFastpayRefundQueryRequest();
 			JSONObject bizContent = new JSONObject();
-			bizContent.put("out_trade_no", flowId);
+			bizContent.put("out_request_no", flowId);
 			bizContent.put("trade_no", outTradeNo);
 			request.setBizContent(bizContent.toJSONString());//设置业务参数
 			AlipayTradeFastpayRefundQueryResponse response = alipayClient.execute(request);
 			if(response.isSuccess()){
 				String refund_amount = response.getRefundAmount();
-				String status = response.getRefundStatus();
-				if("REFUND_SUCCESS".equals(status)) {
-					Long refundAmount = new BigDecimal(refund_amount).multiply(new BigDecimal(100)).longValue();
-					jsonRet.put("errcode", 0);
-					jsonRet.put("errmsg", "ok");
-					jsonRet.put("refund_fee", refundAmount);
-				}else {
-					jsonRet.put("errcode", -1);
-					jsonRet.put("errmsg", "还未退款从成功！");
-				}
-			} else {
+				Long refundAmount = new BigDecimal(refund_amount).multiply(new BigDecimal(100)).longValue();
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+				jsonRet.put("refund_fee", refundAmount);
+			}else {
 				jsonRet.put("errcode", -1);
-				jsonRet.put("errmsg", "支付宝退款查询：接口调用失败！");
+				jsonRet.put("errmsg", "还未退款从成功！");
 			}
 		}catch(Exception e) {
 			e.printStackTrace();

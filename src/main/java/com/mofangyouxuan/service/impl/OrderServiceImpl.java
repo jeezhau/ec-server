@@ -1,7 +1,5 @@
 package com.mofangyouxuan.service.impl;
 
-import static org.hamcrest.CoreMatchers.nullValue;
-
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -446,7 +444,7 @@ public class OrderServiceImpl implements OrderService{
 		//向微信申请预付单
 		if(payType.startsWith("2")) {
 			BigDecimal feeRate = sysParamUtil.getWxFeeRate();
-			fee = amount.multiply(feeRate).setScale(0, BigDecimal.ROUND_CEILING); //计算手续费
+			fee = amount.multiply(feeRate).setScale(0, BigDecimal.ROUND_CEILING); //计算手续费,分
 			totalAmount = amount.longValue() + fee.longValue();//支付金额
 			JSONObject wxRet = wXPay.createPrePay(payType,order,flowId, totalAmount, user.getOpenId(), ip);
 			if(wxRet.containsKey("prepay_id")) {//成功
@@ -681,6 +679,7 @@ public class OrderServiceImpl implements OrderService{
 		jsonRet.put("payTime", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(oldFlow.getCreateTime()));
 		jsonRet.put("amount", oldFlow.getPayAmount()/100.0);
 		jsonRet.put("fee", oldFlow.getFeeAmount()/100.0);
+		BigDecimal allAmount = new BigDecimal(oldFlow.getPayAmount() + oldFlow.getFeeAmount()).divide(new BigDecimal(100)); //总金额，元
 		String sysStat = oldFlow.getStatus();  //系统状态
 		String payType = oldFlow.getPayType();	//支付方式
 		if("00".equals(sysStat) || "10".equals(sysStat)){
@@ -695,6 +694,8 @@ public class OrderServiceImpl implements OrderService{
 				if(queryRet.containsKey("total_fee")) { //已经成功
 					if(queryRet.getLong("total_fee") == oldFlow.getPayAmount() + oldFlow.getFeeAmount()) {
 						this.execPaySucc(false, oldFlow, userVip.getVipId(), order, order.getMchtUId(), queryRet.getString("transaction_id"));
+						this.balanceBill(false, queryRet.getString("transaction_id"), oldFlow.getFlowId(), payType,
+								"SUCCESS", allAmount.toString(), "0");
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "支付成功！");
 						return jsonRet;
@@ -705,6 +706,8 @@ public class OrderServiceImpl implements OrderService{
 				if(queryRet.containsKey("total_fee")) { //已经成功
 					if(queryRet.getLong("total_fee") == oldFlow.getPayAmount() + oldFlow.getFeeAmount()) {
 						this.execPaySucc(false, oldFlow, userVip.getVipId(), order, order.getMchtUId(), queryRet.getString("transaction_id"));
+						this.balanceBill(false, queryRet.getString("transaction_id"), oldFlow.getFlowId(), payType,
+								"SUCCESS", allAmount.toString(), "0");//手续费后记
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "支付成功！");
 						return jsonRet;
@@ -726,9 +729,11 @@ public class OrderServiceImpl implements OrderService{
 			}
 			if(payType.startsWith("2")) {
 				JSONObject queryRet = this.wXPay.queryRefund(oldFlow.getFlowId());
-				if(queryRet.containsKey("refund_fee")) { //已经成功
-					if(queryRet.getLong("refund_fee") == oldFlow.getPayAmount()) {
+				if(queryRet.containsKey("errcode")) { //已经成功
+					if(queryRet.getLong("errcode") == 0) {
 						this.execRefundSucc(false, oldFlow, userVip.getVipId(), order, order.getMchtUId(), "退款成功", queryRet.getString("settlement_refund_fee"));
+						this.balanceBill(true, queryRet.getString("refund_id"), oldFlow.getFlowId(), payType,
+								"SUCCESS", allAmount.toString(), "0");
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "退款成功！");
 						return jsonRet;
@@ -739,6 +744,8 @@ public class OrderServiceImpl implements OrderService{
 				if(queryRet.containsKey("errcode")) { //已经成功
 					if(queryRet.getLong("errcode") == 0) {
 						this.execRefundSucc(false, oldFlow, userVip.getVipId(), order, order.getMchtUId(), "退款成功", oldFlow.getOutTradeNo());
+						this.balanceBill(true, queryRet.getString("refund_id"), oldFlow.getFlowId(), payType,
+								"SUCCESS", allAmount.toString(), "0");
 						jsonRet.put("errcode", 0);
 						jsonRet.put("errmsg", "退款成功！");
 						return jsonRet;
@@ -891,7 +898,7 @@ public class OrderServiceImpl implements OrderService{
 		if(payFlow == null) {
 			return "系统中没有该退款流水信息！";
 		}
-		Long oldTotal = payFlow.getFeeAmount() + payFlow.getFeeAmount(); //退款金额
+		Long oldTotal = payFlow.getPayAmount() + payFlow.getFeeAmount(); //退款金额
 		if(oldTotal != totalAmount) {
 			return "退款金额不正确！";
 		}
@@ -909,7 +916,7 @@ public class OrderServiceImpl implements OrderService{
 	 * 外部退款失败
 	 * 
 	 * @param payFlowId		退款流水号
-	 * @param accountId		退款人账户
+	 * @param outFinishId	外部退款单号
 	 * @param fail			失败信息
 	 * @return
 	 * @throws Exception 
@@ -1127,6 +1134,19 @@ public class OrderServiceImpl implements OrderService{
 		String orderId = flowId.substring(0, 30);
 		Order order = this.get(false, false, false, false, true, orderId);
 		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(flowId);
+//		OrderBal obal = this.orderBalMapper.selectByPrimaryKey(order.getOrderId());
+//		if(obal != null && ("SS".equals(obal.getStatus()) || "SSS".equals(obal.getStatus()) || "SSSS".equals(obal.getStatus())) ) {
+//			return;
+//		}
+		//用户最多应支付（退款）金额
+		BigDecimal feeRate = null;
+		if(payType.startsWith("3")){
+			feeRate = sysParamUtil.getAliFeeRate();
+		}else if(payType.startsWith("2")){
+			feeRate = sysParamUtil.getWxFeeRate();
+		}
+		BigDecimal payFee = order.getAmount().multiply(feeRate).setScale(2, BigDecimal.ROUND_CEILING); //计算手续费,元
+		BigDecimal needAllAmount = order.getAmount().add(payFee);	//用户最多应支付(退款)金额，元
 		boolean isBalOK = true; 	//是否对账成功
 		if(payFlow == null) {//没有支付流水信息
 			payFlow = new PayFlow();
@@ -1134,21 +1154,21 @@ public class OrderServiceImpl implements OrderService{
 			payFlow.setMemo("系统无，微信有，对账插入");
 			if(isRefund) {//退款
 				payFlow.setFlowType("2");
-				if(order.getAmount().compareTo(new BigDecimal(amount)) < 0) { //金额有误
+				if(needAllAmount.compareTo(new BigDecimal(amount)) < 0) { //多退
 					payFlow.setStatus("F2");//退款失败
 					isBalOK = false;
 					payFlow.setMemo((payFlow.getMemo()==null?"":payFlow.getMemo()) + "金额有误：系统到账与应付金额不一致；需要手工处理");
 				}else {
-					payFlow.setStatus("21");
+					payFlow.setStatus("20");
 				}
 			}else {
 				payFlow.setFlowType("1");
-				if(order.getAmount().compareTo(new BigDecimal(amount)) > 0) {
+				if(needAllAmount.compareTo(new BigDecimal(amount)) > 0) {//少付
 					payFlow.setStatus("F1");//支付失败
 					isBalOK = false;
 					payFlow.setMemo("金额有误：系统到账与应付金额不一致；需要手工处理");
 				}else {
-					payFlow.setStatus("11");
+					payFlow.setStatus("10");
 				}
 			}
 			payFlow.setGoodsId(order.getGoodsId());
@@ -1180,10 +1200,8 @@ public class OrderServiceImpl implements OrderService{
 		}else {//已有支付流水
 			//金额检查、状态检查
 			BigDecimal totalAmount = new BigDecimal(payFlow.getPayAmount()).divide(new BigDecimal(100));
-			if(!isRefund) {
-				totalAmount = totalAmount.add(new BigDecimal(payFlow.getFeeAmount()).divide(new BigDecimal(100)));
-			}
-			if(totalAmount.compareTo(new BigDecimal(amount)) != 0) {
+			totalAmount = totalAmount.add(new BigDecimal(payFlow.getFeeAmount()).divide(new BigDecimal(100)));
+			if(totalAmount.compareTo(order.getAmount())<0 || totalAmount.compareTo(new BigDecimal(amount)) != 0) {
 				isBalOK = false;
 				if(isRefund) {//退款失败，金额有误
 					this.outRefundFail(flowId, outTradeNo, "退款失败，金额有误：系统到账与应付金额不一致；需要手工处理	!");
@@ -1192,11 +1210,12 @@ public class OrderServiceImpl implements OrderService{
 				}
 			}else {//金额检查通过：更新状态
 				if(isRefund) {//退款成功
-					if("20".equals(payFlow.getStatus()) || "2F".equals(payFlow.getStatus())) {
+					if("20".equals(payFlow.getStatus()) || "F2".equals(payFlow.getStatus()) ) {
 						this.execRefundSucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), "退款成功", outTradeNo);
 					}
 				}else {//支付成功
-					if("00".equals(payFlow.getStatus()) || "01".equals(payFlow.getStatus()) || "10".equals(payFlow.getStatus()) || "1F".equals(payFlow.getStatus())) {
+					if("00".equals(payFlow.getStatus()) || "01".equals(payFlow.getStatus()) || "10".equals(payFlow.getStatus()) || 
+							"F1".equals(payFlow.getStatus()) ) {
 						this.execPaySucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), outTradeNo);
 					}
 				}
@@ -1208,7 +1227,7 @@ public class OrderServiceImpl implements OrderService{
 		params.put("flowType", "2");
 		params.put("orderId", orderId);
 		int cnt = this.payFlowMapper.countAll(params);
-		String cfBalRet = this.changeFlowService.balOrderFlow(orderId, payFlow.getPayAmount(),payFlow.getFeeAmount(),isRefund,cnt>0);
+		String cfBalRet = this.changeFlowService.balPOrderFlow(orderId, order.getMchtUId(),payFlow.getPayAmount(),payFlow.getFeeAmount(),isRefund,cnt>0);
 		if(!"00".equals(cfBalRet)) {//对账失败
 			isBalOK = false;
 			PayFlow updFlow = new PayFlow();
@@ -1220,11 +1239,99 @@ public class OrderServiceImpl implements OrderService{
 			}
 			updFlow.setMemo((payFlow.getMemo()==null?"":payFlow.getMemo()) + cfBalRet);
 			this.payFlowMapper.updateByPrimaryKeySelective(updFlow);
+		}else {
+			if(payFlow.getStatus().contains("B")) {
+				PayFlow updFlow = new PayFlow();
+				updFlow.setFlowId(flowId);
+				if(isRefund) {
+					updFlow.setStatus("21");
+				}else {
+					updFlow.setStatus("11");
+				}
+				updFlow.setMemo("成功");
+				this.payFlowMapper.updateByPrimaryKeySelective(updFlow);
+			}
 		}
 		//保存对账结果信息
 		this.saveOrderBill(isRefund, order, payType, 
-				new BigDecimal(amount), new BigDecimal(payFlow.getFeeAmount()/100).setScale(0, BigDecimal.ROUND_CEILING),
+				new BigDecimal(amount), new BigDecimal(payFlow.getFeeAmount()).divide(new BigDecimal(100)),
 				new BigDecimal(fee), isBalOK, payFlow.getIncomeTime());
+	}
+	
+	/**
+	 * 余额支付订单对账
+	 * @param isRefund	是否为退款
+	 * @param flow		系统支付流水
+	 * @return
+	 * @throws Exception
+	 */
+	public void balanceBill(boolean isRefund,PayFlow payFlow) throws Exception {
+		String flowId = payFlow.getFlowId();
+		String orderId = payFlow.getFlowId().substring(0, 30);
+		Order order = this.get(false, false, false, false, true, orderId);
+//		OrderBal obal = this.orderBalMapper.selectByPrimaryKey(order.getOrderId());
+//		if(obal != null && ("SS".equals(obal.getStatus()) || "SSS".equals(obal.getStatus()) || "SSSS".equals(obal.getStatus()))) {
+//			return;
+//		}
+		boolean isBalOK = true; 	//是否对账成功
+		//用户应支付金额
+		BigDecimal needAllAmount = order.getAmount();	//用户最多应支付(退款)金额，元
+		//金额检查、状态检查
+		BigDecimal totalAmount = new BigDecimal(payFlow.getPayAmount()).divide(new BigDecimal(100));//支付流水中的支付（退款）总额
+		totalAmount = totalAmount.add(new BigDecimal(payFlow.getFeeAmount()).divide(new BigDecimal(100)));
+		if(totalAmount.compareTo(order.getAmount()) < 0 || totalAmount.compareTo(needAllAmount)>0) {
+			isBalOK = false;
+			if(isRefund) {//退款失败，金额有误
+				this.outRefundFail(flowId, null, "退款失败，金额有误：系统到账与应付金额不一致；需要手工处理	!");
+			}else {//支付失败，金额有误
+				this.outPayFail(flowId, null, "支付失败，金额有误：系统到账与应付金额不一致；需要手工处理	!");
+			}
+		}else {//金额检查通过：更新状态
+			if(isRefund) {//退款成功
+				if("20".equals(payFlow.getStatus()) || "F2".equals(payFlow.getStatus())) {
+					this.execRefundSucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), "退款成功", null);
+				}
+			}else {//支付成功
+				if("00".equals(payFlow.getStatus()) || "01".equals(payFlow.getStatus()) || "10".equals(payFlow.getStatus()) || "F1".equals(payFlow.getStatus())) {
+					this.execPaySucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), null);
+				}
+			}
+		}
+		//资金流水检查并修正状态
+		payFlow = this.payFlowMapper.selectByPrimaryKey(flowId);//重新获取
+		Map<String,Object> params = new HashMap<String,Object>();
+		params.put("flowType", "2");//是否有退款
+		params.put("orderId", orderId);
+		int cnt = this.payFlowMapper.countAll(params);
+		String cfBalRet = this.changeFlowService.balVOrderFlow(orderId, order.getUserId(),order.getMchtUId(),payFlow.getPayAmount(),payFlow.getFeeAmount(),isRefund,cnt>0);
+		if(!"00".equals(cfBalRet)) {//对账失败
+			isBalOK = false;
+			PayFlow updFlow = new PayFlow();
+			updFlow.setFlowId(flowId);
+			if(isRefund) {
+				updFlow.setStatus("2B");
+			}else {
+				updFlow.setStatus("1B");
+			}
+			updFlow.setMemo((payFlow.getMemo()==null?"":payFlow.getMemo()) + cfBalRet);
+			this.payFlowMapper.updateByPrimaryKeySelective(updFlow);
+		}else {
+			if(payFlow.getStatus().contains("B")) {
+				PayFlow updFlow = new PayFlow();
+				updFlow.setFlowId(flowId);
+				if(isRefund) {
+					updFlow.setStatus("21");
+				}else {
+					updFlow.setStatus("11");
+				}
+				updFlow.setMemo("成功");
+				this.payFlowMapper.updateByPrimaryKeySelective(updFlow);
+			}
+		}
+		//保存对账结果信息
+		this.saveOrderBill(isRefund, order, payFlow.getPayType(), 
+				new BigDecimal(payFlow.getPayAmount()).add(new BigDecimal(payFlow.getFeeAmount())).divide(new BigDecimal(100)), new BigDecimal(payFlow.getFeeAmount()).divide(new BigDecimal(100)),
+				new BigDecimal(payFlow.getFeeAmount()).divide(new BigDecimal(100)), isBalOK, payFlow.getIncomeTime());
 	}
 	
 	/**
@@ -1257,7 +1364,7 @@ public class OrderServiceImpl implements OrderService{
 				VipBasic spreadVip = this.vipBasicService.get(buyUser.getSenceId());
 				if(spreadVip != null) {
 					BigDecimal spreadUserProfitRate = this.sysParamUtil.getSpreadUserProfitRatio();
-					spreadUserProfit = spreadUserProfitRate.multiply(order.getAmount()).setScale(0, BigDecimal.ROUND_FLOOR);
+					spreadUserProfit = spreadUserProfitRate.multiply(order.getAmount()).setScale(2, BigDecimal.ROUND_FLOOR);//元
 				}
 			}
 			//推广商家分润
@@ -1265,12 +1372,12 @@ public class OrderServiceImpl implements OrderService{
 				PartnerBasic spPartner = this.partnerBasicService.getByID(partner.getUpPartnerId());
 				if(spPartner != null) {
 					BigDecimal spreadMchtProfitRate = this.sysParamUtil.getSpreadMchtProfitRatio();
-					spreadPartnerProfit = spreadMchtProfitRate.multiply(order.getAmount()).setScale(0, BigDecimal.ROUND_FLOOR);
+					spreadPartnerProfit = spreadMchtProfitRate.multiply(order.getAmount()).setScale(2, BigDecimal.ROUND_FLOOR);//元
 				}
 			}
 			//收取服务费
 			BigDecimal platformServiceFeeRate = this.sysParamUtil.getPlatformServiceFeeRatio();
-			sysSrvFee = platformServiceFeeRate.multiply(order.getAmount()).setScale(0, BigDecimal.ROUND_CEILING);
+			sysSrvFee = platformServiceFeeRate.multiply(order.getAmount()).setScale(2, BigDecimal.ROUND_CEILING);//元
 		}
 		if(obal == null) {
 			obal = new OrderBal();
@@ -1292,7 +1399,7 @@ public class OrderServiceImpl implements OrderService{
 			}else {
 				obal.setStatus("S");
 			}
-			if(isBalOK) {
+			if(!isBalOK) {
 				obal.setStatus("1");
 			}
 			this.orderBalMapper.insert(obal);
@@ -1311,8 +1418,12 @@ public class OrderServiceImpl implements OrderService{
 				obal.setSpreaderUSettle(spreadUserProfit);
 				obal.setSyssrvSettle(sysSrvFee);
 			}
-			obal.setStatus("S");
-			if(isBalOK) {
+			if(obal.getStatus().contains("S")) {
+				obal.setStatus(obal.getStatus() + "S");
+			}else {
+				obal.setStatus("S");
+			}
+			if(!isBalOK) {
 				obal.setStatus("1");
 			}
 			this.orderBalMapper.updateByPrimaryKeySelective(obal);
