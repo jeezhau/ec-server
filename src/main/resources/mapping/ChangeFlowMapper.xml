@@ -85,7 +85,7 @@
         and reason like concat('%',#{params.reason,jdbcType=LONGVARCHAR},'%')
       </if>
       <if test="params.sumFlag != null">
-        and sum_flag = #{params.sumFlag,jdbcType=CHAR}
+        and LOCATE(sum_flag,#{params.sumFlag,jdbcType=CHAR}) &gt; 0
       </if>
       <if test="params.orderId != null">
         and order_id = #{params.orderId,jdbcType=VARCHAR}
@@ -110,8 +110,8 @@
     <include refid="whereSql4All" />
   </select>
   
-  <select id="sumAllGroupTD" parameterType="map" resultType="map">
-    select f.vip_id vipId,DATE_FORMAT(f.create_time,"%Y%m%d") time,left(f.change_type,1) ctype,sum(amount) samount
+  <select id="sumAllByVipDateCt" parameterType="map" resultType="map">
+    select f.vip_id ,DATE_FORMAT(f.create_time,"%Y%m%d") time,left(f.change_type,1) ctype,sum(amount) samount
     from tb_change_flow f
     <include refid="whereSql4All" />
     group by f.vip_id,DATE_FORMAT(f.create_time,"%Y%m%d") ,left(f.change_type,1)

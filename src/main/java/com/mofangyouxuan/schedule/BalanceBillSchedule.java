@@ -3,13 +3,16 @@ package com.mofangyouxuan.schedule;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +44,16 @@ public class BalanceBillSchedule {
 	private WXPay wXpay;
 	
 	@Value("${sys.pay-bills-dir}")
-	public String payBillsDir="/Users/jeekhan/mfyx/paybills/";	//支付账单保存路径
+	public String payBillsDir;	//支付账单保存路径
 	
 	/**
 	 * 执行订单支付对账
+	 * 1、微信支付宝对前一天的帐；
+	 * 2、会员余额对账当日；
 	 */
 	@SuppressWarnings("unused")
-	@Scheduled(cron="0 42 18 * * ?")
+	//@Scheduled(cron="0 30 4,8,11,16,17,18 * * ?")
+	@Scheduled(cron="0 21 21 * * ?")
 	public void balanceBill() {
 		try {
 			Calendar cal = Calendar.getInstance();
@@ -62,6 +68,9 @@ public class BalanceBillSchedule {
 			if(!wxFile.exists()) {
 				logger.info("系统服务【订单对账】，没有微信的对账数据，交易日【" + strBillDate +"】！");
 			}else {
+				File errOutFile = new File(this.payBillsDir,wxpayBillFilename.replaceAll("gzip", "errout.txt"));
+				File okOutFile = new File(this.payBillsDir,wxpayBillFilename.replaceAll("gzip", "okout.txt"));
+				FileWriter fw = new FileWriter(errOutFile);
 				CHZipUtils.unGzip(this.payBillsDir+wxpayBillFilename, this.payBillsDir+wxpayBillFilename.replace(".gzip", ""));
 				wxFile = new File(this.payBillsDir,wxpayBillFilename.replaceAll(".gzip", ""));//解压后文件
 				FileInputStream fis = new FileInputStream(wxFile);
@@ -72,6 +81,8 @@ public class BalanceBillSchedule {
 				//交易时间,公众账号ID,商户号,子商户号,设备号,微信订单号,商户订单号,用户标识,交易类型,交易状态,付款银行,货币种类,总金额,企业红包金额,微信退款单号,商户退款单号,退款金额,企业红包退款金额,退款类型,退款状态,商品名称,商户数据包,手续费,费率
 				String cntHeader = "总交易单数,总交易额,总退款金额,总企业红包退款金额,手续费总金额";
 				String line = null;
+				boolean hasErr = false;
+				
 				while((line=br.readLine())!=null) {
 					try {
 						line = line.trim();
@@ -88,8 +99,16 @@ public class BalanceBillSchedule {
 							this.dealWXBill(line);
 						}
 					}catch(Exception e) {
-						logger.info("系统定时服务【订单支付对账】，微信账单处理出现异常，数据【" + line + "】");
+						hasErr = true;
+						logger.info("系统定时服务【订单支付对账】，微信账单处理出现异常，异常信息：" + e.getStackTrace() + "；数据【" + line + "】");
+						String errmsg = line+"," + "错误信息：" + e.toString() + "\n";
+						fw.write(errmsg);
 					}
+				}
+				fw.close();
+				if(!hasErr) {
+					errOutFile.deleteOnExit();
+					FileUtils.write(okOutFile, "ok", "utf8");
 				}
 				fis.close();
 				br.close();
@@ -98,9 +117,13 @@ public class BalanceBillSchedule {
 			String alipayBillFilename = "alipay{strBillDate}_1.csv.zip";
 			alipayBillFilename = alipayBillFilename.replace("{strBillDate}",strBillDate);
 			File aliFile = new File(this.payBillsDir,alipayBillFilename);
+			
 			if(!aliFile.exists()) {
 				logger.info("系统服务【订单对账】，没有微信的对账数据，交易日【" + strBillDate +"】！");
 			}else {
+				File errOutFile = new File(this.payBillsDir,alipayBillFilename.replaceAll("csv.zip", "errout.txt"));
+				File okOutFile = new File(this.payBillsDir,alipayBillFilename.replaceAll("csv.zip", "okout.txt"));
+				FileWriter fw = new FileWriter(errOutFile);
 				CHZipUtils.unZip(this.payBillsDir + alipayBillFilename, this.payBillsDir + alipayBillFilename.replace(".zip", "/"));
 				File[] aliFileList = new File(this.payBillsDir,alipayBillFilename.replaceAll(".zip", "")).listFiles(new FileFilter("业务明细.csv"));//解压后文件
 				if(aliFileList.length>0) {
@@ -110,6 +133,7 @@ public class BalanceBillSchedule {
 					//支付宝交易号,商户订单号,业务类型,商品名称,创建时间,完成时间,门店编号,门店名称,操作员,终端号,对方账户,订单金额（元）,商家实收（元）,支付宝红包（元）,集分宝（元）,支付宝优惠（元）,商家优惠（元）,券核销金额（元）,券名称,商家红包消费金额（元）,卡消费金额（元）,退款批次号/请求号,服务费（元）,分润（元）,备注
 					//String header = br.readLine();//文件头
 					String line = null;
+					boolean hasErr = false;
 					while((line=br.readLine())!=null) {
 						try {
 							line = line.trim();
@@ -125,8 +149,16 @@ public class BalanceBillSchedule {
 								this.dealAliBill(line);
 							}
 						}catch(Exception e) {
-							logger.info("系统定时服务【订单支付对账】，支付宝账单处理出现异常，数据【" + line + "】");
+							hasErr = true;
+							logger.info("系统定时服务【订单支付对账】，支付宝账单处理出现异常，异常信息：" + e.getStackTrace() + "；数据【" + line + "】");
+							String errmsg = line+"," + "错误信息：" + e.getMessage() + "\n";
+							fw.write(errmsg);
 						}
+					}
+					fw.close();
+					if(!hasErr) {
+						errOutFile.deleteOnExit();
+						FileUtils.write(okOutFile, "ok", "utf8");
 					}
 					fis.close();
 					br.close();
@@ -135,8 +167,8 @@ public class BalanceBillSchedule {
 			//会员余额对账
 			Map<String,Object> params = new HashMap<String,Object>();
 			params.put("status", "11,21"); //成功
-			params.put("beginIncomeTime", strBillDate);
-			params.put("endIncomeTime", strBillDate);
+			params.put("beginIncomeTime", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+			params.put("endIncomeTime", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 			PageCond pageCond = new PageCond(0,100);
 			int cnt = this.orderService.countPayFlow(params);
 			pageCond.setCount(cnt);
@@ -160,7 +192,7 @@ public class BalanceBillSchedule {
 							this.orderService.balanceBill(true, payFlow);
 						}
 					}catch(Exception e) {
-						logger.info("系统定时服务【订单支付对账】，会员余额支付处理出现异常，数据【" + payFlow.getFlowId() + "】");
+						logger.info("系统定时服务【订单支付对账】，会员余额支付处理出现异常，异常信息：" + e.getStackTrace() + "；数据【" + payFlow.getFlowId() + "】");
 					}
 				}
 			}

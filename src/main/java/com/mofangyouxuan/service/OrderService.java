@@ -6,6 +6,7 @@ import java.util.Map;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.Order;
+import com.mofangyouxuan.model.OrderBal;
 import com.mofangyouxuan.model.PayFlow;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
@@ -40,11 +41,10 @@ public interface OrderService {
 	
 	/**
 	 * 根据ID获取订单
-	 * @param params 需要显示哪些分类字段：needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser
      * @param orderId
 	 * @return
 	 */
-	public Order get(Boolean needReceiver,Boolean needLogistics,Boolean needAppr,Boolean needAfterSales,Boolean needGoodsAndUser,String orderId);
+	public Order get(String orderId);
 	
 	/**
 	 * 根据指定查询条件订单数量
@@ -130,27 +130,6 @@ public interface OrderService {
 	public PayFlow getLastedFlow(String orderId,String flowType) ;
 	
 	/**
-	 * 添加买家对商家的评价或者系统自动超时评价
-	 * @param order	订单信息
-	 * @param scoreLogistics		物流得分
-	 * @param scoreMerchant	商家服务得分
-	 * @param scoreGoods		商品描述得分
-	 * @param content	评价内容
-	 * @return
-	 */
-	public JSONObject appraise2Mcht(Order order,Integer scoreLogistics,Integer scoreMerchant,
-			Integer scoreGoods,String content);
-	
-	/**
-	 * 添加卖家对买家的评价或者系统自动超时评价
-	 * @param order	订单信息
-	 * @param score	得分
-	 * @param content	评价内容
-	 * @return
-	 */
-	public JSONObject appraise2User(Order order,Integer score,String content,Integer updateOpr);
-
-	/**
 	 * 订单退款申请
 	 * 1、向第三方支付申请退款，或余额退款；
 	 * 2、保存退款流水；
@@ -183,17 +162,6 @@ public interface OrderService {
 	public String closePay(String payFlowId,Long totalAmount,String outFinishId) throws Exception;
 
 	/**
-	 * 记录评价审批结果
-	 * @param orderId
-	 * @param rewPartnerId
-	 * @param oprId
-	 * @param result 审批结果：1-审核通过，2-审核拒绝
-	 * @param review
-	 * @return
-	 */
-	public JSONObject review(String orderId,Integer rewPartnerId,Integer oprid,String result,String review);
-	
-	/**
 	 * 根据对账单数据指定订单支付对账
 	 * @param isRefund	是否为退款
 	 * @param outTrdaeNo	外部单号
@@ -219,6 +187,9 @@ public interface OrderService {
 	public List<PayFlow> getAllPayFlow(Map<String,Object> params,PageCond pageCond);
 	
 	public int countPayFlow(Map<String,Object> params);
+	
+	
+	public OrderBal getOBal(String orderId);
 	
 }
 

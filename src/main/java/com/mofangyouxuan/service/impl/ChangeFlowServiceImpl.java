@@ -687,10 +687,11 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param vipId		会员账号
 	 * @param oprId		操作员ID
 	 * @param reason
+	 * @param caId		提现申请ID，添加前缀CA
 	 */
 	@Override
-	public String cashApply(Long amount, Integer vipId, Integer oprId, String reason) {
-		return this.doubleFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP21, reason, CashFlowTP.CFTP33,null);
+	public String cashApply(Long amount, Integer vipId, Integer oprId, String reason,String caId) {
+		return this.doubleFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP21, reason, CashFlowTP.CFTP33,caId);
 	}
 
 	/**
@@ -700,14 +701,23 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @param vipId		会员ID
 	 * @param oprId
 	 * @param reason
+	 * @param caId		提现申请ID，添加前缀CA
 	 */
 	@Override
-	public String cashFinish(boolean success,Long amount, Integer vipId, Integer oprId, String reason) {
+	public String cashFinish(boolean success,Long amount, Integer vipId, Integer oprId, String reason,String caId) {
+		String ret;
 		if(success) {
-			return this.unFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP42,null);
+			ret = this.unFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP42,null);
 		}else {
-			return this.doubleUnFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP18, reason, CashFlowTP.CFTP42,null);
+			ret = this.doubleUnFreeze(amount, vipId, oprId, reason, CashFlowTP.CFTP18, reason, CashFlowTP.CFTP42,caId);
 		}
+		if("00".equals(ret)) {
+			Map<String,Object> params = new HashMap<String,Object>();
+			params.put("vipId", vipId);
+			params.put("orderId", caId);
+			this.changeFlowMapper.updateFlag(params, "1");
+		}
+		return ret;
 	}
 	
 	/**
@@ -935,6 +945,16 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 			}
 		}
 		return "00";
+	}
+	
+	/**
+	 * 批量更新流水状态
+	 * @param params	更新条件
+	 * @param flag	目标状态
+	 * @return
+	 */
+	public int updateFla(Map<String,Object> params,String flag) {
+		return this.changeFlowMapper.updateFlag(params, flag);
 	}
 	
 }

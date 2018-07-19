@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.AppraiseMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Appraise">
+    <id column="appr_id" jdbcType="INTEGER" property="apprId" />
+    <result column="goods_id" jdbcType="INTEGER" property="goodsId" />
+    <result column="order_id" jdbcType="VARCHAR" property="orderId" />
+    <result column="object" jdbcType="VARCHAR" property="object" />
+    <result column="score_logistics" jdbcType="INTEGER" property="scoreLogistics" />
+    <result column="score_goods" jdbcType="INTEGER" property="scoreGoods" />
+    <result column="score_merchant" jdbcType="INTEGER" property="scoreMerchant" />
+    <result column="score_user" jdbcType="INTEGER" property="scoreUser" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="content" jdbcType="LONGVARCHAR" property="content" />
+    
+    <result column="goods_spec" jdbcType="VARCHAR" property="goodsSpec" />
+    <result column="goods_name" jdbcType="VARCHAR" property="goodsName" />
+    <result column="goods_main_img_path" jdbcType="VARCHAR" property="goodsMainImgPath" />
+    <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
+    <result column="user_id" jdbcType="INTEGER" property="userId" />
+    <result column="nickname" jdbcType="VARCHAR" property="nickname" />
+    <result column="headimgpath" jdbcType="VARCHAR" property="headimgpath" />
+  </resultMap>
+  
+
+  <sql id="Base_Column_List">
+    a.appr_id, a.goods_id, a.order_id, a.object, a.score_logistics, a.score_goods, a.score_merchant, 
+    a.score_user, a.update_time, a.status,a.content,
+    o.goods_spec,
+    g.goods_name,g.main_img_path goods_main_img_path,g.partner_id,
+    u.user_id,u.nickname,u.headimgurl
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="ResultMapWith">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_appraise a
+    left join tb_order_info o on a.order_id = o.order_id
+    left join tb_user_basic u on o.user_id = u.user_id
+    left join tb_goods_info g on af.goods_id = g.goods_id
+    where appr_id = #{apprId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from tb_appraise
+    where appr_id = #{apprId,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Appraise">
+    insert into tb_appraise (appr_id, goods_id, order_id, 
+      object, score_logistics, score_goods, 
+      score_merchant, score_user, update_time, 
+      status, content)
+    values (#{apprId,jdbcType=INTEGER}, #{goodsId,jdbcType=INTEGER}, #{orderId,jdbcType=VARCHAR}, 
+      #{object,jdbcType=VARCHAR}, #{scoreLogistics,jdbcType=INTEGER}, #{scoreGoods,jdbcType=INTEGER}, 
+      #{scoreMerchant,jdbcType=INTEGER}, #{scoreUser,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{status,jdbcType=VARCHAR}, #{content,jdbcType=LONGVARCHAR})
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.Appraise">
+    insert into tb_appraise
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="apprId != null">
+        appr_id,
+      </if>
+      <if test="goodsId != null">
+        goods_id,
+      </if>
+      <if test="orderId != null">
+        order_id,
+      </if>
+      <if test="object != null">
+        object,
+      </if>
+      <if test="scoreLogistics != null">
+        score_logistics,
+      </if>
+      <if test="scoreGoods != null">
+        score_goods,
+      </if>
+      <if test="scoreMerchant != null">
+        score_merchant,
+      </if>
+      <if test="scoreUser != null">
+        score_user,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="status != null">
+        status,
+      </if>
+      <if test="content != null">
+        content,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="apprId != null">
+        #{apprId,jdbcType=INTEGER},
+      </if>
+      <if test="goodsId != null">
+        #{goodsId,jdbcType=INTEGER},
+      </if>
+      <if test="orderId != null">
+        #{orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="object != null">
+        #{object,jdbcType=VARCHAR},
+      </if>
+      <if test="scoreLogistics != null">
+        #{scoreLogistics,jdbcType=INTEGER},
+      </if>
+      <if test="scoreGoods != null">
+        #{scoreGoods,jdbcType=INTEGER},
+      </if>
+      <if test="scoreMerchant != null">
+        #{scoreMerchant,jdbcType=INTEGER},
+      </if>
+      <if test="scoreUser != null">
+        #{scoreUser,jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null">
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.Appraise">
+    update tb_appraise
+    <set>
+      <if test="goodsId != null">
+        goods_id = #{goodsId,jdbcType=INTEGER},
+      </if>
+      <if test="orderId != null">
+        order_id = #{orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="object != null">
+        object = #{object,jdbcType=VARCHAR},
+      </if>
+      <if test="scoreLogistics != null">
+        score_logistics = #{scoreLogistics,jdbcType=INTEGER},
+      </if>
+      <if test="scoreGoods != null">
+        score_goods = #{scoreGoods,jdbcType=INTEGER},
+      </if>
+      <if test="scoreMerchant != null">
+        score_merchant = #{scoreMerchant,jdbcType=INTEGER},
+      </if>
+      <if test="scoreUser != null">
+        score_user = #{scoreUser,jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null">
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where appr_id = #{apprId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.mofangyouxuan.model.Appraise">
+    update tb_appraise
+    set goods_id = #{goodsId,jdbcType=INTEGER},
+      order_id = #{orderId,jdbcType=VARCHAR},
+      object = #{object,jdbcType=VARCHAR},
+      score_logistics = #{scoreLogistics,jdbcType=INTEGER},
+      score_goods = #{scoreGoods,jdbcType=INTEGER},
+      score_merchant = #{scoreMerchant,jdbcType=INTEGER},
+      score_user = #{scoreUser,jdbcType=INTEGER},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      status = #{status,jdbcType=VARCHAR},
+      content = #{content,jdbcType=LONGVARCHAR}
+    where appr_id = #{apprId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Appraise">
+    update tb_appraise
+    set goods_id = #{goodsId,jdbcType=INTEGER},
+      order_id = #{orderId,jdbcType=VARCHAR},
+      object = #{object,jdbcType=VARCHAR},
+      score_logistics = #{scoreLogistics,jdbcType=INTEGER},
+      score_goods = #{scoreGoods,jdbcType=INTEGER},
+      score_merchant = #{scoreMerchant,jdbcType=INTEGER},
+      score_user = #{scoreUser,jdbcType=INTEGER},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      status = #{status,jdbcType=VARCHAR}
+    where appr_id = #{apprId,jdbcType=INTEGER}
+  </update>
+  
+  <sql id="whereSql">
+   <where>
+    <if test="params.orderId != null">
+     and a.order_id = #{params.orderId,jdbcType=VARCHAR}
+    </if>
+    <if test="params.userId != null">
+     and o.user_id = #{params.userId,jdbcType=INTEGER}
+    </if>
+    <if test="params.goodsId != null">
+     and a.goods_id = #{params.goodsId,jdbcType=INTEGER}
+    </if>
+    <if test="params.upPartnerId != null">
+     and p.up_partnerId = #{params.upPartnerId,jdbcType=INTEGER}
+    </if>
+    <if test="params.object != null">
+     and a.object = #{params.object,jdbcType=VARCHAR}
+    </if>
+    <if test="params.partnerId != null">
+     and g.partner_id = #{params.partnerId,jdbcType=INTEGER}
+    </if>
+    <if test="params.beginUpdateTime != null">
+     and a.update_time &gt;= concat(#{params.beginUpdateTime,jdbcType=VARCHAR},' 00:00:00')
+    </if>
+    <if test="params.endUpdateTime != null">
+     and a.update_time &lt;= concat(#{params.endUpdateTime,jdbcType=VARCHAR},' 23:59:59')
+    </if>
+    <if test="params.status != null">
+     and LOCATE(a.status,#{params.status,jdbcType=VARCHAR}) &gt; 0
+    </if>
+   </where>
+  </sql>
+  
+  <select id="countAll" parameterType="map" resultType="int">
+   select count(1)
+   from tb_appraise a
+   left join tb_order_info o on a.order_id = o.order_id
+   left join tb_user_basic u on o.user_id = u.user_id
+   left join tb_goods_info g on a.goods_id = g.goods_id
+   left join tb_partner_basic p on g.partner_id = p.partner_id
+   <include refid="whereSql" />
+  </select>
+ 
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+   select  
+   <include refid="Base_Column_List" />
+   from tb_appraise a
+   left join tb_order_info o on a.order_id = o.order_id
+   left join tb_user_basic u on o.user_id = u.user_id
+   left join tb_goods_info g on a.goods_id = g.goods_id
+   left join tb_partner_basic p on g.partner_id = p.partner_id
+   <include refid="whereSql" />
+   order by a.update_time desc
+   limit #{pageCond.begin},#{pageCond.pageSize}
+  </select>
+  
+</mapper>

@@ -33,9 +33,10 @@ public class UserBasicServiceImpl implements UserBasicService{
 	 * 添加新用户
 	 * @param userBasic
 	 * @return 新用户ID或null
+	 * @throws Exception 
 	 */
 	@Override
-	public Integer add(UserBasic userBasic) {
+	public Integer add(UserBasic userBasic) throws Exception {
 		userBasic.setUserId(null);
 		userBasic.setRegistTime(new Date());
 		userBasic.setUpdateTime(new Date());

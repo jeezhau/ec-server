@@ -28,20 +28,6 @@
     <result column="sign_user" jdbcType="VARCHAR" property="signUser" />
     <result column="sign_time" jdbcType="TIMESTAMP" property="signTime" />
     <result column="sign_prolong" jdbcType="INTEGER" property="signProlong" />
-    <result column="score_logistics" jdbcType="INTEGER" property="scoreLogistics" />
-    <result column="score_goods" jdbcType="INTEGER" property="scoreGoods" />
-    <result column="score_merchant" jdbcType="INTEGER" property="scoreMerchant" />
-    <result column="appraise_status" jdbcType="CHAR" property="appraiseStatus" />
-    <result column="appraise_time" jdbcType="TIMESTAMP" property="appraiseTime" />
-    <result column="score_user" jdbcType="INTEGER" property="scoreUser" />
-    <result column="appr_user" jdbcType="LONGVARCHAR" property="apprUser" />
-    <result column="appr_user_time" jdbcType="TIMESTAMP" property="apprUserTime" />
-    
-    <result column="aftersales_apply_time" jdbcType="TIMESTAMP" property="aftersalesApplyTime" />
-    <result column="aftersales_deal_time" jdbcType="TIMESTAMP" property="aftersalesDealTime" />
-    <result column="appraise_info" jdbcType="LONGVARCHAR" property="appraiseInfo" />
-    <result column="aftersales_reason" jdbcType="LONGVARCHAR" property="aftersalesReason" />
-    <result column="aftersales_result" jdbcType="LONGVARCHAR" property="aftersalesResult" />
     
     <result column="goods_name" jdbcType="VARCHAR" property="goodsName" />
     <result column="goods_main_img_path" jdbcType="VARCHAR" property="goodsMainImgPath" />
@@ -65,12 +51,6 @@
   <sql id="Column_List_Logistics">
     o.logistics_comp, o.logistics_no,o.logistics
   </sql>  
-  <sql id="Column_List_Appr"> 
-    o.score_logistics, o.score_goods, o.score_merchant, o.appraise_info, o.appraise_time,o.appraise_status,o.score_user,o.appr_user,o.appr_user_time
-  </sql>
-  <sql id="Column_List_AfterSales">
-    o.aftersales_apply_time, o.aftersales_deal_time, o.aftersales_reason, o.aftersales_result
-  </sql> 
   <sql id="Column_List_GoodsAndUser">
     g.goods_name,g.main_img_path goods_main_img_path,g.partner_id,g.refund_limit,p.busi_name partner_busi_name,p.vip_id mchtUId,
     u.phone user_phone,u.nickname,u.headimgurl
@@ -79,21 +59,9 @@
   <select id="selectByPrimaryKey" parameterType="map" resultMap="BaseResultMap">
     select 
     <include refid="Column_List_Base" />
-    <if test="params.needReceiver != null">
     ,<include refid="Column_List_Receiver" />
-    </if>
-    <if test="params.needLogistics != null">
     ,<include refid="Column_List_Logistics" />
-    </if>
-    <if test="params.needAppr != null">
-    ,<include refid="Column_List_Appr" />
-    </if>
-    <if test="params.needAfterSales != null">
-    ,<include refid="Column_List_AfterSales" />
-    </if>
-    <if test="params.needGoodsAndUser != null">
     ,<include refid="Column_List_GoodsAndUser" />
-    </if>
     from tb_order_info o 
      join tb_goods_info g on o.goods_id = g.goods_id 
      join tb_partner_basic p on g.partner_id = p.partner_id 
@@ -114,12 +82,7 @@
       recv_phone, recv_country, recv_province, 
       recv_city, recv_area, recv_addr, 
       logistics_comp, logistics_no,logistics, send_opr,send_time, 
-      sign_user, sign_time, sign_prolong, 
-      score_logistics,score_goods, score_merchant, appraise_status, 
-      appraise_time, aftersales_apply_time, 
-      score_user,appr_user_time,appr_user,
-      aftersales_deal_time, appraise_info, 
-      aftersales_reason, aftersales_result
+      sign_user, sign_time, sign_prolong
       )
     values (#{orderId,jdbcType=VARCHAR}, #{userId,jdbcType=INTEGER}, #{goodsId,jdbcType=INTEGER}, 
       #{goodsSpec,jdbcType=VARCHAR}, #{carrage,jdbcType=DECIMAL}, #{amount,jdbcType=DECIMAL}, 
@@ -129,12 +92,7 @@
       #{recvCity,jdbcType=VARCHAR}, #{recvArea,jdbcType=VARCHAR}, #{recvAddr,jdbcType=VARCHAR}, 
       #{logisticsComp,jdbcType=VARCHAR}, #{logisticsNo,jdbcType=VARCHAR},#{logistics,jdbcType=LONGVARCHAR}, 
       #{sendOpr,jdbcType=INTEGER}, #{sendTime,jdbcType=TIMESTAMP}, 
-      #{signUser,jdbcType=VARCHAR}, #{signTime,jdbcType=TIMESTAMP}, #{signProlong,jdbcType=INTEGER}, 
-      #{scoreLogistics,jdbcType=INTEGER}, #{scoreGoods,jdbcType=INTEGER}, #{scoreMerchant,jdbcType=INTEGER}, #{appraiseStatus,jdbcType=CHAR}, 
-      #{appraiseTime,jdbcType=TIMESTAMP}, #{aftersalesApplyTime,jdbcType=TIMESTAMP}, 
-      #{scoreUser,jdbcType=INTEGER}, #{apprUserTime,jdbcType=TIMESTAMP}, #{apprUser,jdbcType=LONGVARCHAR}, 
-      #{aftersalesDealTime,jdbcType=TIMESTAMP}, #{appraiseInfo,jdbcType=LONGVARCHAR}, 
-      #{aftersalesReason,jdbcType=LONGVARCHAR}, #{aftersalesResult,jdbcType=LONGVARCHAR}
+      #{signUser,jdbcType=VARCHAR}, #{signTime,jdbcType=TIMESTAMP}, #{signProlong,jdbcType=INTEGER}
       )
   </insert>
   
@@ -216,45 +174,6 @@
       <if test="signProlong != null">
         sign_prolong = #{signProlong,jdbcType=INTEGER},
       </if>
-      <if test="scoreLogistics != null">
-        score_logistics = #{scoreLogistics,jdbcType=INTEGER},
-      </if>
-      <if test="scoreGoods != null">
-        score_goods = #{scoreGoods,jdbcType=INTEGER},
-      </if>
-      <if test="scoreMerchant != null">
-        score_merchant = #{scoreMerchant,jdbcType=INTEGER},
-      </if>
-      <if test="appraiseStatus != null">
-        appraise_status = #{appraiseStatus,jdbcType=CHAR},
-      </if>
-      <if test="appraiseTime != null">
-        appraise_time = #{appraiseTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="scoreUser != null">
-        score_user = #{scoreUser,jdbcType=INTEGER},
-      </if>
-      <if test="apprUser != null">
-        appr_user = #{apprUser,jdbcType=LONGVARCHAR},
-      </if>
-      <if test="apprUserTime != null">
-        appr_user_time = #{apprUserTime,jdbcType=TIMESTAMP},
-      </if>      
-      <if test="aftersalesApplyTime != null">
-        aftersales_apply_time = #{aftersalesApplyTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="aftersalesDealTime != null">
-        aftersales_deal_time = #{aftersalesDealTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="appraiseInfo != null">
-        appraise_info = #{appraiseInfo,jdbcType=LONGVARCHAR},
-      </if>
-      <if test="aftersalesReason != null">
-        aftersales_reason = #{aftersalesReason,jdbcType=LONGVARCHAR},
-      </if>
-      <if test="aftersalesResult != null">
-        aftersales_result = #{aftersalesResult,jdbcType=LONGVARCHAR},
-      </if>
     </set>
     where order_id = #{orderId,jdbcType=VARCHAR}
   </update>
@@ -285,20 +204,7 @@
       send_time = #{sendTime,jdbcType=TIMESTAMP},
       sign_user = #{signUser,jdbcType=VARCHAR},
       sign_time = #{signTime,jdbcType=TIMESTAMP},
-      sing_prolong = #{singProlong,jdbcType=INTEGER},
-      score_logistics = #{scoreLogistics,jdbcType=INTEGER},
-      score_goods = #{scoreGoods,jdbcType=INTEGER},
-      score_merchant = #{scoreMerchant,jdbcType=INTEGER},
-      appraise_status = #{appraiseStatus,jdbcType=CHAR},
-      appraise_time = #{appraiseTime,jdbcType=TIMESTAMP},
-      score_user = #{scoreUser,jdbcType=INTEGER},
-      appr_user = #{apprUser,jdbcType=LONGVARCHAR},
-      appr_user_time = #{apprUserTime,jdbcType=TIMESTAMP},
-      aftersales_apply_time = #{aftersalesApplyTime,jdbcType=TIMESTAMP},
-      aftersales_deal_time = #{aftersalesDealTime,jdbcType=TIMESTAMP},
-      appraise_info = #{appraiseInfo,jdbcType=LONGVARCHAR},
-      aftersales_reason = #{aftersalesReason,jdbcType=LONGVARCHAR},
-      aftersales_result = #{aftersalesResult,jdbcType=LONGVARCHAR}
+      sing_prolong = #{singProlong,jdbcType=INTEGER}
     where order_id = #{orderId,jdbcType=VARCHAR}
   </update>
   
@@ -334,9 +240,6 @@
        <if test="params.postageId != null">
         and o.postage_id = #{params.postageId,jdbcType=INTEGER}
       </if>     
-      <if test="params.appraiseStatus != null">
-        and LOCATE(o.appraise_status,#{params.appraiseStatus,jdbcType=VARCHAR}) &gt; 0
-      </if> 
       <if test="params.beginCreateTime != null">
         and o.create_time &gt;= concat(#{params.beginCreateTime,jdbcType=VARCHAR},' 00:00:00')
       </if> 
@@ -383,12 +286,6 @@
     </if>
     <if test="params.needLogistics != null">
     ,<include refid="Column_List_Logistics" />
-    </if>
-    <if test="params.needAppr != null">
-    ,<include refid="Column_List_Appr" />
-    </if>
-    <if test="params.needAfterSales != null">
-    ,<include refid="Column_List_AfterSales" />
     </if>
     <if test="params.needGoodsAndUser != null">
     ,<include refid="Column_List_GoodsAndUser" />

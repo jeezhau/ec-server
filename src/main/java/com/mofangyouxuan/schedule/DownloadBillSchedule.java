@@ -26,7 +26,7 @@ public class DownloadBillSchedule {
 	private static Logger logger = LoggerFactory.getLogger(DownloadBillSchedule.class);
 	
 	@Value("${sys.pay-bills-dir}")
-	public String payBillsDir="/Users/jeekhan/mfyx/paybills/";	//支付账单保存路径
+	public String payBillsDir;	//支付账单保存路径
 	
 	@Autowired
 	private WXPay wXPay;
@@ -36,14 +36,17 @@ public class DownloadBillSchedule {
 	/**
 	 * 下载对账单
 	 */
-	@Scheduled(cron="0 56 14 * * ?")
+	//@Scheduled(cron="10 10 4,8,11 * * ?")
+	@Scheduled(cron="0 11 21 * * ?")
 	public void download() {
 		try {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(new Date());
 			cal.add(Calendar.DAY_OF_MONTH, -1);
 			Date billDate = cal.getTime();
-			String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
+			//String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
+			String strBillDate = "20180711";
+			billDate = new SimpleDateFormat("yyyyMMdd").parse(strBillDate);
 			//下载微信账单
 			String wxpayBillFilename = "wxpay{strBillDate}_1.gzip";
 			wxpayBillFilename = wxpayBillFilename.replace("{strBillDate}",strBillDate);

@@ -15,11 +15,10 @@ public interface OrderMapper {
     int insert(Order record);
 
     /**
-     * params 需要显示哪些分类字段：needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser
      * @param orderId
      * @return
      */
-    Order selectByPrimaryKey(@Param("params")Map<String,Object> params,@Param("orderId")String orderId);
+    Order selectByPrimaryKey(@Param("orderId")String orderId);
 
     int updateByPrimaryKeySelective(Order record);
 

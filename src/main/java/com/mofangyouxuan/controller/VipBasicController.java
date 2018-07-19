@@ -67,7 +67,7 @@ public class VipBasicController {
 	public Object getVipBasic(@PathVariable("vipId")Integer vipId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			VipBasic vipBasic = this.vipBasicService.get(vipId);
+			VipBasic vipBasic = this.vipBasicService.getVipBal(vipId);
 			if(vipBasic == null) {
 				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该会员用户！");

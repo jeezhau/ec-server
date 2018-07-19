@@ -1,6 +1,5 @@
 package com.mofangyouxuan.schedule;
 
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -14,7 +13,12 @@ import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.PageCond;
+import com.mofangyouxuan.model.Aftersale;
+import com.mofangyouxuan.model.Appraise;
 import com.mofangyouxuan.model.Order;
+import com.mofangyouxuan.model.OrderBal;
+import com.mofangyouxuan.service.AftersaleService;
+import com.mofangyouxuan.service.AppraiseService;
 import com.mofangyouxuan.service.ChangeFlowService;
 import com.mofangyouxuan.service.OrderService;
 
@@ -35,11 +39,16 @@ public class UnFreezeAndProfitSchedule {
 	@Value("${sys.order-amount-unfreeze-days}")
 	private Integer uFreezeDays;	//自从评价以后
 	
+	@Autowired
+	private AftersaleService aftersaleService;
+	@Autowired
+	private AppraiseService appraiseService;
+	
 	/**
 	 * 解冻资金
 	 */
-	@Scheduled(cron="0 0 4-8/4 * * ?")
-	//@Scheduled(cron="0 * * * * ?")
+	//@Scheduled(cron="0 0 4-8/4 * * ?")
+	@Scheduled(cron="0 */3 * * * ?")
 	public void unFreezeAmount() {
 		JSONObject jsonSearch = new JSONObject();
 		jsonSearch.put("status", "41,57"); //评价完成
@@ -66,20 +75,25 @@ public class UnFreezeAndProfitSchedule {
 			for(Order order:list) {
 				try {
 					Date apprTime = null;
+					Aftersale aftersale = this.aftersaleService.getByID(order.getOrderId());
+					Appraise appraise = this.appraiseService.getByOrderIdAndObj(order.getOrderId(), "1");
 					if("41".equals(order.getStatus())) {
-						apprTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(order.getAppraiseTime());
+						apprTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(appraise.getUpdateTime());
 					}else {
-						apprTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(order.getAftersalesDealTime());
+						apprTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(aftersale.getDealTime());
 					}
-					long gapDays = (new Date().getTime() - apprTime.getTime())/1000/3600/24; //单位天
+					long gapDays = (new Date().getTime() - apprTime.getTime())/1000/3600/24 + 10; //单位天
 					if(gapDays > this.uFreezeDays) { //超时
-						Long amount = order.getAmount().multiply(new BigDecimal(100)).longValue();
-						//this.changeFlowService.dealFinish(amount, order.getUserId(), order.getMchtUId(), 1, "商家卖款资金解冻【订单号：" + order.getOrderId() + "】", order.getOrderId());
-						
-						Order updOrder = new Order();
-						updOrder.setOrderId(order.getOrderId());
-						updOrder.setStatus("CM");
-						this.orderService.update(updOrder);
+						//Long amount = order.getAmount().multiply(new BigDecimal(100)).longValue();
+						//OrderBal orderBal,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId
+						OrderBal orderBal = this.orderService.getOBal(order.getOrderId());
+						if(orderBal != null && "SS".equals(orderBal.getStatus())) {
+							this.changeFlowService.dealFinish(orderBal, order.getUserId(), order.getMchtUId(), 1, "商家卖款资金解冻【订单号：" + order.getOrderId() + "】", order.getOrderId());
+						}
+//						Order updOrder = new Order();
+//						updOrder.setOrderId(order.getOrderId());
+//						updOrder.setStatus("CM");
+//						this.orderService.update(updOrder);
 					}
 				}catch(Exception e) {
 					log.info("系统资金解冻与分润，系统异常：" + e.getMessage());

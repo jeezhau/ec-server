@@ -4,8 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -403,11 +401,10 @@ public class PartnerStaffController {
 	 * @param result
 	 * @param passwd
 	 * @return
-	 * @throws NoSuchAlgorithmException
-	 * @throws UnsupportedEncodingException
+	 * @throws Exception 
 	 */
 	private String dataCheck(Integer partnerId,
-			 PartnerStaff staff,BindingResult result,String passwd) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+			 PartnerStaff staff,BindingResult result,String passwd) throws Exception {
 		JSONObject jsonRet = new JSONObject();
 		if(result.hasErrors()){
 			StringBuilder sb = new StringBuilder();

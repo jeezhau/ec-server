@@ -21,6 +21,7 @@ import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.OrderBalMapper;
 import com.mofangyouxuan.mapper.OrderMapper;
 import com.mofangyouxuan.mapper.PayFlowMapper;
+import com.mofangyouxuan.model.Aftersale;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.Order;
 import com.mofangyouxuan.model.OrderBal;
@@ -30,6 +31,7 @@ import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.pay.AliPay;
 import com.mofangyouxuan.pay.WXPay;
+import com.mofangyouxuan.service.AftersaleService;
 import com.mofangyouxuan.service.ChangeFlowService;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.OrderService;
@@ -64,6 +66,9 @@ public class OrderServiceImpl implements OrderService{
 	private UserBasicService userBasicService;
 	@Autowired
 	private SysParamUtil sysParamUtil;
+	@Autowired
+	private AftersaleService aftersaleService;
+	
 	/**
 	 * 新增订单
 	 * @param order
@@ -79,13 +84,6 @@ public class OrderServiceImpl implements OrderService{
 		order.setSendTime(null);
 		order.setSignTime(null);
 		order.setSignUser(null);
-		order.setScoreGoods(null);
-		order.setScoreLogistics(null);
-		order.setScoreMerchant(null);
-		order.setAppraiseInfo(null);
-		order.setAppraiseStatus(null);
-		order.setAftersalesReason(null);
-		order.setAftersalesResult(null);
 		int cnt = this.orderMapper.insert(order);
 		if(cnt>0) {
 			return order.getOrderId();
@@ -119,29 +117,12 @@ public class OrderServiceImpl implements OrderService{
 	
 	/**
 	 * 根据ID获取订单
-	 * @param params 需要显示哪些分类字段：needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser
      * @param orderId
 	 * @return
 	 */
 	@Override
-	public Order get(Boolean needReceiver,Boolean needLogistics,Boolean needAppr,Boolean needAfterSales,Boolean needGoodsAndUser,String orderId) {
-		Map<String,Object> params = new HashMap<String,Object>();
-		if(needReceiver != null) {
-			params.put("needReceiver", needReceiver);
-		}
-		if(needLogistics != null) {
-			params.put("needLogistics", needLogistics);
-		}
-		if(needAppr != null) {
-			params.put("needAppr", needAppr);
-		}
-		if(needAfterSales != null) {
-			params.put("needAfterSales", needAfterSales);
-		}
-		if(needGoodsAndUser != null) {
-			params.put("needGoodsAndUser", needGoodsAndUser);
-		}
-		return this.orderMapper.selectByPrimaryKey(params,orderId);
+	public Order get(String orderId) {
+		return this.orderMapper.selectByPrimaryKey(orderId);
 	}
 	
 	/**
@@ -177,27 +158,6 @@ public class OrderServiceImpl implements OrderService{
 					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " sign_time asc " : " sign_time desc " );
 				}
 			}
-			if(jsonSorts.containsKey("appraiseTime")) {
-				String value = jsonSorts.getString("appraiseTime");
-				if(value != null && value.length()>0) {
-					String[] arr = value.split("#");
-					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " appraise_time asc " : " appraise_time desc " );
-				}
-			}
-			if(jsonSorts.containsKey("aftersalesApplyTime")) {
-				String value = jsonSorts.getString("aftersalesApplyTime");
-				if(value != null && value.length()>0) {
-					String[] arr = value.split("#");
-					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " aftersales_apply_time asc " : " aftersales_apply_time desc " );
-				}
-			}
-			if(jsonSorts.containsKey("aftersalesDealTime")) {
-				String value = jsonSorts.getString("aftersalesDealTime");
-				if(value != null && value.length()>0) {
-					String[] arr = value.split("#");
-					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " aftersales_deal_time asc " : " aftersales_deal_time desc " );
-				}
-			}
 			Set<Integer> set = new TreeSet<Integer>(sortMap.keySet());
 			StringBuilder sb = new StringBuilder();
 			for(Integer key:set) {
@@ -218,12 +178,6 @@ public class OrderServiceImpl implements OrderService{
 			}
 			if(jsonShow.containsKey("needLogistics") && jsonShow.get("needLogistics") != null) {
 				params.put("needLogistics", true);
-			}
-			if(jsonShow.containsKey("needAppr") && jsonShow.get("needAppr") != null) {
-				params.put("needAppr", true);
-			}
-			if(jsonShow.containsKey("needAfterSales") && jsonShow.get("needAfterSales") != null) {
-				params.put("needAfterSales", true);
 			}
 			if(jsonShow.containsKey("needGoodsAndUser") && jsonShow.get("needGoodsAndUser") != null) {
 				params.put("needGoodsAndUser", true);
@@ -291,9 +245,6 @@ public class OrderServiceImpl implements OrderService{
 		if(jsonParams.containsKey("postageId")) { //运费模板ID
 			params.put("postageId", jsonParams.getInteger("postageId"));
 		}
-		if(jsonParams.containsKey("appraiseStatus")) { //评价内容状态
-			params.put("appraiseStatus", jsonParams.getString("appraiseStatus"));
-		}
 		
 		if(jsonParams.containsKey("beginCreateTime")) { //订单创建开始时间
 			params.put("beginCreateTime", jsonParams.getString("beginCreateTime"));
@@ -351,13 +302,18 @@ public class OrderServiceImpl implements OrderService{
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
 			asr.put("type", "申请取消");
 			asr.put("content", ctn);
-			String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
-			JSONArray asrArr = JSONArray.parseArray(oldAsr);
+			Aftersale aftersale = this.aftersaleService.getByID(order.getOrderId());
+			if(aftersale == null) {
+				aftersale = new Aftersale();
+			}
+			JSONArray asrArr = JSONArray.parseArray(aftersale.getApplyReason()==null ? "[]" : aftersale.getApplyReason());
 			asrArr.add(asr);
-			cancelOrder.setAftersalesApplyTime(currTime);
-			cancelOrder.setAftersalesReason(asrArr.toJSONString());
+			aftersale.setGoodsId(order.getGoodsId());
+			aftersale.setOrderId(order.getOrderId());
+			aftersale.setApplyReason(asrArr.toJSONString());
 			int cnt = this.orderMapper.updateByPrimaryKeySelective(cancelOrder);
 			if(cnt>0) {
+				this.aftersaleService.saveAF(aftersale);
 				jsonRet.put("errcode", 0);
 				jsonRet.put("errmsg","订单已成功取消！");
 			}else {
@@ -583,7 +539,7 @@ public class OrderServiceImpl implements OrderService{
 		}
 		String stat = payFlow.getStatus();
 		if("00".equals(stat) || "10".equals(stat) || "F1".equals(stat)) {
-			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+			Order order = this.get( payFlow.getOrderId());
 			VipBasic vip = this.vipBasicService.get(payFlow.getUserId());
 			this.execPaySucc(false, payFlow,vip.getVipId(), order, order.getMchtUId(),outFinishId);
 		}else if(!"11".equals(stat)) {
@@ -614,7 +570,7 @@ public class OrderServiceImpl implements OrderService{
 			failFlow.setMemo(fail);
 			this.payFlowMapper.updateByPrimaryKeySelective(failFlow);
 			//更新订单
-			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+			Order order = this.get(payFlow.getOrderId());
 			Order updOrder = new Order();
 			updOrder.setOrderId(order.getOrderId());
 			updOrder.setStatus("12");
@@ -652,7 +608,7 @@ public class OrderServiceImpl implements OrderService{
 			updFlow.setStatus("01");
 			this.payFlowMapper.updateByPrimaryKeySelective(updFlow);
 		}else if("20".equals(stat)) { //退款成功
-			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+			Order order = this.get(payFlow.getOrderId());
 			this.execRefundSucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), "退款成功", outFinishId);
 		}
 		return "00";
@@ -852,20 +808,27 @@ public class OrderServiceImpl implements OrderService{
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
 			asr.put("type", changeReason);
 			asr.put("content", reason);
+			Aftersale aftersale = this.aftersaleService.getByID(order.getOrderId());
+			if(aftersale == null) {
+				aftersale = new Aftersale();
+			}
+			aftersale.setOrderId(order.getOrderId());
+			aftersale.setGoodsId(order.getGoodsId());
 			if(isMcht) { //商户申请处理退款
-				String oldAsr = order.getAftersalesResult()==null ? "[]" : order.getAftersalesResult();
+				aftersale.setApplyReason(changeReason);
+				String oldAsr = aftersale.getDealResult()==null ? "[]" : aftersale.getDealResult();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);
 				asrArr.add(0,asr);
 				updOrder.setStatus("65"); //65:同意退款，资金回退中
-				updOrder.setAftersalesDealTime(currTime);
-				updOrder.setAftersalesResult(asrArr.toJSONString());
+				aftersale.setDealResult(asrArr.toJSONString());
+				this.aftersaleService.updateAF(aftersale);
 			}else { //买家申请退款
-				String oldAsr = order.getAftersalesReason()==null ? "[]" : order.getAftersalesReason();
+				String oldAsr = aftersale.getApplyReason()==null ? "[]" : aftersale.getApplyReason();
 				JSONArray asrArr = JSONArray.parseArray(oldAsr);
 				asrArr.add(0,asr);
 				updOrder.setStatus("D0"); //D0:资金回退中
-				updOrder.setAftersalesApplyTime(currTime);
-				updOrder.setAftersalesReason(asrArr.toJSONString());
+				aftersale.setApplyReason(asrArr.toJSONString());
+				this.aftersaleService.saveAF(aftersale);
 			}
 			this.orderMapper.updateByPrimaryKeySelective(updOrder);
 			
@@ -904,7 +867,7 @@ public class OrderServiceImpl implements OrderService{
 		}
 		String stat = payFlow.getStatus();
 		if("20".equals(stat) || "F2".equals(stat)) {
-			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+			Order order = this.get(payFlow.getOrderId());
 			this.execRefundSucc(false, payFlow, order.getUserId(), order, order.getMchtUId(), "退款成功", outFinishId);
 		}else if(!"21".equals(stat)) {
 			return "订单退款状态有误！";
@@ -936,7 +899,7 @@ public class OrderServiceImpl implements OrderService{
 			failFlow.setMemo(fail);
 			this.payFlowMapper.updateByPrimaryKeySelective(failFlow);
 			//更新订单
-			Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
+			Order order = this.get(payFlow.getOrderId());
 			Order updOrder = new Order();
 			updOrder.setOrderId(order.getOrderId());
 			if("65".equals(order.getStatus())) {
@@ -994,127 +957,6 @@ public class OrderServiceImpl implements OrderService{
 		
 	}
 	
-	/**
-	 * 添加买家对商家的评价或者系统自动超时评价
-	 * @param order	订单信息
-	 * @param scoreLogistics		物流得分
-	 * @param scoreMerchant	商家服务得分
-	 * @param scoreGoods		商品描述得分
-	 * @param content	评价内容
-	 * @return
-	 */
-	@Override
-	public JSONObject appraise2Mcht(Order order,Integer scoreLogistics,Integer scoreMerchant,
-			Integer scoreGoods,String content) {
-		JSONObject jsonRet = new JSONObject();
-		//更新订单信息
-		Date currTime = new Date();
-		Order updOdr = new Order();
-		if("30".equals(order.getStatus()) || "31".equals(order.getStatus()) || "40".equals(order.getStatus()) || "41".equals(order.getStatus())) {
-			updOdr.setStatus("41"); //41:评价完成
-		}else {
-			updOdr.setStatus("56"); //56：评价完成（换货结束）
-		}
-		if("30".equals(order.getStatus()) || "31".equals(order.getStatus()) || "54".equals(order.getStatus()) || "55".equals(order.getStatus())){
-			updOdr.setSignTime(currTime);
-			updOdr.setSignUser(order.getNickname());
-		}
-		//if(updOdr.getAppraiseStatus() == null || "0".equals(updOdr.getAppraiseStatus())) {
-			updOdr.setAppraiseStatus("1");
-		//}
-		updOdr.setOrderId(order.getOrderId());
-		updOdr.setScoreGoods(scoreGoods);
-		updOdr.setScoreLogistics(scoreLogistics);
-		updOdr.setScoreMerchant(scoreMerchant);
-		updOdr.setAppraiseTime(currTime);
-		if(content != null && content.length()>1) {
-			JSONObject asr = new JSONObject();
-			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
-			asr.put("content", content);
-			String oldAsr = order.getAppraiseInfo()==null ? "[]" : order.getAppraiseInfo();
-			JSONArray asrArr = JSONArray.parseArray(oldAsr);
-			asrArr.add(0, asr);
-			updOdr.setAppraiseInfo(asrArr.toJSONString());
-		}
-		//更新商户积分
-		this.partnerBasicService.updScore(order.getPartnerId(), scoreLogistics, scoreMerchant, scoreGoods);
-		int cnt = this.orderMapper.updateByPrimaryKeySelective(updOdr);
-		if(cnt >0) {
-			jsonRet.put("errcode", 0);
-			jsonRet.put("errmsg", "ok");
-		}else {
-			jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-			jsonRet.put("errmsg", "数据库保存数据出错！");
-		}
-		return jsonRet;
-	}
-	
-	/**
-	 * 添加卖家对买家的评价或者系统自动超时评价
-	 * @param order	订单信息
-	 * @param score	得分
-	 * @param content	评价内容
-	 * @return
-	 */
-	@Override
-	public JSONObject appraise2User(Order order,Integer score,String content,Integer updateOpr) {
-		JSONObject jsonRet = new JSONObject();
-		//更新订单信息
-		Date currTime = new Date();
-		Order updOdr = new Order();
-		updOdr.setOrderId(order.getOrderId());
-		updOdr.setScoreUser(score);
-		updOdr.setApprUserTime(currTime);
-		//if(updOdr.getAppraiseStatus() == null || "0".equals(updOdr.getAppraiseStatus())) {
-			updOdr.setAppraiseStatus("2");
-		//}
-		if(content != null && content.length()>1) {
-			JSONObject asr = new JSONObject();
-			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
-			asr.put("operator", updateOpr);
-			asr.put("content", content);
-			String oldAsr = order.getApprUser()==null ? "[]" : order.getApprUser();
-			JSONArray asrArr = JSONArray.parseArray(oldAsr);
-			asrArr.add(0,asr);
-			updOdr.setApprUser(asrArr.toJSONString());
-		}
-		int cnt = this.orderMapper.updateByPrimaryKeySelective(updOdr);
-		if(cnt >0) {
-			jsonRet.put("errcode", 0);
-			jsonRet.put("errmsg", "ok");
-		}else {
-			jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-			jsonRet.put("errmsg", "数据库保存数据出错！");
-		}
-		return jsonRet;
-	}
-	
-	/**
-	 * 记录评价审批结果
-	 * @param orderId
-	 * @param rewPartnerId
-	 * @param oprId
-	 * @param result 审批结果：1-审核通过，2-审核拒绝
-	 * @param review
-	 * @return
-	 */
-	public JSONObject review(String orderId,Integer rewPartnerId,Integer oprId,String result,String review) {
-		JSONObject jsonRet = new JSONObject();
-		//更新订单信息
-		Order updOdr = new Order();
-		updOdr.setOrderId(orderId);
-		updOdr.setAppraiseStatus(result);
-		
-		int cnt = this.orderMapper.updateByPrimaryKeySelective(updOdr);
-		if(cnt >0) {
-			jsonRet.put("errcode", 0);
-			jsonRet.put("errmsg", "ok");
-		}else {
-			jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
-			jsonRet.put("errmsg", "数据库保存数据出错！");
-		}
-		return jsonRet;
-	}
 	
 	
 	/**
@@ -1132,12 +974,12 @@ public class OrderServiceImpl implements OrderService{
 	public void balanceBill(boolean isRefund,String outTradeNo,String flowId,
 			String payType,String status,String amount,String fee) throws Exception {
 		String orderId = flowId.substring(0, 30);
-		Order order = this.get(false, false, false, false, true, orderId);
+		OrderBal obal = this.orderBalMapper.selectByPrimaryKey(orderId);
+		if(obal != null && "SS".equals(obal.getStatus()) ) {
+			return;
+		}
+		Order order = this.get(orderId);
 		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(flowId);
-//		OrderBal obal = this.orderBalMapper.selectByPrimaryKey(order.getOrderId());
-//		if(obal != null && ("SS".equals(obal.getStatus()) || "SSS".equals(obal.getStatus()) || "SSSS".equals(obal.getStatus())) ) {
-//			return;
-//		}
 		//用户最多应支付（退款）金额
 		BigDecimal feeRate = null;
 		if(payType.startsWith("3")){
@@ -1268,11 +1110,11 @@ public class OrderServiceImpl implements OrderService{
 	public void balanceBill(boolean isRefund,PayFlow payFlow) throws Exception {
 		String flowId = payFlow.getFlowId();
 		String orderId = payFlow.getFlowId().substring(0, 30);
-		Order order = this.get(false, false, false, false, true, orderId);
-//		OrderBal obal = this.orderBalMapper.selectByPrimaryKey(order.getOrderId());
-//		if(obal != null && ("SS".equals(obal.getStatus()) || "SSS".equals(obal.getStatus()) || "SSSS".equals(obal.getStatus()))) {
-//			return;
-//		}
+		OrderBal obal = this.orderBalMapper.selectByPrimaryKey(orderId);
+		if(obal != null && "SS".equals(obal.getStatus()) ) {
+			return;
+		}
+		Order order = this.get(orderId);
 		boolean isBalOK = true; 	//是否对账成功
 		//用户应支付金额
 		BigDecimal needAllAmount = order.getAmount();	//用户最多应支付(退款)金额，元
@@ -1419,7 +1261,7 @@ public class OrderServiceImpl implements OrderService{
 				obal.setSyssrvSettle(sysSrvFee);
 			}
 			if(obal.getStatus().contains("S")) {
-				obal.setStatus(obal.getStatus() + "S");
+				obal.setStatus("SS");
 			}else {
 				obal.setStatus("S");
 			}
@@ -1437,4 +1279,9 @@ public class OrderServiceImpl implements OrderService{
 	public int countPayFlow(Map<String,Object> params) {
 		return this.payFlowMapper.countAll(params);
 	}
+	
+	public OrderBal getOBal(String orderId) {
+		return this.orderBalMapper.selectByPrimaryKey(orderId);
+	}
+	
 }

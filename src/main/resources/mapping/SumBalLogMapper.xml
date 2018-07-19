@@ -42,4 +42,58 @@
     where t.vip_id = #{vipId,jdbcType=INTEGER} and t.flow_time = #{flowTime,jdbcType=VARCHAR} 
   </select>
   
+  <select id="sumByVIPMonth" parameterType="map" resultMap="BaseResultMap">
+   select t.vip_id,left(t.flow_time,6) flow_time,
+  	sum(t.amount_addbal) amount_addbal, sum(t.amount_subbal) amount_subbal, 
+  	sum(t.amount_addfrz) amount_addfrz, sum(t.amount_subfrz) amount_subfrz, now() create_time
+   from tb_sumbal_log t
+   <where>
+      length(t.flow_time)=8
+     <if test="vipId != null">
+       and t.vip_id = #{vipId,jdbcType=INTEGER}
+     </if>
+     <if test="month != null">
+       and t.flow_time like concat(#{month,jdbcType=VARCHAR} ,'%')
+     </if>
+   </where>
+    group by t.vip_id,left(t.flow_time,6)
+  </select>
+ 
+  <select id="sumByVIPYear" parameterType="map" resultMap="BaseResultMap">
+   select t.vip_id,left(t.flow_time,4) flow_time,
+  	sum(t.amount_addbal) amount_addbal, sum(t.amount_subbal) amount_subbal, 
+  	sum(t.amount_addfrz) amount_addfrz, sum(t.amount_subfrz) amount_subfrz, now() create_time
+   from tb_sumbal_log t
+   <where>
+      length(t.flow_time)=6
+     <if test="vipId != null">
+       and t.vip_id = #{vipId,jdbcType=INTEGER}
+     </if>
+     <if test="year != null">
+       and t.flow_time like concat(#{year,jdbcType=VARCHAR} ,'%')
+     </if>
+   </where>
+    group by t.vip_id,left(t.flow_time,4)
+  </select>
+  
+  <select id="sumAllByVIP" parameterType="int" resultMap="BaseResultMap">
+   select t.vip_id,'' flow_time,
+  	sum(t.amount_addbal) amount_addbal, sum(t.amount_subbal) amount_subbal, 
+  	sum(t.amount_addfrz) amount_addfrz, sum(t.amount_subfrz) amount_subfrz, now() create_time
+   from tb_sumbal_log t
+   where t.vip_id = #{vipId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteFlows" parameterType="map" >
+   delete from tb_sumbal_log
+   <where>
+     <if test="vipId != null">
+       and vip_id = #{vipId,jdbcType=INTEGER}
+     </if>
+     <if test="flowTime != null">
+       and flow_time like concat(#{flowTime,jdbcType=VARCHAR} ,'%')
+     </if>
+   </where>
+  </delete>
+  
 </mapper>

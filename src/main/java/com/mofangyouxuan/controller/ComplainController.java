@@ -101,7 +101,7 @@ public class ComplainController {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-			Order order = orderService.get(false, false, false, false, true, log.getOrderId());
+			Order order = orderService.get(log.getOrderId());
 			if(order == null) {
 				jsonRet.put("errmsg", "系统中没有该订单信息！");
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);

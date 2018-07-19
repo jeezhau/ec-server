@@ -332,8 +332,8 @@
     <include refid="Base_Column_List" /> 
     from tb_pay_flow f
     <include refid="whereSql" /> 
-    limit #{pageCond.begin},#{pageCond.pageSize}
     order by create_time desc
+    limit #{pageCond.begin},#{pageCond.pageSize}
   </select>
 
   <select id="countAll" parameterType="map" resultType="int">

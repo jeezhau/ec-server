@@ -103,9 +103,10 @@ public interface ChangeFlowService {
 	 * @param vipId		会员账号
 	 * @param oprId		操作员ID
 	 * @param reason
+	 * @param caId		提现申请ID，添加前缀CA
 	 * @return "00"-成功，其他：失败信息
 	 */
-	public String cashApply(Long amount, Integer vipId, Integer oprId, String reason);
+	public String cashApply(Long amount, Integer vipId, Integer oprId, String reason,String caId);
 	
 	/**
 	 * 添加用户提现结束流水
@@ -115,9 +116,11 @@ public interface ChangeFlowService {
 	 * @param flow	提现的原流水
 	 * @param vip	提现会员用户
 	 * @param oprId	操作人ID
+	 * @param caId		提现申请ID，添加前缀CA
+	 * 
 	 * @return "00"-成功，其他：失败信息
 	 */
-	public String cashFinish(boolean success,Long amount, Integer vipId, Integer oprId, String reason);
+	public String cashFinish(boolean success,Long amount, Integer vipId, Integer oprId, String reason,String caId);
 	
 	
 	/**

@@ -16,7 +16,9 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
+import com.mofangyouxuan.model.Aftersale;
 import com.mofangyouxuan.model.Order;
+import com.mofangyouxuan.service.AftersaleService;
 import com.mofangyouxuan.service.OrderService;
 import com.mofangyouxuan.utils.HttpUtils;
 
@@ -35,6 +37,9 @@ public class LogisticsQuerySignSchedule {
 	
 	@Value("${logistics.alicloudapi-appcode}")
 	private String appcode;
+	
+	@Autowired
+	private AftersaleService aftersaleService;
 
 	@Autowired
 	private SysParamUtil sysParamUtil;
@@ -76,9 +81,10 @@ public class LogisticsQuerySignSchedule {
 					//超时签收
 					Date sendTime = null;
 					if("55".equals(orderStatus)) {
-						sendTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(order.getAftersalesDealTime());
+						Aftersale aftersale = this.aftersaleService.getByID(order.getOrderId());
+						sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(aftersale.getDealTime());
 					}else {
-						sendTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(order.getSendTime());
+						sendTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(order.getSendTime());
 					}
 					long gapDays = (new Date().getTime() - sendTime.getTime())/1000/3600/24; //单位天
 					int dd = this.sysParamUtil.getNoSignDates4Refund() + (order.getSignProlong() == null ? 3:order.getSignProlong());
@@ -122,7 +128,7 @@ public class LogisticsQuerySignSchedule {
 							Date signTime = new Date();
 							if(result.getJSONArray("list") != null && result.getJSONArray("list").size()>0) {
 								String time = result.getJSONArray("list").getJSONObject(0).getString("time");
-								signTime = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(time);
+								signTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(time);
 							}
 							updOrder.setSignTime(signTime);
 							updOrder.setStatus("40"); //待评价

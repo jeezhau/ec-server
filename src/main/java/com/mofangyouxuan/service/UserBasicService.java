@@ -8,8 +8,9 @@ public interface UserBasicService {
 	 * 添加新用户
 	 * @param userBasic
 	 * @return 新用户ID
+	 * @throws Exception 
 	 */
-	public Integer add(UserBasic userBasic);
+	public Integer add(UserBasic userBasic) throws Exception;
 	
 	/**
 	 * 更新用户信息

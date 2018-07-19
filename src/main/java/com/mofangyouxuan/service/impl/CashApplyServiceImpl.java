@@ -100,6 +100,7 @@ public class CashApplyServiceImpl implements CashApplyService{
 	public JSONObject updateStat(VipBasic vip,CashApply old,String stat,Integer updateOpr,String memo) {
 		JSONObject jsonRet = new JSONObject();
 		Long amount = old.getCashAmount() + old.getCashFee();
+		String caRefId = "CA" + old.getApplyId();	 //资金流水中的提现申请ID
 		if("1".equals(stat)) {
 			//可提现检查
 			if((old.getCashAmount() + old.getCashFee())> vip.getBalance()) {
@@ -113,7 +114,7 @@ public class CashApplyServiceImpl implements CashApplyService{
 				return jsonRet;
 			}
 			//添加提现申请记录
-			String ret = this.changeFlowService.cashApply(amount, old.getVipId(), updateOpr, "提现申请");
+			String ret = this.changeFlowService.cashApply(amount, old.getVipId(), updateOpr, "提现申请",caRefId);
 			if(!"00".equals(ret)) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据库数据保存错误！");
@@ -133,14 +134,14 @@ public class CashApplyServiceImpl implements CashApplyService{
 					return jsonRet;
 				}
 				//添加提现申请记录
-				String ret = this.changeFlowService.cashApply(amount, old.getVipId(), updateOpr, "提现申请");
+				String ret = this.changeFlowService.cashApply(amount, old.getVipId(), updateOpr, "提现申请",caRefId);
 				if(!"00".equals(ret)) {
 					jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 					jsonRet.put("errmsg", "数据库数据保存错误！");
 					return jsonRet;
 				}
 			}
-			String ret = this.changeFlowService.cashFinish(true, amount, old.getVipId(), updateOpr, "提现成功");
+			String ret = this.changeFlowService.cashFinish(true, amount, old.getVipId(), updateOpr, "提现成功",caRefId);
 			if(!"00".equals(ret)) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据库数据保存错误！");
@@ -153,7 +154,7 @@ public class CashApplyServiceImpl implements CashApplyService{
 				return jsonRet;
 			}
 			if("1".equals(old.getStatus())) { //已受理
-				String ret = this.changeFlowService.cashFinish(false, amount, old.getVipId(), updateOpr, "提现失败");
+				String ret = this.changeFlowService.cashFinish(false, amount, old.getVipId(), updateOpr, "提现失败",caRefId);
 				if(!"00".equals(ret)) {
 					jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 					jsonRet.put("errmsg", "数据库数据保存错误！");

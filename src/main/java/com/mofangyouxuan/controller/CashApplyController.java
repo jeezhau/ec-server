@@ -57,7 +57,7 @@ public class CashApplyController {
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			VipBasic vipBasic = this.vipBasicService.get(vipId);
+			VipBasic vipBasic = this.vipBasicService.getVipBal(vipId);
 			if(vipBasic == null || !"1".equals(vipBasic.getStatus()) ) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 				jsonRet.put("errmsg", "系统中没有该会员信息或未激活！");
@@ -214,7 +214,7 @@ public class CashApplyController {
 				return jsonRet.toString();
 			}
 			//数据处理
-			VipBasic vipBasic = this.vipBasicService.get(vipId);
+			VipBasic vipBasic = this.vipBasicService.getVipBal(vipId);
 			CashApply old = this.cashApplyService.get(applyId);
 			if(vipBasic == null || old == null || !old.getVipId().equals(vipId)) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);

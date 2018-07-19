@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.AftersaleMapper">
+
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.Aftersale">
+    <id column="order_id" jdbcType="VARCHAR" property="orderId" />
+    <result column="goods_id" jdbcType="INTEGER" property="goodsId" />
+    <result column="apply_time" jdbcType="TIMESTAMP" property="applyTime" />
+    <result column="deal_time" jdbcType="TIMESTAMP" property="dealTime" />
+    <result column="apply_reason" jdbcType="LONGVARCHAR" property="applyReason" />
+    <result column="deal_result" jdbcType="LONGVARCHAR" property="dealResult" />
+  </resultMap>
+  
+  <sql id="Base_Column_List">
+    af_id, goods_id, order_id, apply_time, apply_type, deal_time, deal_opr,
+    apply_reason, deal_result
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_aftersale
+    where order_id = #{orderId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from tb_aftersale
+    where order_id = #{orderId,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.AftersaleWithBLOBs">
+    insert into tb_aftersale (goods_id, order_id, 
+      apply_time,deal_time, 
+      apply_reason, deal_result
+      )
+    values (#{goodsId,jdbcType=INTEGER}, #{orderId,jdbcType=VARCHAR}, 
+      #{applyTime,jdbcType=TIMESTAMP}, #{dealTime,jdbcType=TIMESTAMP}, 
+      #{applyReason,jdbcType=LONGVARCHAR}, #{dealResult,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.AftersaleWithBLOBs">
+    insert into tb_aftersale
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="goodsId != null">
+        goods_id,
+      </if>
+      <if test="orderId != null">
+        order_id,
+      </if>
+      <if test="applyTime != null">
+        apply_time,
+      </if>
+      <if test="dealTime != null">
+        deal_time,
+      </if>
+      <if test="applyReason != null">
+        apply_reason,
+      </if>
+      <if test="dealResult != null">
+        deal_result,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="goodsId != null">
+        #{goodsId,jdbcType=INTEGER},
+      </if>
+      <if test="orderId != null">
+        #{orderId,jdbcType=VARCHAR},
+      </if>
+      <if test="applyTime != null">
+        #{applyTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="applyType != null">
+        #{applyType,jdbcType=VARCHAR},
+      </if>
+      <if test="dealTime != null">
+        #{dealTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="applyReason != null">
+        #{applyReason,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="dealResult != null">
+        #{dealResult,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.AftersaleWithBLOBs">
+    update tb_aftersale
+    <set>
+      <if test="applyTime != null">
+        apply_time = #{applyTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="dealTime != null">
+        deal_time = #{dealTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="applyReason != null">
+        apply_reason = #{applyReason,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="dealResult != null">
+        deal_result = #{dealResult,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where order_id = #{orderId,jdbcType=VARCHAR}
+  </update>
+  
+
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Aftersale">
+    update tb_aftersale
+    set apply_time = #{applyTime,jdbcType=TIMESTAMP},
+      apply_reason = #{applyReason,jdbcType=LONGVARCHAR},
+      deal_time = #{dealTime,jdbcType=TIMESTAMP},
+      deal_result = #{dealResult,jdbcType=LONGVARCHAR}
+    where order_id = #{orderId,jdbcType=VARCHAR}
+  </update>
+  
+  <sql id="whereSql">
+   <where>
+    <if test="params.orderId != null">
+     and order_id = #{params.orderId,jdbcType=VARCHAR}
+    </if>
+    <if test="params.goodsId != null">
+     and goods_id = #{params.goodsId,jdbcType=INTEGER}
+    </if>
+    <if test="params.partnerId != null">
+     and partner_id = #{params.partnerId,jdbcType=INTEGER}
+    </if>
+    <if test="params.beginApplyTime != null">
+     and apply_time &gt;= concat(#{params.beginApplyTime,jdbcType=VARCHAR},' 00:00:00')
+    </if>
+    <if test="params.endApplyTime != null">
+     and apply_time &lt;= concat(#{params.endApplyTime,jdbcType=VARCHAR},' 23:59:59')
+    </if>
+    <if test="params.beginDealTime != null">
+     and deal_time &gt;= concat(#{params.beginDealTime,jdbcType=VARCHAR},' 00:00:00')
+    </if>
+    <if test="params.endDealTime != null">
+     and deal_time &lt;= concat(#{params.endDealTime,jdbcType=VARCHAR},' 23:59:59')
+    </if> 
+   </where>
+  </sql>
+  
+  <select id="countAll" parameterType="map" resultType="int">
+   select count(1)
+   from tb_aftersale af
+   join tb_goods_info g on af.goods_id = g.goods_id
+   <include refid="whereSql" />
+  </select>
+ 
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+   select  
+   <include refid="Base_Column_List" />
+   from tb_aftersale af
+   join tb_goods_info g on af.goods_id = g.goods_id
+   <include refid="whereSql" />
+   order by af.apply_time
+   limit #{pageCond.begin},#{pageCond.pageSize}
+  </select>
+   
+</mapper>
