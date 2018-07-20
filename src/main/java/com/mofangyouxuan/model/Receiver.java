@@ -13,6 +13,10 @@ public class Receiver {
 	@Min(value=0,message=" 收货信息ID：取值正整数！")
     private Long recvId;
 
+	@NotNull(message=" 收货人类型：不可为空！")
+	@Pattern(regexp="[12]",message=" 收货人类型：取值【1-买家，2-卖家】")
+	private String recvType;
+	
 	@NotNull(message=" 拥有者ID：不可为空！")
     private Integer userId;
 
@@ -68,7 +72,15 @@ public class Receiver {
         this.userId = userId;
     }
 
-    public String getCountry() {
+    public String getRecvType() {
+		return recvType;
+	}
+
+	public void setRecvType(String recvType) {
+		this.recvType = recvType;
+	}
+
+	public String getCountry() {
         return country;
     }
 

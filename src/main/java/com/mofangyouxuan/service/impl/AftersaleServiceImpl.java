@@ -27,12 +27,12 @@ public class AftersaleServiceImpl implements AftersaleService {
 	public JSONObject saveAF(Aftersale aftersale) {
 		JSONObject jsonRet = new JSONObject();
 		Date currDate = new Date();
-		aftersale.setApplyTime(currDate);
 		Map<String,Object> params = new HashMap<String,Object>();
 		params.put("orderId", aftersale.getOrderId());
 		int hasCnt1 = this.aftersaleMapper.countAll(params);
 		int cnt;
 		if(hasCnt1 <= 0) {
+			aftersale.setApplyTime(currDate);
 			cnt = this.aftersaleMapper.insert(aftersale);
 		}else {
 			cnt = this.aftersaleMapper.updateByPrimaryKey(aftersale);
@@ -78,14 +78,15 @@ public class AftersaleServiceImpl implements AftersaleService {
 
 	@Override
 	public int countAll(Map<String, Object> params) {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.aftersaleMapper.countAll(params);
 	}
 
 	@Override
 	public List<Aftersale> getAll(Map<String, Object> params, PageCond pageCond) {
-		// TODO Auto-generated method stub
-		return null;
+		if(pageCond == null) {
+			pageCond = new PageCond(0,30);
+		}
+		return this.aftersaleMapper.selectAll(params, pageCond);
 	}
 
 }

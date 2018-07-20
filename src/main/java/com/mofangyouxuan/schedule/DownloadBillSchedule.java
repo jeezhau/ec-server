@@ -36,8 +36,8 @@ public class DownloadBillSchedule {
 	/**
 	 * 下载对账单
 	 */
-	//@Scheduled(cron="10 10 4,8,11 * * ?")
-	@Scheduled(cron="0 11 21 * * ?")
+	@Scheduled(cron="10 10 4,8,11 * * ?")
+	//@Scheduled(cron="0 11 21 * * ?")
 	public void download() {
 		try {
 			Calendar cal = Calendar.getInstance();

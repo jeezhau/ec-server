@@ -52,8 +52,8 @@ public class BalanceBillSchedule {
 	 * 2、会员余额对账当日；
 	 */
 	@SuppressWarnings("unused")
-	//@Scheduled(cron="0 30 4,8,11,16,17,18 * * ?")
-	@Scheduled(cron="0 21 21 * * ?")
+	@Scheduled(cron="0 30 4,8,11,16,17,18 * * ?")
+	//@Scheduled(cron="0 27 22 * * ?")
 	public void balanceBill() {
 		try {
 			Calendar cal = Calendar.getInstance();
@@ -167,6 +167,7 @@ public class BalanceBillSchedule {
 			//会员余额对账
 			Map<String,Object> params = new HashMap<String,Object>();
 			params.put("status", "11,21"); //成功
+			params.put("payType", "1");
 			params.put("beginIncomeTime", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 			params.put("endIncomeTime", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 			PageCond pageCond = new PageCond(0,100);

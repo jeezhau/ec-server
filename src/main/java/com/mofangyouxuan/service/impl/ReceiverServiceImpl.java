@@ -38,7 +38,7 @@ public class ReceiverServiceImpl implements ReceiverService{
 	 */
 	public Long add(Receiver receiver) {
 		receiver.setRecvId(null);
-		int n = this.receiverMapper.countAllByUser(receiver.getUserId());
+		int n = this.receiverMapper.countAllByUser(receiver.getUserId(),receiver.getRecvType());
 		if(n >= this.receiverCntLimit) {
 			return (long)ErrCodes.RECEIVER_CNT_LIMIT;
 		}
@@ -46,7 +46,7 @@ public class ReceiverServiceImpl implements ReceiverService{
 			receiver.setIsDefault("1");
 		}
 		if("1".equals(receiver.getIsDefault())){
-			this.receiverMapper.unDefault(receiver.getUserId());//取消已有默认
+			this.receiverMapper.unDefault(receiver.getUserId(),receiver.getRecvType());//取消已有默认
 		}
 		int cnt = this.receiverMapper.insert(receiver);
 		if(cnt>0) {
@@ -61,9 +61,9 @@ public class ReceiverServiceImpl implements ReceiverService{
 	 * @return
 	 */
 	public int update(Receiver receiver) {
-		int n = this.receiverMapper.countAllByUser(receiver.getUserId());
+		int n = this.receiverMapper.countAllByUser(receiver.getUserId(),receiver.getRecvType());
 		if(n > 1 && "1".equals(receiver.getIsDefault())){
-			this.receiverMapper.unDefault(receiver.getUserId());//取消已有默认
+			this.receiverMapper.unDefault(receiver.getUserId(),receiver.getRecvType());//取消已有默认
 		}
 		if(n <= 1) {
 			receiver.setIsDefault("1");
@@ -88,7 +88,7 @@ public class ReceiverServiceImpl implements ReceiverService{
 	 * @return
 	 */
 	public int setDefault(Receiver receiver) {
-		this.receiverMapper.unDefault(receiver.getUserId());
+		this.receiverMapper.unDefault(receiver.getUserId(),receiver.getRecvType());
 		int cnt = this.receiverMapper.setDefault(receiver.getRecvId());
 		return cnt;
 	}
@@ -98,8 +98,8 @@ public class ReceiverServiceImpl implements ReceiverService{
 	 * @param userId
 	 * @return
 	 */
-	public Receiver getDefault(Integer userId) {
-		List<Receiver> list = this.receiverMapper.selectDefault(userId);
+	public Receiver getDefault(Integer userId,String recvType) {
+		List<Receiver> list = this.receiverMapper.selectDefault(userId,recvType);
 		if(list != null && list.size()>0) {
 			return list.get(0);
 		}
@@ -111,8 +111,8 @@ public class ReceiverServiceImpl implements ReceiverService{
 	 * @param userId
 	 * @return
 	 */
-	public List<Receiver> getAllByUser(Integer userId){
-		return this.receiverMapper.selectAllByUser(userId);
+	public List<Receiver> getAllByUser(Integer userId,String recvType){
+		return this.receiverMapper.selectAllByUser(userId,recvType);
 	}
 	
 }

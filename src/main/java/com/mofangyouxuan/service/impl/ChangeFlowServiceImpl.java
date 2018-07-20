@@ -15,11 +15,13 @@ import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.mapper.ChangeFlowMapper;
 import com.mofangyouxuan.model.ChangeFlow;
+import com.mofangyouxuan.model.Order;
 import com.mofangyouxuan.model.OrderBal;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.ChangeFlowService;
+import com.mofangyouxuan.service.OrderService;
 import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
@@ -38,7 +40,8 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	@Autowired
 	private PartnerBasicService partnerBasicService;
 	
-	
+	@Autowired
+	private OrderService orderService;
 	@Autowired
 	private SysParamUtil sysParamUtil;
 	
@@ -262,7 +265,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 			VipBasic spreadVip = this.vipBasicService.get(buyUser.getSenceId());
 			if(spreadVip != null) {
 				Long profit = orderBal.getSpreaderUSettle().multiply(new BigDecimal(100)).longValue();
-				ret = this.shareProfit(sysPartner,profit, spreadVip.getVipId(), oprId, "推广用户购买商品获得奖励",orderId);
+				ret = this.shareProfit(sysPartner,profit, spreadVip.getVipId(), oprId, "推广用户购买商品奖励",orderId);
 				if(!"00".equals(ret)) {
 					throw new Exception(ret);
 				}
@@ -273,7 +276,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 			PartnerBasic spPartner = this.partnerBasicService.getByID(partner.getUpPartnerId());
 			if(spPartner != null) {
 				Long profit = orderBal.getSpreaderPSettle().multiply(new BigDecimal(100)).longValue();
-				ret = this.shareProfit(sysPartner,profit, spPartner.getVipId(), oprId, "推广商家出售商品获得奖励",orderId);
+				ret = this.shareProfit(sysPartner,profit, spPartner.getVipId(), oprId, "推广商家出售商品奖励",orderId);
 				if(!"00".equals(ret)) {
 					throw new Exception(ret);
 				}
@@ -281,15 +284,23 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		}
 		//系统收取服务费
 		Long syssrvFee = orderBal.getSyssrvSettle().multiply(new BigDecimal(100)).longValue();
-		ret = this.addBal(syssrvFee, sysPartner.getVipId(), oprId, reason, CashFlowTP.CFTP10, orderId);
+		ret = this.addBal(syssrvFee, sysPartner.getVipId(), oprId, "收取服务费", CashFlowTP.CFTP10, orderId);
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
 		}
 		//商家支付服务费
-		ret = this.subBal(syssrvFee, mchtVipId, oprId, reason, CashFlowTP.CFTP20, orderId);
+		ret = this.subBal(syssrvFee, mchtVipId, oprId, "支付服务费", CashFlowTP.CFTP20, orderId);
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
 		}
+		Order updOrder = new Order();
+		updOrder.setOrderId(orderId);
+		updOrder.setStatus("CM");
+		this.orderService.update(updOrder);
+		
+		params = new HashMap<String,Object>();
+		params.put("orderId", orderId);
+		this.changeFlowMapper.updateFlag(params,"1");
 		return "00";
 	}
 	

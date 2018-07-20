@@ -32,7 +32,7 @@
     u.user_id,u.nickname,u.headimgurl
   </sql>
   
-  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="ResultMapWith">
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
     from tb_appraise a
@@ -42,7 +42,7 @@
     where appr_id = #{apprId,jdbcType=INTEGER}
   </select>
   
-  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from tb_appraise
     where appr_id = #{apprId,jdbcType=INTEGER}
   </delete>
@@ -169,11 +169,9 @@
     where appr_id = #{apprId,jdbcType=INTEGER}
   </update>
   
-  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.mofangyouxuan.model.Appraise">
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Appraise">
     update tb_appraise
-    set goods_id = #{goodsId,jdbcType=INTEGER},
-      order_id = #{orderId,jdbcType=VARCHAR},
-      object = #{object,jdbcType=VARCHAR},
+    set 
       score_logistics = #{scoreLogistics,jdbcType=INTEGER},
       score_goods = #{scoreGoods,jdbcType=INTEGER},
       score_merchant = #{scoreMerchant,jdbcType=INTEGER},
@@ -181,20 +179,6 @@
       update_time = #{updateTime,jdbcType=TIMESTAMP},
       status = #{status,jdbcType=VARCHAR},
       content = #{content,jdbcType=LONGVARCHAR}
-    where appr_id = #{apprId,jdbcType=INTEGER}
-  </update>
-  
-  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.Appraise">
-    update tb_appraise
-    set goods_id = #{goodsId,jdbcType=INTEGER},
-      order_id = #{orderId,jdbcType=VARCHAR},
-      object = #{object,jdbcType=VARCHAR},
-      score_logistics = #{scoreLogistics,jdbcType=INTEGER},
-      score_goods = #{scoreGoods,jdbcType=INTEGER},
-      score_merchant = #{scoreMerchant,jdbcType=INTEGER},
-      score_user = #{scoreUser,jdbcType=INTEGER},
-      update_time = #{updateTime,jdbcType=TIMESTAMP},
-      status = #{status,jdbcType=VARCHAR}
     where appr_id = #{apprId,jdbcType=INTEGER}
   </update>
   

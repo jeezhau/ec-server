@@ -13,37 +13,42 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
+import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.Receiver;
 import com.mofangyouxuan.model.UserBasic;
+import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.ReceiverService;
 import com.mofangyouxuan.service.UserBasicService;
 
 /**
  * 收货人信息管理
- * 1、每位用户的收货人信息数量有限制；
+ * 1、每位用户(买家或卖家合作伙伴)的收货人信息数量有限制；
  * 2、每位用户都有一个默认收货人信息，第一个系统自动设为默认；
  * @author jeekhan
  *
  */
 @RestController
 @RequestMapping("/receiver/{userId}")
-public class ReceiverAction {
+public class ReceiverController {
 	
 	@Autowired
 	private ReceiverService  receiverService;
 	@Autowired
 	private UserBasicService userBasicService;
+	@Autowired
+	private PartnerBasicService partnerBasicService;
+	
 	
 	/**
 	 * 获取指定用户的默认收货人信息
 	 * @param userId
 	 * @return {errcode:0,errmsg:"ok",receiver:{...}}
 	 */
-	@RequestMapping("/getdefault")
-	public Object getDefault(@PathVariable("userId")Integer userId) {
+	@RequestMapping("/getdefault/{recvType}")
+	public Object getDefault(@PathVariable("userId")Integer userId,@PathVariable("recvType")String recvType) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			Receiver receiver = this.receiverService.getDefault(userId);
+			Receiver receiver = this.receiverService.getDefault(userId,recvType);
 			if(receiver == null) {
 				jsonRet.put("errcode", ErrCodes.RECEIVER_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该用户的默认信息！");
@@ -65,11 +70,11 @@ public class ReceiverAction {
 	 * @param userId
 	 * @return {errcode:0,errmsg:"ok",datas:[{...},{...},...]}
 	 */
-	@RequestMapping("/getbyuser")
-	public Object getAllByUser(@PathVariable("userId")Integer userId) {
+	@RequestMapping("/getbyuser/{recvType}")
+	public Object getAllByUser(@PathVariable("userId")Integer userId,@PathVariable("recvType")String recvType) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			List<Receiver> datas = this.receiverService.getAllByUser(userId);
+			List<Receiver> datas = this.receiverService.getAllByUser(userId,recvType);
 			if(datas == null) {
 				jsonRet.put("errcode", ErrCodes.POSTAGE_NO_EXISTS);
 				jsonRet.put("errmsg", "系统中没有该用户的收货人信息！");
@@ -136,11 +141,20 @@ public class ReceiverAction {
 			@PathVariable("userId")Integer userId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			UserBasic user = this.userBasicService.get(userId);
-			if(user == null || !"1".equals(user.getStatus())) {
-				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
-				jsonRet.put("errmsg", "系统中没有该用户！");
-				return jsonRet.toString();
+			if("1".equals(receiver.getRecvType())) { 
+				UserBasic user = this.userBasicService.get(userId);
+				if(user == null || !"1".equals(user.getStatus())) {
+					jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+					jsonRet.put("errmsg", "系统中没有该用户！");
+					return jsonRet.toString();
+				}
+			}else {
+				PartnerBasic partner = this.partnerBasicService.getByID(userId);
+				if(partner == null || (!"S".equals(partner.getStatus()) && !"C".equals(partner.getStatus())) ) {
+					jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+					jsonRet.put("errmsg", "系统中没有该合作伙伴！");
+					return jsonRet.toString();
+				}
 			}
 			if(!receiver.getUserId().equals(userId)) {
 				jsonRet.put("errmsg", "用户信息不一致！");

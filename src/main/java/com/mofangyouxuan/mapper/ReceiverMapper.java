@@ -2,6 +2,8 @@ package com.mofangyouxuan.mapper;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
+
 import com.mofangyouxuan.model.Receiver;
 
 public interface ReceiverMapper {
@@ -20,11 +22,12 @@ public interface ReceiverMapper {
     
     int setDefault(Long recvId);
     
-    int unDefault(Integer userId);
+    int unDefault(@Param("userId")Integer userId,@Param("recvType")String recvType);
     
-    List<Receiver> selectDefault(Integer userId);
+    List<Receiver> selectDefault(@Param("userId")Integer userId,@Param("recvType")String recvType);
     
-    List<Receiver> selectAllByUser(Integer userId);
+    List<Receiver> selectAllByUser(@Param("userId")Integer userId,@Param("recvType")String recvType);
     
-    int countAllByUser(Integer userId);
+    int countAllByUser(@Param("userId")Integer userId,@Param("recvType")String recvType);
+    
 }

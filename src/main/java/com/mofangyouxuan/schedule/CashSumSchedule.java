@@ -26,8 +26,8 @@ public class CashSumSchedule {
 	 * 资金流水统计
 	 * 1、每日统计
 	 */
-	//@Scheduled(cron="0 0 12,20 * * ?")
-	@Scheduled(cron="0 22 22 * * ?")
+	@Scheduled(cron="0 0 12,20 * * ?")
+	//@Scheduled(cron="0 22 22 * * ?")
 	public void dateSum() {
 		try {
 			this.vipBasicService.sumDetailFlowByDay(null, null);
@@ -41,8 +41,8 @@ public class CashSumSchedule {
 	 * 资金流水统计
 	 * 1、每月3号6点统计上一月
 	 */
-	//@Scheduled(cron="0 0 6 3 * ?")
-	@Scheduled(cron="0 24 22 * * ?")
+	@Scheduled(cron="0 0 6 3 * ?")
+	//@Scheduled(cron="0 24 22 * * ?")
 	public void monthSum() {
 		try {
 			Calendar cal = Calendar.getInstance();
@@ -59,8 +59,8 @@ public class CashSumSchedule {
 	 * 资金流水统计
 	 * 1、每年1月10号5点统计上一年
 	 */
-	//@Scheduled(cron="0 0 5 10 1 ?")
-	@Scheduled(cron="0 21 21 * * ?")
+	@Scheduled(cron="0 0 5 10 1 ?")
+	//@Scheduled(cron="0 21 21 * * ?")
 	public void yearSum() {
 		try {
 			Calendar cal = Calendar.getInstance();

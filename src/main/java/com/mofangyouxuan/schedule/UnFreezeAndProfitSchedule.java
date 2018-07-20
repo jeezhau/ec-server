@@ -47,11 +47,11 @@ public class UnFreezeAndProfitSchedule {
 	/**
 	 * 解冻资金
 	 */
-	//@Scheduled(cron="0 0 4-8/4 * * ?")
-	@Scheduled(cron="0 */3 * * * ?")
+	@Scheduled(cron="0 0 4-8/4 * * ?")
+	//@Scheduled(cron="0 */3 * * * ?")
 	public void unFreezeAmount() {
 		JSONObject jsonSearch = new JSONObject();
-		jsonSearch.put("status", "41,57"); //评价完成
+		jsonSearch.put("status", "41,54,57,58,66,67,68,DS,DR,DF"); //评价完成
 		JSONObject jsonShow = new JSONObject();
 		jsonShow.put("needAppr", true);
 		jsonShow.put("needGoodsAndUser", true);
@@ -79,10 +79,12 @@ public class UnFreezeAndProfitSchedule {
 					Appraise appraise = this.appraiseService.getByOrderIdAndObj(order.getOrderId(), "1");
 					if("41".equals(order.getStatus())) {
 						apprTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(appraise.getUpdateTime());
-					}else {
+					}else if(order.getStatus().startsWith("5") || order.getStatus().startsWith("6")){
 						apprTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(aftersale.getDealTime());
+					}else {
+						apprTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(aftersale.getApplyTime());
 					}
-					long gapDays = (new Date().getTime() - apprTime.getTime())/1000/3600/24 + 10; //单位天
+					long gapDays = (new Date().getTime() - apprTime.getTime())/1000/3600/24 + 11; //单位天
 					if(gapDays > this.uFreezeDays) { //超时
 						//Long amount = order.getAmount().multiply(new BigDecimal(100)).longValue();
 						//OrderBal orderBal,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId

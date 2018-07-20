@@ -12,15 +12,14 @@
   </resultMap>
   
   <sql id="Base_Column_List">
-    af_id, goods_id, order_id, apply_time, apply_type, deal_time, deal_opr,
-    apply_reason, deal_result
+    a.goods_id, a.order_id, a.apply_time,a.deal_time, a.apply_reason, a.deal_result
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
-    from tb_aftersale
-    where order_id = #{orderId,jdbcType=INTEGER}
+    from tb_aftersale a
+    where a.order_id = #{orderId,jdbcType=INTEGER}
   </select>
   
   <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
@@ -28,7 +27,7 @@
     where order_id = #{orderId,jdbcType=INTEGER}
   </delete>
   
-  <insert id="insert" parameterType="com.mofangyouxuan.model.AftersaleWithBLOBs">
+  <insert id="insert" parameterType="com.mofangyouxuan.model.Aftersale">
     insert into tb_aftersale (goods_id, order_id, 
       apply_time,deal_time, 
       apply_reason, deal_result
@@ -39,7 +38,7 @@
       )
   </insert>
   
-  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.AftersaleWithBLOBs">
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.Aftersale">
     insert into tb_aftersale
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="goodsId != null">
@@ -71,9 +70,6 @@
       <if test="applyTime != null">
         #{applyTime,jdbcType=TIMESTAMP},
       </if>
-      <if test="applyType != null">
-        #{applyType,jdbcType=VARCHAR},
-      </if>
       <if test="dealTime != null">
         #{dealTime,jdbcType=TIMESTAMP},
       </if>
@@ -86,7 +82,7 @@
     </trim>
   </insert>
   
-  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.AftersaleWithBLOBs">
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.Aftersale">
     update tb_aftersale
     <set>
       <if test="applyTime != null">
@@ -118,44 +114,46 @@
   <sql id="whereSql">
    <where>
     <if test="params.orderId != null">
-     and order_id = #{params.orderId,jdbcType=VARCHAR}
+     and a.order_id = #{params.orderId,jdbcType=VARCHAR}
     </if>
     <if test="params.goodsId != null">
-     and goods_id = #{params.goodsId,jdbcType=INTEGER}
+     and a.goods_id = #{params.goodsId,jdbcType=INTEGER}
     </if>
     <if test="params.partnerId != null">
-     and partner_id = #{params.partnerId,jdbcType=INTEGER}
+     and g.partner_id = #{params.partnerId,jdbcType=INTEGER}
     </if>
     <if test="params.beginApplyTime != null">
-     and apply_time &gt;= concat(#{params.beginApplyTime,jdbcType=VARCHAR},' 00:00:00')
+     and a.apply_time &gt;= concat(#{params.beginApplyTime,jdbcType=VARCHAR},' 00:00:00')
     </if>
     <if test="params.endApplyTime != null">
-     and apply_time &lt;= concat(#{params.endApplyTime,jdbcType=VARCHAR},' 23:59:59')
+     and a.apply_time &lt;= concat(#{params.endApplyTime,jdbcType=VARCHAR},' 23:59:59')
     </if>
     <if test="params.beginDealTime != null">
-     and deal_time &gt;= concat(#{params.beginDealTime,jdbcType=VARCHAR},' 00:00:00')
+     and a.deal_time &gt;= concat(#{params.beginDealTime,jdbcType=VARCHAR},' 00:00:00')
     </if>
     <if test="params.endDealTime != null">
-     and deal_time &lt;= concat(#{params.endDealTime,jdbcType=VARCHAR},' 23:59:59')
+     and a.deal_time &lt;= concat(#{params.endDealTime,jdbcType=VARCHAR},' 23:59:59')
     </if> 
    </where>
   </sql>
   
   <select id="countAll" parameterType="map" resultType="int">
    select count(1)
-   from tb_aftersale af
-   join tb_goods_info g on af.goods_id = g.goods_id
+   from tb_aftersale a
+   join tb_order_info o on a.order_id = o.order_id
+   join tb_goods_info g on a.goods_id = g.goods_id
    <include refid="whereSql" />
   </select>
  
   <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
    select  
    <include refid="Base_Column_List" />
-   from tb_aftersale af
-   join tb_goods_info g on af.goods_id = g.goods_id
+   from tb_aftersale a
+   join tb_order_info o on a.order_id = o.order_id
+   join tb_goods_info g on a.goods_id = g.goods_id
    <include refid="whereSql" />
-   order by af.apply_time
+   order by a.apply_time
    limit #{pageCond.begin},#{pageCond.pageSize}
   </select>
-   
+  
 </mapper>

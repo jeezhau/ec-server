@@ -176,6 +176,113 @@ public class AppraiseController {
 	}
 	
 	/**
+	 * 买家对商家的评价
+	 * 1、首次评价得分不可为空；
+	 * 2、追加评价仅可追加内容，不可修改得分；
+	 * @param orderId	订单ID
+	 * @param userId		买家ID
+	 * @param scoreLogistics		物流评分
+	 * @param scoreMerchangt		商家服务评分
+	 * @param scoreGoods		商品描述评分
+	 * @param content	评价内容
+	 * @return {errcode,errmsg}
+	 */
+	@RequestMapping("/appr2mcht/{orderId}")
+	public String appraise2Mcht(@PathVariable(value="orderId",required=true)String orderId,
+			@RequestParam(value="userId",required=true)Integer userId,
+			Integer scoreLogistics,Integer scoreMerchant,Integer scoreGoods,String content) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			//数据检查
+			StringBuilder sb = new StringBuilder();
+			if(scoreLogistics != null) {
+				if(scoreLogistics<0 || scoreLogistics>10) {
+					sb.append("物流得分范围 0-10 分！");
+				}
+			}
+			if(scoreMerchant != null) {
+				if(scoreMerchant<0 || scoreMerchant>10) {
+					sb.append("商家服务得分范围 0-10 分！");
+				}
+			}
+			if(scoreGoods != null) {
+				if(scoreGoods<0 || scoreGoods>10) {
+					sb.append("商品描述得分范围 0-10 分！");
+				}
+			}
+			if(content != null && content.length()>0) {
+				content = content.trim();
+				if(content.length()<3 || content.length()>600) {
+					sb.append("图文评价内容长度3-600字符！");
+				}
+			}
+			if(sb.length()>0) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", sb.toString());
+				return jsonRet.toJSONString();
+			}
+			UserBasic user = this.userBasicService.get(userId);
+			Order order = this.orderService.get(orderId);
+			if(user == null || order == null ) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			if(!user.getUserId().equals(order.getUserId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			if(!"30".equals(order.getStatus()) && !"31".equals(order.getStatus()) && !"40".equals(order.getStatus()) && !"41".equals(order.getStatus()) && 
+					!"55".equals(order.getStatus()) && !"56".equals(order.getStatus()) && !"57".equals(order.getStatus()) && !"58".equals(order.getStatus())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
+				jsonRet.put("errmsg", "该订单当前不可进行评价！");
+				return jsonRet.toJSONString();
+			}
+			//时间与次数检查(天)
+			Long limitApprDaysGap = 1800l;  //超过1800天的订单不可进行评价
+			Appraise appraise = this.appraiseService.getByOrderIdAndObj(orderId, "1");
+			if(appraise != null) {
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+				Long d = (new Date().getTime() - sdf.parse(appraise.getUpdateTime()).getTime())/1000/3600/24;
+				if(d > limitApprDaysGap) {
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					jsonRet.put("errmsg", "该订单当前不可再次进行评价，已经超过期限！");
+					return jsonRet.toJSONString();
+				}
+				String oldCtn = appraise.getContent();
+				if(oldCtn != null) {
+					if(JSONArray.parseArray(oldCtn).size() >= 3) {//已有三次评价
+						jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+						jsonRet.put("errmsg", "该订单当前不可再次进行评价，最多可有三次评价！");
+						return jsonRet.toJSONString();
+					}
+				}
+				if(content == null) {
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					jsonRet.put("errmsg", "追加评价的内容不可为空，不可少于3个字符！");
+					return jsonRet.toJSONString();
+				}
+				scoreLogistics = appraise.getScoreLogistics();
+				scoreMerchant = appraise.getScoreMerchant();
+				scoreGoods = appraise.getScoreGoods();
+			}else {
+				if(scoreLogistics == null || scoreGoods == null || scoreMerchant == null) {
+					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+					jsonRet.put("errmsg", "评分不可为空！");
+					return jsonRet.toJSONString();
+				}
+			}
+			jsonRet = this.appraiseService.appraise2Mcht(order, scoreLogistics, scoreMerchant, scoreGoods, content);
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+
+	/**
 	 * 评价审核
 	 * @param orderId	订单ID
 	 * @param rewPartnerId	审批者合作伙伴
@@ -252,119 +359,12 @@ public class AppraiseController {
 				return jsonRet.toString();
 			}
 			Appraise appraise = this.appraiseService.getByOrderIdAndObj(orderId, "1");
-			if(null == appraise.getStatus() || "0".equals(appraise.getStatus())) {
+			if(null == appraise.getStatus()) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				jsonRet.put("errmsg", "该订单当前不可进行评价审核！");
 				return jsonRet.toString();
 			}
 			jsonRet = this.appraiseService.review(orderId, rewPartnerId, operator, result, review);
-		}catch(Exception e) {
-			e.printStackTrace();
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet.toString();
-	}
-	
-	/**
-	 * 买家对商家的评价
-	 * 1、首次评价得分不可为空；
-	 * 2、追加评价仅可追加内容，不可修改得分；
-	 * @param orderId	订单ID
-	 * @param userId		买家ID
-	 * @param scoreLogistics		物流评分
-	 * @param scoreMerchangt		商家服务评分
-	 * @param scoreGoods		商品描述评分
-	 * @param content	评价内容
-	 * @return {errcode,errmsg}
-	 */
-	@RequestMapping("appr2mcht/{orderId}")
-	public String appraise2Mcht(@PathVariable(value="orderId",required=true)String orderId,
-			@RequestParam(value="userId",required=true)Integer userId,
-			Integer scoreLogistics,Integer scoreMerchant,Integer scoreGoods,String content) {
-		JSONObject jsonRet = new JSONObject();
-		try {
-			//数据检查
-			StringBuilder sb = new StringBuilder();
-			if(scoreLogistics != null) {
-				if(scoreLogistics<0 || scoreLogistics>10) {
-					sb.append("物流得分范围 0-10 分！");
-				}
-			}
-			if(scoreMerchant != null) {
-				if(scoreMerchant<0 || scoreMerchant>10) {
-					sb.append("商家服务得分范围 0-10 分！");
-				}
-			}
-			if(scoreGoods != null) {
-				if(scoreGoods<0 || scoreGoods>10) {
-					sb.append("商品描述得分范围 0-10 分！");
-				}
-			}
-			if(content != null && content.length()>0) {
-				content = content.trim();
-				if(content.length()<3 || content.length()>600) {
-					sb.append("图文评价内容长度3-600字符！");
-				}
-			}
-			if(sb.length()>0) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", sb.toString());
-				return jsonRet.toJSONString();
-			}
-			UserBasic user = this.userBasicService.get(userId);
-			Order order = this.orderService.get(orderId);
-			if(user == null || order == null ) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
-				return jsonRet.toJSONString();
-			}
-			if(!user.getUserId().equals(order.getUserId())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您没有权限处理该订单！");
-				return jsonRet.toJSONString();
-			}
-			if(!"30".equals(order.getStatus()) && !"31".equals(order.getStatus()) && !"40".equals(order.getStatus()) && !"41".equals(order.getStatus()) && 
-					!"54".equals(order.getStatus()) && !"56".equals(order.getStatus()) && !"57".equals(order.getStatus()) && !"58".equals(order.getStatus())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-				jsonRet.put("errmsg", "该订单当前不可进行评价！");
-				return jsonRet.toJSONString();
-			}
-			//时间与次数检查(天)
-			Long limitApprDaysGap = 1800l;  //超过1800天的订单不可进行评价
-			if(order.getStatus().equals("41") || order.getStatus().equals("56")) {
-				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-				Appraise appraise = this.appraiseService.getByOrderIdAndObj(orderId, "1");
-				Long d = (new Date().getTime() - sdf.parse(appraise.getUpdateTime()).getTime())/1000/3600/24;
-				if(d > limitApprDaysGap) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-					jsonRet.put("errmsg", "该订单当前不可再次进行评价，已经超过期限！");
-					return jsonRet.toJSONString();
-				}
-				String oldCtn = appraise.getContent();
-				if(oldCtn != null) {
-					if(JSONArray.parseArray(oldCtn).size() >= 3) {//已有三次评价
-						jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-						jsonRet.put("errmsg", "该订单当前不可再次进行评价，最多可有三次评价！");
-						return jsonRet.toJSONString();
-					}
-				}
-				if(content == null) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-					jsonRet.put("errmsg", "追加评价的内容不可为空，不可少于3个字符！");
-					return jsonRet.toJSONString();
-				}
-				scoreLogistics = appraise.getScoreLogistics();
-				scoreMerchant = appraise.getScoreMerchant();
-				scoreGoods = appraise.getScoreGoods();
-			}else {
-				if(scoreLogistics == null || scoreMerchant == null || scoreGoods == null) {
-					jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-					jsonRet.put("errmsg", "评分不可为空！");
-					return jsonRet.toJSONString();
-				}
-			}
-			jsonRet = this.appraiseService.appraise2Mcht(order, scoreLogistics, scoreMerchant, scoreGoods, content);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
@@ -385,7 +385,7 @@ public class AppraiseController {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//数据检查
-			if(!"1".equals(object) && "2".equals(object)) {
+			if(!"1".equals(object) && !"2".equals(object)) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "评价对象：取值不正确！");
 				return jsonRet;

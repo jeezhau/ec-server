@@ -46,13 +46,13 @@ public interface ReceiverService {
 	 * @param userId
 	 * @return
 	 */
-	public Receiver getDefault(Integer userId);
+	public Receiver getDefault(Integer userId,String recvType);
 	
 	/**
 	 * 获取指定用户的所有所获人信息
 	 * @param userId
 	 * @return
 	 */
-	public List<Receiver> getAllByUser(Integer userId);
+	public List<Receiver> getAllByUser(Integer userId,String recvType);
 	
 }

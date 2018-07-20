@@ -9,13 +9,13 @@ import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.model.Appraise;
 
 public interface AppraiseMapper {
-    int deleteByPrimaryKey(Integer apprId);
+    int deleteByPrimaryKey(Long apprId);
 
     int insert(Appraise record);
 
     int insertSelective(Appraise record);
 
-    Appraise selectByPrimaryKey(Integer apprId);
+    Appraise selectByPrimaryKey(Long apprId);
 
     int updateByPrimaryKeySelective(Appraise record);
 

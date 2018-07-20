@@ -36,14 +36,14 @@ public class AppraiseServiceImpl implements AppraiseService{
 	public JSONObject save(Appraise appraise) {
 		JSONObject jsonRet = new JSONObject();
 		Date currDate = new Date();
-		appraise.setUpdateTime(currDate);
-		Map<String,Object> params = new HashMap<String,Object>();
-		params.put("orderId", appraise.getOrderId());
-		int hasCnt1 = this.appraiseMapper.countAll(params);
+		
+		Appraise old = this.getByOrderIdAndObj(appraise.getOrderId(), appraise.getObject());
 		int cnt;
-		if(hasCnt1 <= 0) {
+		appraise.setUpdateTime(currDate);
+		if(old == null) {
 			cnt = this.appraiseMapper.insert(appraise);
 		}else {
+			appraise.setApprId(old.getApprId());
 			cnt = this.appraiseMapper.updateByPrimaryKey(appraise);
 		}
 		if(cnt >0) {
@@ -58,26 +58,40 @@ public class AppraiseServiceImpl implements AppraiseService{
 
 	@Override
 	public JSONObject update(Appraise appraise) {
-		// TODO Auto-generated method stub
-		return null;
+		JSONObject jsonRet = new JSONObject();
+		Date currDate = new Date();
+		Appraise old = this.getByOrderIdAndObj(appraise.getOrderId(), appraise.getObject());
+		if(old == null) {
+			jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+			jsonRet.put("errmsg", "数据库数据保存错误！");
+			return jsonRet;
+		}
+		appraise.setUpdateTime(currDate);
+		appraise.setApprId(old.getApprId());
+		int cnt = this.appraiseMapper.updateByPrimaryKey(appraise);
+		if(cnt >0) {
+			jsonRet.put("errcode", 0);
+			jsonRet.put("errmsg", "ok");
+		}else {
+			jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+			jsonRet.put("errmsg", "数据库数据保存错误！");
+		}
+		return jsonRet;
 	}
 
 	@Override
 	public Appraise getByID(Long Id) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.appraiseMapper.selectByPrimaryKey(Id);
 	}
 
 	@Override
 	public int countAll(Map<String, Object> params) {
-		// TODO Auto-generated method stub
-		return 0;
+		return this.appraiseMapper.countAll(params);
 	}
 
 	@Override
 	public List<Appraise> getAll(Map<String, Object> params, PageCond pageCond) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.appraiseMapper.selectAll(params, pageCond);
 	}
 	
 	public Appraise getByOrderIdAndObj(String orderId,String object) {
@@ -110,7 +124,7 @@ public class AppraiseServiceImpl implements AppraiseService{
 		if("30".equals(order.getStatus()) || "31".equals(order.getStatus()) || "40".equals(order.getStatus()) || "41".equals(order.getStatus())) {
 			updOdr.setStatus("41"); //41:评价完成
 		}else {
-			updOdr.setStatus("56"); //56：评价完成（换货结束）
+			updOdr.setStatus("57"); //57：评价完成（换货结束）
 		}
 		if("30".equals(order.getStatus()) || "31".equals(order.getStatus()) || "54".equals(order.getStatus()) || "55".equals(order.getStatus())){
 			updOdr.setSignTime(currTime);
@@ -123,6 +137,7 @@ public class AppraiseServiceImpl implements AppraiseService{
 		}
 		appraise.setGoodsId(order.getGoodsId());
 		appraise.setOrderId(order.getOrderId());
+		appraise.setObject("1");
 		appraise.setScoreGoods(scoreGoods);
 		appraise.setScoreLogistics(scoreLogistics);
 		appraise.setScoreMerchant(scoreMerchant);
@@ -163,7 +178,9 @@ public class AppraiseServiceImpl implements AppraiseService{
 		appraise.setScoreUser(score);
 		appraise.setGoodsId(order.getGoodsId());
 		appraise.setOrderId(order.getOrderId());
+		appraise.setObject("2");
 		appraise.setStatus("0");
+		appraise.setUpdateTime(currTime);
 		if(content != null && content.length()>1) {
 			JSONObject asr = new JSONObject();
 			asr.put("time", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(currTime));
@@ -171,7 +188,7 @@ public class AppraiseServiceImpl implements AppraiseService{
 			asr.put("content", content);
 			String oldCnt = appraise.getContent()==null ? "[]" : appraise.getContent();
 			JSONArray apprCnt = JSONArray.parseArray(oldCnt);
-			apprCnt.add(0,apprCnt);
+			apprCnt.add(0,asr);
 			appraise.setContent(apprCnt.toJSONString());
 		}
 		jsonRet = this.save(appraise);
