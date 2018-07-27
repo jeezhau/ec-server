@@ -77,7 +77,7 @@ public class PartnerStaffController {
 	@RequestMapping("/{partnerId}/saveStaff")
 	public Object saveStaff(@PathVariable("partnerId")Integer partnerId,
 			@Valid PartnerStaff staff,BindingResult result,
-			@RequestParam(value="passwd",required=true)String passwd) {
+			@RequestParam(value="password",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//数据验证

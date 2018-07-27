@@ -44,8 +44,8 @@ public class DownloadBillSchedule {
 			cal.setTime(new Date());
 			cal.add(Calendar.DAY_OF_MONTH, -1);
 			Date billDate = cal.getTime();
-			//String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
-			String strBillDate = "20180711";
+			String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
+			//String strBillDate = "20180711";
 			billDate = new SimpleDateFormat("yyyyMMdd").parse(strBillDate);
 			//下载微信账单
 			String wxpayBillFilename = "wxpay{strBillDate}_1.gzip";

@@ -15,7 +15,7 @@ public class UserBasic {
     private Integer userId;
 
     @NotNull(message=" 昵称： 不可为空！")
-    @Size(min=3,max=20,message=" 昵称:长度范围 6-20字符！")
+    @Size(min=1,max=20,message=" 昵称:长度范围 1-20字符！")
     private String nickname;
 
     @Size(max=100,message=" 邮箱：长度范围 6-100字符! ")
@@ -82,6 +82,9 @@ public class UserBasic {
     }
 
     public void setNickname(String nickname) {
+    		if(nickname.length()>20) {
+    			this.nickname = nickname.substring(0, 17) + "...";
+    		}
         this.nickname = nickname == null ? null : nickname.trim();
     }
 

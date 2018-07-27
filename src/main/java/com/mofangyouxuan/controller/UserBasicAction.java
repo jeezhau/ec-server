@@ -193,6 +193,7 @@ public class UserBasicAction {
 			UserBasic old = this.userBasicService.get(unique);
 			if( old != null) {	//已有该用户，直接返回成功
 				if("2".equals(registType)) {//微信再次关注
+					userBasic.setUserId(old.getUserId());
 					return this.update(userBasic, result);
 				}
 				jsonRet.put("errcode", 0);

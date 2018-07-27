@@ -52,15 +52,15 @@ public class BalanceBillSchedule {
 	 * 2、会员余额对账当日；
 	 */
 	@SuppressWarnings("unused")
-	@Scheduled(cron="0 30 4,8,11,16,17,18 * * ?")
-	//@Scheduled(cron="0 27 22 * * ?")
+	//@Scheduled(cron="0 30 4,8,11,16,17,18,22 * * ?")
+	@Scheduled(cron="0 13 22 * * ?")
 	public void balanceBill() {
 		try {
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(new Date());
 			cal.add(Calendar.DAY_OF_MONTH, -1);
-			//String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
-			String strBillDate = "20180711";
+			String strBillDate = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
+			//String strBillDate = "20180711";
 			//微信账单
 			String wxpayBillFilename = "wxpay{strBillDate}_1.gzip";
 			wxpayBillFilename = wxpayBillFilename.replace("{strBillDate}",strBillDate);

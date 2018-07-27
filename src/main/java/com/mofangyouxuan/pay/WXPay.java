@@ -73,10 +73,10 @@ public class WXPay {
 	
 	public String SecretKEY;			//微信支付商户密钥,保存于服务器本地
 	@Value("${wxpay.cert-key-dir}")
-	public String certKeyDir="/Users/jeekhan/mfpay/wxpay/";
+	public String certKeyDir;
 	
 	@Value("${sys.pay-bills-dir}")
-	public String payBillsDir="/Users/jeekhan/mfyx/paybills/";	//支付账单保存路径
+	public String payBillsDir;	//支付账单保存路径
 	
 	
 	@Autowired

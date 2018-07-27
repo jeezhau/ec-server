@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.ImageGalleryMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.ImageGallery">
+    <id column="img_id" jdbcType="VARCHAR" property="imgId" />
+    <result column="img_type" jdbcType="VARCHAR" property="imgType" />
+    <result column="is_dir" jdbcType="VARCHAR" property="isDir" />
+    <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
+    <result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+    <result column="using_cnt" jdbcType="INTEGER" property="usingCnt" />
+    <result column="udpate_time" jdbcType="TIMESTAMP" property="udpateTime" />
+    <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    img_id, img_type, is_dir, partner_id, parent_id, file_name, using_cnt, udpate_time, 
+    update_opr
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="map" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_image_gallery
+    where img_id = #{imgId,jdbcType=VARCHAR} and partner_id = #{partnerId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="map">
+    delete from tb_image_gallery
+    where img_id = #{imgId,jdbcType=VARCHAR} and partner_id = #{partnerId,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.ImageGallery">
+    insert into tb_image_gallery (img_id, img_type, is_dir, 
+      partner_id, parent_id, file_name, 
+      using_cnt, udpate_time, update_opr
+      )
+    values (#{imgId,jdbcType=VARCHAR}, #{imgType,jdbcType=VARCHAR}, #{isDir,jdbcType=VARCHAR}, 
+      #{partnerId,jdbcType=INTEGER}, #{parentId,jdbcType=VARCHAR}, #{fileName,jdbcType=VARCHAR}, 
+      #{usingCnt,jdbcType=INTEGER}, #{udpateTime,jdbcType=TIMESTAMP}, #{updateOpr,jdbcType=INTEGER}
+      )
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.ImageGallery">
+    insert into tb_image_gallery
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="imgId != null">
+        img_id,
+      </if>
+      <if test="imgType != null">
+        img_type,
+      </if>
+      <if test="isDir != null">
+        is_dir,
+      </if>
+      <if test="partnerId != null">
+        partner_id,
+      </if>
+      <if test="parentId != null">
+        parent_id,
+      </if>
+      <if test="fileName != null">
+        file_name,
+      </if>
+      <if test="usingCnt != null">
+        using_cnt,
+      </if>
+      <if test="udpateTime != null">
+        udpate_time,
+      </if>
+      <if test="updateOpr != null">
+        update_opr,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="imgId != null">
+        #{imgId,jdbcType=VARCHAR},
+      </if>
+      <if test="imgType != null">
+        #{imgType,jdbcType=VARCHAR},
+      </if>
+      <if test="isDir != null">
+        #{isDir,jdbcType=VARCHAR},
+      </if>
+      <if test="partnerId != null">
+        #{partnerId,jdbcType=INTEGER},
+      </if>
+      <if test="parentId != null">
+        #{parentId,jdbcType=VARCHAR},
+      </if>
+      <if test="fileName != null">
+        #{fileName,jdbcType=VARCHAR},
+      </if>
+      <if test="usingCnt != null">
+        #{usingCnt,jdbcType=INTEGER},
+      </if>
+      <if test="udpateTime != null">
+        #{udpateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateOpr != null">
+        #{updateOpr,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.ImageGallery">
+    update tb_image_gallery
+    <set>
+      <if test="imgType != null">
+        img_type = #{imgType,jdbcType=VARCHAR},
+      </if>
+      <if test="isDir != null">
+        is_dir = #{isDir,jdbcType=VARCHAR},
+      </if>
+      <if test="parentId != null">
+        parent_id = #{parentId,jdbcType=VARCHAR},
+      </if>
+      <if test="fileName != null">
+        file_name = #{fileName,jdbcType=VARCHAR},
+      </if>
+      <if test="usingCnt != null">
+        using_cnt = #{usingCnt,jdbcType=INTEGER},
+      </if>
+      <if test="udpateTime != null">
+        udpate_time = #{udpateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateOpr != null">
+        update_opr = #{updateOpr,jdbcType=INTEGER},
+      </if>
+    </set>
+    where img_id = #{imgId,jdbcType=VARCHAR} and partner_id = #{partnerId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.ImageGallery">
+    update tb_image_gallery
+    set img_type = #{imgType,jdbcType=VARCHAR},
+      is_dir = #{isDir,jdbcType=VARCHAR},
+      parent_id = #{parentId,jdbcType=VARCHAR},
+      file_name = #{fileName,jdbcType=VARCHAR},
+      using_cnt = #{usingCnt,jdbcType=INTEGER},
+      udpate_time = #{udpateTime,jdbcType=TIMESTAMP},
+      update_opr = #{updateOpr,jdbcType=INTEGER}
+    where img_id = #{imgId,jdbcType=VARCHAR} and partner_id = #{partnerId,jdbcType=INTEGER}
+  </update>
+  
+  <sql id="whereSql">
+   <where>
+    <if test="params.imgId != null">
+     and img_id = #{params.imgId,jdbcType=VARCHAR}
+    </if>
+    <if test="params.imgType != null">
+     and img_type = #{params.imgType,jdbcType=VARCHAR}
+    </if>
+    <if test="params.isDir != null">
+     and is_dir = #{params.isDir,jdbcType=VARCHAR}
+    </if>
+    <if test="params.partnerId != null">
+     and partner_id = #{params.partnerId,jdbcType=INTEGER}
+    </if>
+    <if test="params.parentId != null">
+     and parent_id = #{params.parentId,jdbcType=VARCHAR}
+    </if>
+    <if test="params.fileName != null">
+     and file_name = #{params.fileName,jdbcType=VARCHAR}
+    </if>
+    <if test="params.isUsing != null and params.isUsing == 1">
+     and using_cnt &gt; 0
+    </if>
+   </where>
+  </sql>
+  
+  <select id="countAll" parameterType="map" resultType="int">
+    select count(1)
+    from tb_image_gallery
+    <include refid="whereSql" />
+  </select>
+  
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_image_gallery
+    <include refid="whereSql" />
+    order by is_dir desc 
+  </select>
+  
+</mapper>

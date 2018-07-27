@@ -66,7 +66,7 @@ public class AliPay {
 	public String SIGN_TYPE = "RSA2";
 	
 	@Value("${sys.pay-bills-dir}")
-	public String payBillsDir="/Users/jeekhan/mfyx/paybills/";	//支付账单保存路径
+	public String payBillsDir;	//支付账单保存路径
 
 	@Autowired
 	private OrderService orderService;

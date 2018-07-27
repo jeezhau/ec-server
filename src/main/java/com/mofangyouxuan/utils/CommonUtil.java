@@ -43,6 +43,17 @@ public class CommonUtil {
 	}
 	
 	/**
+	 * 生成20位的ImageID
+	 * @return
+	 */
+	public static String genImageId() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddhhmmssSSS"); //17位时间
+		String currTime = sdf.format(new Date());
+		return currTime + NonceStrUtil.getNonceNum(3);
+	}
+	
+	
+	/**
 	 * 获取指定IP的二进制字符串序列
 	 * @param address
 	 * @return

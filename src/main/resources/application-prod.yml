@@ -27,7 +27,7 @@ mybatis:
  
 logging:
   level:
-    com.mofangyouxuan: DEBUG
+    com.mofangyouxuan: INFO
 
   
 ######业务参数############

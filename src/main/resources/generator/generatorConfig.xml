@@ -55,15 +55,12 @@
         <table tableName="tb_sumbal_log" domainObjectName="SumBalLog" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
         <table tableName="tb_cash_apply" domainObjectName="CashApply" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
         <table tableName="tb_goods_spec" domainObjectName="GoodsSpec" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
-        <table tableName="tb_order_bal" domainObjectName="OrderBal" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
-                                    
-            
-            -->                 
-<!--        
+        <table tableName="tb_order_bal" domainObjectName="OrderBal" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>     
         <table tableName="tb_appraise" domainObjectName="Appraise" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
- -->        
         <table tableName="tb_aftersale" domainObjectName="Aftersale" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
-                                                
+ -->
+        <table tableName="tb_image_gallery" domainObjectName="ImageGallery" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
+                                                 
     </context>
     
 </generatorConfiguration>

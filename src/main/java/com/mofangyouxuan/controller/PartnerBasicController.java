@@ -92,9 +92,9 @@ public class PartnerBasicController {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			VipBasic vip = this.vipBasicService.get(vipId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
+			if(vip == null ) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+				jsonRet.put("errmsg", "系统中没有该会员！");
 				return jsonRet.toString();
 			}
 			
@@ -145,7 +145,30 @@ public class PartnerBasicController {
 		}
 	}
 	
-	
+	private String dataCheck(PartnerBasic basic) {
+		String errmsg = "";
+		List<PartnerBasic> list;
+		Map<String,Object> params1 = new HashMap<String,Object>();
+		//busiName,legalPername,legalPeridno,compType,compName,licenceNo,phone,
+		params1.put("busiName", basic.getBusiName());
+		list = this.partnerBasicService.getAll(params1, null, new PageCond(0,1));
+		if(list != null && list.size()>0 && !list.get(0).getPartnerId().equals(basic.getPartnerId())) {
+			errmsg += "经营名称：已被使用！";
+		}
+		Map<String,Object> params2 = new HashMap<String,Object>();
+		params2.put("compName", basic.getCompName());
+		list = this.partnerBasicService.getAll(params2, null, new PageCond(0,1));
+		if(list != null && list.size()>0 && !list.get(0).getPartnerId().equals(basic.getPartnerId())) {
+			errmsg += "公司名称：已被使用！";
+		}
+		Map<String,Object> params3 = new HashMap<String,Object>();
+		params3.put("licenceNo", basic.getLicenceNo());
+		list = this.partnerBasicService.getAll(params3, null, new PageCond(0,1));
+		if(list != null && list.size()>0 && !list.get(0).getPartnerId().equals(basic.getPartnerId())) {
+			errmsg += "营业执照号(个人身份证号)：已被使用！";
+		}
+		return errmsg;
+	}
 
 	/**
 	 * 会员自己开通创建合作伙伴
@@ -171,7 +194,6 @@ public class PartnerBasicController {
 				jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-
 			//数据检查
 			VipBasic vip = this.vipBasicService.get(basic.getVipId());
 			if(vip == null || !"1".equals(vip.getStatus()) ) {
@@ -205,6 +227,13 @@ public class PartnerBasicController {
 					jsonRet.put("errmsg", "该上级合作伙伴不存在！");
 					return jsonRet.toString();
 				}
+			}
+			//数据可用检查
+			String errmsg = this.dataCheck(basic);
+			if(errmsg != null && errmsg.length()>1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", errmsg);
+				return jsonRet.toString();
 			}
 			//证件照必填检查
 			File tempCertDir = new File(this.partnerImgDir +  "VIPID_" + basic.getVipId() + "/cert/" );  //临时目录
@@ -310,9 +339,9 @@ public class PartnerBasicController {
 				return jsonRet.toString();
 			}
 			VipBasic vip = this.vipBasicService.get(basic.getVipId());
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
+			if(vip == null) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+				jsonRet.put("errmsg", "系统中没有该会员！");
 				return jsonRet.toString();
 			}
 			if(!old.getVipId().equals(vip.getVipId())) {
@@ -320,6 +349,14 @@ public class PartnerBasicController {
 				jsonRet.put("errmsg", "会员ID与合作伙伴ID不匹配！");
 				return jsonRet.toString();
 			}
+			//数据可用检查
+			String errmsg = this.dataCheck(basic);
+			if(errmsg != null && errmsg.length()>1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", errmsg);
+				return jsonRet.toString();
+			}
+			
 			String oldStatus = old.getStatus();
 			if(!"0".equals(oldStatus) && !"S".equals(oldStatus) && !"C".equals(oldStatus)) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
@@ -419,7 +456,7 @@ public class PartnerBasicController {
 				return jsonRet.toString();
 			}
 			VipBasic vip = this.vipBasicService.get(old.getVipId());
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
+			if(vip == null) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
 				return jsonRet.toString();
@@ -514,9 +551,9 @@ public class PartnerBasicController {
 			}
 			//数据检查
 			VipBasic vip = this.vipBasicService.get(bindVipId);
-			if(vip == null || !"1".equals(vip.getStatus()) ) {
+			if(vip == null ) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
+				jsonRet.put("errmsg", "系统中没有该会员！");
 				return jsonRet.toString();
 			}
 			PartnerBasic partner = this.partnerBasicService.getByBindUser(bindVipId);
@@ -528,7 +565,7 @@ public class PartnerBasicController {
 					isPass = true;
 				}
 			}
-			if(isPass != true) {
+			if(isPass != true && partner != null) {
 				PartnerStaff operator = this.partnerStaffService.get(partner.getPartnerId(), userId); //员工
 				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("basic") && signPwd.equals(operator.getPasswd())) { //员工密码验证
 					isPass = true;
@@ -565,6 +602,10 @@ public class PartnerBasicController {
 			}
 			File newFile = new File(certDir,certType + "." + imgType.toLowerCase());
 			FileUtils.copyInputStreamToFile(image.getInputStream(), newFile);
+			//变更状态
+			if(partner != null) {
+				this.partnerBasicService.changeShopStatus(partner.getPartnerId(), "0");
+			}
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
 		} catch (Exception e) {
@@ -656,7 +697,7 @@ public class PartnerBasicController {
 			String signPwd = SignUtils.encodeSHA256Hex(passwd);
 			if(operator.equals(oprPartner.getVipId())) { //绑定会员
 				VipBasic vip = this.vipBasicService.get(operator);
-				if(vip == null || !"1".equals(vip.getStatus()) ) {
+				if(vip == null) {
 					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
 					return jsonRet.toString();

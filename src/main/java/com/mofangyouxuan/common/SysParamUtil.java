@@ -85,14 +85,6 @@ public class SysParamUtil {
 	@Value("${sys.image-folder-level-limit}")
 	private Integer imageFolderLevelLimit;
 	public Integer getImageFolderLevelLimit() {
-		if(this.getSysParam("image-folder-level-limit") != null) {
-			try {
-				Integer newParam = new Integer(this.getSysParam("image-folder-level-limit"));
-				return newParam;
-			}catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
 		return imageFolderLevelLimit;
 	}
 	

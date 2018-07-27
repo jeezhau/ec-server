@@ -46,7 +46,7 @@ public class PartnerStaff {
     @Null
     private String kfQrcodeUrl;
 
-    @Size(max=96,message="标签ID列表：最长96个字符！")
+    @Size(max=1000,message="标签ID列表：最长1000个字符！")
     private String tagList;
 
     private Date updateTime;
