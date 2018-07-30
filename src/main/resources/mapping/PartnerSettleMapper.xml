@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.PartnerSettleMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.PartnerSettle">
+    <id column="partner_id" jdbcType="INTEGER" property="partnerId" />
+    <result column="is_retfee" jdbcType="VARCHAR" property="isRetfee" />
+    <result column="service_fee_rate" jdbcType="DECIMAL" property="serviceFeeRate" />
+    <result column="share_profit_rate" jdbcType="DECIMAL" property="shareProfitRate" />
+  </resultMap>
+  
+  <sql id="Base_Column_List">
+    partner_id, is_retfee, service_fee_rate, share_profit_rate
+  </sql>
+  
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from tb_partner_settle
+    where partner_id = #{partnerId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from tb_partner_settle
+    where partner_id = #{partnerId,jdbcType=INTEGER}
+  </delete>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.PartnerSettle">
+    insert into tb_partner_settle (partner_id, is_retfee, service_fee_rate, 
+      share_profit_rate)
+    values (#{partnerId,jdbcType=INTEGER}, #{isRetfee,jdbcType=VARCHAR}, #{serviceFeeRate,jdbcType=DECIMAL}, 
+      #{shareProfitRate,jdbcType=DECIMAL})
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.mofangyouxuan.model.PartnerSettle">
+    insert into tb_partner_settle
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="partnerId != null">
+        partner_id,
+      </if>
+      <if test="isRetfee != null">
+        is_retfee,
+      </if>
+      <if test="serviceFeeRate != null">
+        service_fee_rate,
+      </if>
+      <if test="shareProfitRate != null">
+        share_profit_rate,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="partnerId != null">
+        #{partnerId,jdbcType=INTEGER},
+      </if>
+      <if test="isRetfee != null">
+        #{isRetfee,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceFeeRate != null">
+        #{serviceFeeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="shareProfitRate != null">
+        #{shareProfitRate,jdbcType=DECIMAL},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.mofangyouxuan.model.PartnerSettle">
+    update tb_partner_settle
+    <set>
+      <if test="isRetfee != null">
+        is_retfee = #{isRetfee,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceFeeRate != null">
+        service_fee_rate = #{serviceFeeRate,jdbcType=DECIMAL},
+      </if>
+      <if test="shareProfitRate != null">
+        share_profit_rate = #{shareProfitRate,jdbcType=DECIMAL},
+      </if>
+    </set>
+    where partner_id = #{partnerId,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PartnerSettle">
+    update tb_partner_settle
+    set is_retfee = #{isRetfee,jdbcType=VARCHAR},
+      service_fee_rate = #{serviceFeeRate,jdbcType=DECIMAL},
+      share_profit_rate = #{shareProfitRate,jdbcType=DECIMAL}
+    where partner_id = #{partnerId,jdbcType=INTEGER}
+  </update>
+  
+</mapper>
