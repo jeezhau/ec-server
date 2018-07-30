@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -37,6 +38,7 @@ import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.model.PartnerSettle;
 import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.PartnerBasicService;
@@ -84,7 +86,7 @@ public class PartnerBasicController {
 	 * 根据合作伙伴绑定的用户获取合作伙伴信息
 	 * @param userId	绑定用户的ID
 	 * 
-	 * @return {errcode:0,errmsg:"ok",partner:{...}}
+	 * @return {errcode:0,errmsg:"ok",partner:{...},settle:{}}
 	 * @throws JSONException 
 	 */
 	@RequestMapping("/get/byvip/{vipId}")
@@ -104,9 +106,11 @@ public class PartnerBasicController {
 				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
 				return jsonRet.toString();
 			}
+			PartnerSettle settle = this.partnerBasicService.getSettle(partner.getPartnerId());
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
 			jsonRet.put("partner", partner);
+			jsonRet.put("settle", settle);
 			return jsonRet;
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -120,7 +124,7 @@ public class PartnerBasicController {
 	 * 根据合作伙伴绑定的用户获取合作伙伴信息
 	 * @param 合作伙伴ID
 	 * 
-	 * @return {errcode:0,errmsg:"ok",partner:{...}}
+	 * @return {errcode:0,errmsg:"ok",partner:{...},settle:{}}
 	 * @throws JSONException 
 	 */
 	@RequestMapping("/get/byid/{partnerId}")
@@ -133,9 +137,11 @@ public class PartnerBasicController {
 				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
 				return jsonRet.toString();
 			}
+			PartnerSettle settle = this.partnerBasicService.getSettle(partner.getPartnerId());
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
 			jsonRet.put("partner", partner);
+			jsonRet.put("settle", settle);
 			return jsonRet;
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -145,7 +151,7 @@ public class PartnerBasicController {
 		}
 	}
 	
-	private String dataCheck(PartnerBasic basic) {
+	private String basicCheck(PartnerBasic basic) {
 		String errmsg = "";
 		List<PartnerBasic> list;
 		Map<String,Object> params1 = new HashMap<String,Object>();
@@ -169,6 +175,35 @@ public class PartnerBasicController {
 		}
 		return errmsg;
 	}
+	
+	public String settleCheck(PartnerSettle settle) {
+		String errmsg = "";
+		if(settle == null) {
+			return errmsg;
+		}
+		if(settle.getIsRetfee() == null) {
+			settle.setIsRetfee("0");
+		}
+		if(settle.getServiceFeeRate() == null) {
+			settle.setServiceFeeRate(this.sysParamUtil.getDefaultServiceFeeRatio());
+		}else {
+			if(settle.getServiceFeeRate().compareTo(this.sysParamUtil.getSysHighestServiceFeeRate())>0) {
+				errmsg += "平台服务费费率高于系统最高费率！";
+			}else if(settle.getServiceFeeRate().compareTo(this.sysParamUtil.getSysLowestServiceFeeRate())<0) {
+				errmsg += "平台服务费费率低于系统最低费率！";
+			}
+		}
+		if(settle.getShareProfitRate() == null) {
+			settle.setShareProfitRate(this.sysParamUtil.getDefaultPartnerProfitRatio());//设置默认分润比例
+		}else {
+			if(settle.getShareProfitRate().compareTo(new BigDecimal(70))>0){//分润率大于服务费费率70%
+				errmsg += "交易奖励资金比例不可大于70%！";
+			}else if(settle.getShareProfitRate().compareTo(new BigDecimal(0))<0){
+				errmsg += "交易奖励资金比例不可小于0！";
+			}
+		}
+		return errmsg;
+	}
 
 	/**
 	 * 会员自己开通创建合作伙伴
@@ -179,20 +214,28 @@ public class PartnerBasicController {
 	 * @throws JSONException
 	 */
 	@RequestMapping(value="/create",method=RequestMethod.POST)
-	public String create(@Valid PartnerBasic basic,BindingResult result,
+	public String create(@Valid PartnerBasic basic,BindingResult result1,
+			@Valid PartnerSettle settle,BindingResult result2,
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//信息验证结果处理
-			if(result.hasErrors()){
-				StringBuilder sb = new StringBuilder();
-				List<ObjectError> list = result.getAllErrors();
+			StringBuilder errSb = new StringBuilder();
+			if(result1.hasErrors()){
+				List<ObjectError> list = result1.getAllErrors();
 				for(ObjectError e :list){
-					sb.append(e.getDefaultMessage());
+					errSb.append(e.getDefaultMessage());
 				}
-				jsonRet.put("errmsg", sb.toString());
+			}
+			if(result2.hasErrors()){
+				List<ObjectError> list = result2.getAllErrors();
+				for(ObjectError e :list){
+					errSb.append(e.getDefaultMessage());
+				}
+			}
+			if(errSb.length()>0) {
+				jsonRet.put("errmsg", errSb.toString());
 				jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
-				return jsonRet.toString();
 			}
 			//数据检查
 			VipBasic vip = this.vipBasicService.get(basic.getVipId());
@@ -229,7 +272,19 @@ public class PartnerBasicController {
 				}
 			}
 			//数据可用检查
-			String errmsg = this.dataCheck(basic);
+			String errmsg = this.basicCheck(basic);
+			if(errmsg != null && errmsg.length()>1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", errmsg);
+				return jsonRet.toString();
+			}
+			if(settle == null) {
+				settle = new PartnerSettle();
+			}else {
+				settle.setServiceFeeRate(null);
+				settle.setShareProfitRate(null);
+			}
+			errmsg = this.settleCheck(settle);
 			if(errmsg != null && errmsg.length()>1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				jsonRet.put("errmsg", errmsg);
@@ -278,10 +333,13 @@ public class PartnerBasicController {
 				basic.setUpPartnerId(this.sysParamUtil.getSysPartnerId());
 			}
 			basic.setStatus("0"); //待审核
-			basic.setReviewLog("");
-			basic.setReviewOpr(null);
-			basic.setReviewTime(null);
-			Integer id = this.partnerBasicService.add(basic);
+			basic.setFreviewLog(null);
+			basic.setFreviewOpr(null);
+			basic.setFreviewTime(null);
+			basic.setLreviewLog(null);
+			basic.setLreviewOpr(null);
+			basic.setLreviewTime(null);
+			Integer id = this.partnerBasicService.add(basic,settle);
 			if(id == null) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
@@ -311,20 +369,28 @@ public class PartnerBasicController {
 	 * @throws JSONException 
 	 */
 	@RequestMapping(value="/update",method=RequestMethod.POST)
-	public String update(@Valid PartnerBasic basic,BindingResult result,
+	public String update(@Valid PartnerBasic basic,BindingResult result1,
+			@Valid PartnerSettle settle,BindingResult result2,
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			//信息验证结果处理
-			if(result.hasErrors()){
-				StringBuilder sb = new StringBuilder();
-				List<ObjectError> list = result.getAllErrors();
+			StringBuilder errSb = new StringBuilder();
+			if(result1.hasErrors()){
+				List<ObjectError> list = result1.getAllErrors();
 				for(ObjectError e :list){
-					sb.append(e.getDefaultMessage());
+					errSb.append(e.getDefaultMessage());
 				}
-				jsonRet.put("errmsg", sb.toString());
-				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
-				return jsonRet.toString();
+			}
+			if(result2.hasErrors()){
+				List<ObjectError> list = result2.getAllErrors();
+				for(ObjectError e :list){
+					errSb.append(e.getDefaultMessage());
+				}
+			}
+			if(errSb.length()>0) {
+				jsonRet.put("errmsg", errSb.toString());
+				jsonRet.put("errcode", ErrCodes.USER_PARAM_ERROR);
 			}
 			//数据检查
 			if(basic.getPartnerId() == null || basic.getVipId() == null) {
@@ -332,39 +398,61 @@ public class PartnerBasicController {
 				jsonRet.put("errmsg", "合作伙伴ID和绑定的会员ID均不可为空！");
 				return jsonRet.toString();
 			}
-			PartnerBasic old = this.partnerBasicService.getByID(basic.getPartnerId());
-			if(old == null ) {
+			PartnerBasic oldBasic = this.partnerBasicService.getByID(basic.getPartnerId());
+			if(oldBasic == null ) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
 				return jsonRet.toString();
 			}
+			PartnerSettle oldSettle = this.partnerBasicService.getSettle(basic.getPartnerId());
 			VipBasic vip = this.vipBasicService.get(basic.getVipId());
 			if(vip == null) {
 				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
 				jsonRet.put("errmsg", "系统中没有该会员！");
 				return jsonRet.toString();
 			}
-			if(!old.getVipId().equals(vip.getVipId())) {
+			if(!oldBasic.getVipId().equals(vip.getVipId())) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "会员ID与合作伙伴ID不匹配！");
 				return jsonRet.toString();
 			}
-			//数据可用检查
-			String errmsg = this.dataCheck(basic);
-			if(errmsg != null && errmsg.length()>1) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
-				jsonRet.put("errmsg", errmsg);
-				return jsonRet.toString();
-			}
 			
-			String oldStatus = old.getStatus();
+			String oldStatus = oldBasic.getStatus();
 			if(!"0".equals(oldStatus) && !"S".equals(oldStatus) && !"C".equals(oldStatus)) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
 				jsonRet.put("errmsg", "您当前不可变更信息，状态不正确！");
 				return jsonRet.toString();
 			}
+			//数据可用检查
+			String errmsg = this.basicCheck(basic);
+			if(errmsg != null && errmsg.length()>1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", errmsg);
+				return jsonRet.toString();
+			}
+			if(settle == null) {
+				if(oldSettle == null) {
+					settle = new PartnerSettle();
+				}else {
+					settle = oldSettle;
+				}
+			}else {
+				if(oldSettle != null) {
+					settle.setServiceFeeRate(oldSettle.getServiceFeeRate());
+					settle.setShareProfitRate(oldSettle.getShareProfitRate());
+				}else {
+					settle.setServiceFeeRate(null);
+					settle.setShareProfitRate(null);
+				}
+			}
+			errmsg = this.settleCheck(settle);
+			if(errmsg != null && errmsg.length()>1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", errmsg);
+				return jsonRet.toString();
+			}
 			//证件照必填检查
-			File certDir = new File(this.partnerImgDir +  "PARTNERID_" + old.getPartnerId() + "/cert/" );
+			File certDir = new File(this.partnerImgDir +  "PARTNERID_" + oldBasic.getPartnerId() + "/cert/" );
 			if(!certDir.exists() || !certDir.isDirectory()) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_CERT_IMAGE);
 				jsonRet.put("errmsg", "您还未上传相关证书照片！");
@@ -411,17 +499,16 @@ public class PartnerBasicController {
 			}
 			//数据处理
 			basic.setStatus("0"); //待审核
-			basic.setReviewLog("");
-			basic.setReviewOpr(null);
-			basic.setReviewTime(null);
-			
-			int cnt = this.partnerBasicService.updateBasic(basic);
+			if(oldSettle == null) {
+				this.partnerBasicService.add(oldSettle);
+			}
+			int cnt = this.partnerBasicService.updateBasic(basic,settle);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
 			}else {
 				jsonRet.put("errcode", 0);
-				jsonRet.put("partnerId", old.getPartnerId());
+				jsonRet.put("partnerId", oldBasic.getPartnerId());
 				jsonRet.put("errmsg", "ok");
 			}
 		}catch(Exception e) {
@@ -492,7 +579,7 @@ public class PartnerBasicController {
 			}else {
 				newStatus = "S";
 			}
-			int cnt = this.partnerBasicService.changeShopStatus(partnerId, newStatus);
+			int cnt = this.partnerBasicService.changeStatusOwn(partnerId, newStatus);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
@@ -604,7 +691,7 @@ public class PartnerBasicController {
 			FileUtils.copyInputStreamToFile(image.getInputStream(), newFile);
 			//变更状态
 			if(partner != null) {
-				this.partnerBasicService.changeShopStatus(partner.getPartnerId(), "0");
+				this.partnerBasicService.changeStatusOwn(partner.getPartnerId(), "0");
 			}
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
@@ -765,7 +852,7 @@ public class PartnerBasicController {
 			@RequestParam(value="passwd",required=true)String passwd){
 		JSONObject jsonRet = new JSONObject();
 		try {
-			if(!"S".equals(result) && !"R".equals(result)) {
+			if(!"S".equals(result) && !"R".equals(result) && !"1".equals(result)) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "审批结果不正确（S-通过，R-拒绝）！");
 				return jsonRet.toString();
@@ -819,11 +906,14 @@ public class PartnerBasicController {
 				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
 				return jsonRet.toString();
 			}
-			if(!rewPartnerId.equals(this.sysParamUtil.getSysPartnerId())) {
-				result = result + "N";
-			}
 			//数据处理保存
-			int cnt = this.partnerBasicService.review(partnerId, rewPartnerId+"#"+operator, review, result);
+			int cnt ;
+			if(!rewPartnerId.equals(this.sysParamUtil.getSysPartnerId())) {//初审
+				result = result + "N";
+				cnt = this.partnerBasicService.firstReview(partnerId, rewPartnerId+"#"+operator, review, result);
+			}else {//终审
+				cnt = this.partnerBasicService.lastReview(partnerId, rewPartnerId+"#"+operator, review, result);
+			}
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");

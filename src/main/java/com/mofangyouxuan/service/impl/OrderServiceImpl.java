@@ -26,6 +26,7 @@ import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.Order;
 import com.mofangyouxuan.model.OrderBal;
 import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.model.PartnerSettle;
 import com.mofangyouxuan.model.PayFlow;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
@@ -1203,6 +1204,7 @@ public class OrderServiceImpl implements OrderService{
 		//分润数据
 		UserBasic buyUser = this.userBasicService.get(order.getUserId());
 		PartnerBasic partner = this.partnerBasicService.getByBindUser(order.getMchtUId());
+		PartnerSettle settle = this.partnerBasicService.getSettle(partner.getPartnerId());
 		PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
 		if(sysPartner == null || buyUser == null || partner == null) {
 			throw new Exception("获取用户或商家信息失败！");
@@ -1210,25 +1212,40 @@ public class OrderServiceImpl implements OrderService{
 		BigDecimal spreadUserProfit = new BigDecimal(0);
 		BigDecimal spreadPartnerProfit = new BigDecimal(0);
 		BigDecimal sysSrvFee = new BigDecimal(0);
-		if(!isRefund) {
+		if(!isRefund) {//非退款
+			//服务费费率
+			BigDecimal platformServiceFeeRate = this.sysParamUtil.getDefaultServiceFeeRatio();
+			if(settle != null && settle.getServiceFeeRate() != null && 
+					settle.getServiceFeeRate().compareTo(this.sysParamUtil.getSysLowestServiceFeeRate())<0 &&
+					settle.getServiceFeeRate().compareTo(this.sysParamUtil.getSysHighestServiceFeeRate())>0) {
+				platformServiceFeeRate = settle.getServiceFeeRate();
+			}
+			platformServiceFeeRate = platformServiceFeeRate.divide(new BigDecimal(100));//百分比换算
+			sysSrvFee = platformServiceFeeRate.multiply(order.getAmount()).setScale(2, BigDecimal.ROUND_CEILING);//元
+			//推广用户分润
 			if(buyUser != null && buyUser.getSenceId()!=null) {
 				VipBasic spreadVip = this.vipBasicService.get(buyUser.getSenceId());
 				if(spreadVip != null) {
 					BigDecimal spreadUserProfitRate = this.sysParamUtil.getSpreadUserProfitRatio();
+					spreadUserProfitRate = spreadUserProfitRate.divide(new BigDecimal(100));
 					spreadUserProfit = spreadUserProfitRate.multiply(order.getAmount()).setScale(2, BigDecimal.ROUND_FLOOR);//元
 				}
 			}
 			//推广商家分润
 			if(partner.getUpPartnerId() != null) {
 				PartnerBasic spPartner = this.partnerBasicService.getByID(partner.getUpPartnerId());
+				PartnerSettle spSettle = this.partnerBasicService.getSettle(partner.getUpPartnerId());
 				if(spPartner != null) {
-					BigDecimal spreadMchtProfitRate = this.sysParamUtil.getSpreadMchtProfitRatio();
-					spreadPartnerProfit = spreadMchtProfitRate.multiply(order.getAmount()).setScale(2, BigDecimal.ROUND_FLOOR);//元
+					BigDecimal spreadMchtProfitRate = this.sysParamUtil.getDefaultPartnerProfitRatio();
+					if(spSettle != null && spSettle.getShareProfitRate() != null &&
+							spSettle.getShareProfitRate().compareTo(new BigDecimal(0))<0 &&
+							spSettle.getShareProfitRate().compareTo(new BigDecimal(70))>0) {
+						spreadMchtProfitRate = spSettle.getShareProfitRate();
+					}
+					spreadMchtProfitRate = spreadMchtProfitRate.divide(new BigDecimal(100));//百分数换算
+					spreadPartnerProfit = spreadMchtProfitRate.multiply(sysSrvFee).setScale(2, BigDecimal.ROUND_FLOOR);//元
 				}
 			}
-			//收取服务费
-			BigDecimal platformServiceFeeRate = this.sysParamUtil.getPlatformServiceFeeRatio();
-			sysSrvFee = platformServiceFeeRate.multiply(order.getAmount()).setScale(2, BigDecimal.ROUND_CEILING);//元
 		}
 		if(obal == null) {
 			obal = new OrderBal();
@@ -1237,15 +1254,15 @@ public class OrderServiceImpl implements OrderService{
 			obal.setPayType(payType);
 			obal.setPartnerSettle(order.getAmount().subtract(sysSrvFee));
 			obal.setPayAmount(payAmount);	//支付总额
-			obal.setPayFee(payFee);	//支付的手续费
-			obal.setPtoolsFee(toolsFee);
+			obal.setPayFee(payFee);	//用户支付的手续费
+			obal.setPtoolsFee(toolsFee); //支付工具收取的手续费
 			obal.setSpreaderPSettle(spreadPartnerProfit);
 			obal.setSpreaderUSettle(spreadUserProfit);
 			obal.setSyssrvSettle(sysSrvFee);
 			if(isRefund) {//退款不退服务费
-				obal.setRefundPartnerSettle(payAmount);
+				obal.setRefundPartnerSettle(payAmount);//申请的退款金额
 				obal.setRefundTime(refundTime);
-				obal.setRefundUserSettle(payAmount);
+				obal.setRefundUserSettle(payAmount);//申请的退款金额
 				obal.setStatus("0");
 			}else {
 				obal.setStatus("S");

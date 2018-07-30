@@ -79,6 +79,7 @@ public class ImageGalleryServiceImpl implements ImageGalleryService{
 			return jsonRet;
 		}
 		image.setUdpateTime(new Date());
+		image.setUsingCnt(0);
 		int cnt = this.imageGalleryMapper.insert(image);
 		if(cnt >0) {
 			jsonRet.put("errcode", 0);
@@ -128,12 +129,12 @@ public class ImageGalleryServiceImpl implements ImageGalleryService{
 	 * 文件移动
 	 */
 	@Override
-	public JSONObject move(ImageGallery image,ImageGallery newParent) {
+	public JSONObject move(ImageGallery image,String targetParentImgId) {
 		JSONObject jsonRet = new JSONObject();
 		//同名文件检查
 		Map<String,Object> params = new HashMap<String,Object>();
 		params.put("partnerId", image.getPartnerId());
-		params.put("parentId", newParent.getImgId());
+		params.put("parentId", targetParentImgId);
 		params.put("fileName", image.getFileName());
 		List<ImageGallery> list1 = this.imageGalleryMapper.selectAll(params);
 		if(list1 != null && list1.size()>0) {
@@ -144,7 +145,7 @@ public class ImageGalleryServiceImpl implements ImageGalleryService{
 		//单文件夹文件个数检查
 		Map<String,Object> params3 = new HashMap<String,Object>();
 		params3.put("partnerId", image.getPartnerId());
-		params3.put("parentId", newParent.getImgId());
+		params3.put("parentId", targetParentImgId);
 		int cnt2 = this.imageGalleryMapper.countAll(params3);
 		if(cnt2 >= this.sysParamUtil.getImageFolderFileLimit()) {
 			jsonRet.put("errcode", ErrCodes.IMAGE_ALL_FILE_LIMIT);
@@ -155,7 +156,7 @@ public class ImageGalleryServiceImpl implements ImageGalleryService{
 		ImageGallery updImage = new ImageGallery();
 		updImage.setImgId(image.getImgId());
 		updImage.setPartnerId(image.getPartnerId());
-		updImage.setParentId(newParent.getImgId());
+		updImage.setParentId(targetParentImgId);
 		updImage.setUdpateTime(new Date());
 		int cnt = this.imageGalleryMapper.updateByPrimaryKeySelective(updImage);
 		if(cnt >0) {
@@ -208,6 +209,14 @@ public class ImageGalleryServiceImpl implements ImageGalleryService{
 	@Override
 	public List<ImageGallery> getAll(Map<String, Object> params) {
 		return this.imageGalleryMapper.selectAll(params);
+	}
+
+	@Override
+	public int updUsingCnt(Integer partnerId, String imgId, int cnt) {
+		if(cnt == 0) {
+			return 0;
+		}
+		return this.imageGalleryMapper.updUsingCnt(partnerId, imgId, cnt);
 	}
 
 }

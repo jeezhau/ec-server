@@ -181,4 +181,11 @@
     order by is_dir desc 
   </select>
   
+   <update id="updUsingCnt" parameterType="map" >
+    update tb_image_gallery
+    set using_cnt = using_cnt + (#{cnt,jdbcType=INTEGER}) 
+    where partner_id = #{partnerId,jdbcType=INTEGER} 
+    and img_id = #{imgId,jdbcType=INTEGER} 
+  </update>
+  
 </mapper>

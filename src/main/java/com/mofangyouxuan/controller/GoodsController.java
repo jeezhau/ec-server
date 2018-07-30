@@ -41,6 +41,7 @@ import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.utils.CommonUtil;
 import com.mofangyouxuan.utils.SignUtils;
 
 /**
@@ -101,7 +102,12 @@ public class GoodsController {
 			String ret = this.checkSpec(goods,jsonSpecArr);
 			if(ret != null) {
 				return ret;
-			}			
+			}	
+			//图片链接检查
+			ret = this.checkImgs(partnerId, goods);
+			if(ret != null && !"00".equals(ret)) {
+				return ret;
+			}
 			//其他验证
 			Integer limitCnt = goods.getLimitedNum();
 			StringBuilder sb = new StringBuilder();
@@ -205,6 +211,11 @@ public class GoodsController {
 			if(ret != null) {
 				return ret;
 			}
+			//图片链接检查
+			ret = this.checkImgs(partnerId, goods);
+			if(ret != null && !"00".equals(ret)) {
+				return ret;
+			}
 			//其他验证
 			Integer limitCnt = goods.getLimitedNum();
 			StringBuilder sb = new StringBuilder();
@@ -275,7 +286,7 @@ public class GoodsController {
 			goods.setReviewResult(Goods.REWSTAT.forreview.getValue()); 
 			goods.setReviewLog("");
 			goods.setReviewTime(null);
-			int id = this.goodsService.update(goods);
+			int id = this.goodsService.update(old,goods);
 			if(id <1 ) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！，错误码：" + id);
@@ -290,6 +301,32 @@ public class GoodsController {
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
 		return jsonRet.toString();
+	}
+	
+	/**
+	 * 判断是否使用了外链图片或不是自己的图片
+	 * @param goods
+	 * @return
+	 */
+	private String checkImgs(Integer partnerId,Goods goods) {
+		StringBuilder sb = new StringBuilder();
+		if(goods.getGoodsDesc() == null || goods.getGoodsDesc().trim().length()<1) {
+			return "00";
+		}
+		List<String> list = CommonUtil.getImgStr(goods.getGoodsDesc());
+		if(list == null || list.size()<1) {
+			return "00";
+		}
+		for(String str:list) {
+			str = str.trim();
+			if(!str.startsWith("/shop/gimage/" + partnerId)) {
+				sb.append("图片链接【" + str + "】使用不合规！");
+			}
+		}
+		if(sb.length()>0) {
+			return sb.toString();
+		}
+		return "00";
 	}
 	
 	private String checkSpec(Goods goods,String jsonSpecArr) {

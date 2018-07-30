@@ -1,9 +1,16 @@
 package com.mofangyouxuan.utils;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -114,9 +121,104 @@ public class CommonUtil {
 		return ip;
 	}
 	
+	/**
+	 * 统计该文件夹下的文件数量,排除隐藏文件
+	 * @param folder
+	 * @return
+	 */
+	public static int countFileCnt(File file) {
+		int cnt = 0;
+		if(!file.exists()) {//文件不存在
+			return 0;
+		}
+		if(!file.isDirectory()) {//普通文件
+			if(file.getName().startsWith(".")) {
+				return 0;
+			}
+			return 1;
+		}
+		File[] files = file.listFiles();
+		if(files == null || files.length<1) {//空目录
+			return 1;
+		}else {
+			cnt += 1; //非空目录
+		}
+		//迭代目录下的文件
+		
+		for(File f:files) {
+			int c = countFileCnt(f);
+			//System.out.println(f.getName() + ":" + c);
+			cnt += c;
+		}
+		return cnt;
+	}
+	
+	/**
+	 * 从指定文件夹下查找指定文件
+	 * @param folder
+	 * @param filename
+	 * @return
+	 */
+	public static File findFile(File file,String filename) {
+		File target = null;
+		if(file == null) {
+			return null;
+		}
+		if(!file.exists()) {
+			return null;
+		}
+		if(!file.isDirectory()) {//非目录
+			if(file.getName().equals(filename)) {
+				return file;
+			}
+		}
+		File[] files = file.listFiles();
+		if(files == null || files.length<1) {
+			return null;
+		}
+		for(File f:files) {
+			target = findFile(f,filename);
+			if(target != null) {
+				return target;
+			}
+		}
+		return target;
+	}
+
+	/**
+     * 得到网页中图片的地址
+     */
+    public static List<String> getImgStr(String htmlStr) {
+        List<String> pics = new ArrayList<>();
+        String img = "";
+        Pattern p_image;
+        Matcher m_image;
+        //     String regEx_img = "<img.*src=(.*?)[^>]*?>"; //图片链接地址
+        String regEx_img = "<img.*src\\s*=\\s*(.*?)[^>]*?>";
+        p_image = Pattern.compile(regEx_img, Pattern.CASE_INSENSITIVE);
+        m_image = p_image.matcher(htmlStr);
+        while (m_image.find()) {
+            // 得到<img />数据
+            img = m_image.group();
+            // 匹配<img>中的src数据
+            Matcher m = Pattern.compile("src\\s*=\\s*\"?(.*?)(\"|>|\\s+)").matcher(img);
+            while (m.find()) {
+                pics.add(m.group(1));
+            }
+        }
+        return pics;
+    }
+    
 	public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		//System.out.println(genOrderId(100002));
-		System.out.println(SignUtils.encodeSHA256Hex("123456"));
+		//System.out.println(SignUtils.encodeSHA256Hex("123456"));
+		
+		String testStr = "<p>美味鲜甜，不可错过</p>  <p><img alt=\"\" src=\"/shop/gimage/10002/1532177258770.jpg\" style=\"width:80%\" /><img alt=\"\" src=\"/shop/gimage/10002/20180729044308586805\" style=\"width:80%\" /></p>  <p>多汁诱人<img alt=\"\" src=\"/shop/gimage/10002/1532177258766.jpg\" style=\"width:80%\" /></p>  <p><img alt=\"\" src=\"/shop/gimage/10002/20180729044308586804\" style=\"width:80%\" /></p>";
+		List<String> list = getImgStr(testStr);
+		for(String str:list) {
+			System.out.println(str);
+		}
+		
 	}
 
 }

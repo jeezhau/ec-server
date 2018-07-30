@@ -2,6 +2,7 @@ package com.mofangyouxuan.mapper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.ibatis.annotations.Param;
 
@@ -23,5 +24,7 @@ public interface ImageGalleryMapper {
     int countAll(@Param("params")Map<String,Object> params);
     
     List<ImageGallery> selectAll(@Param("params")Map<String,Object> params);
+    
+    int updUsingCnt(@Param("partnerId")Integer partnerId,@Param("imgId")String imgId,@Param("cnt")Integer cnt);
     
 }

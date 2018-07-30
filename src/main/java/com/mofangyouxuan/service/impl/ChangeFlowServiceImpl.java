@@ -18,6 +18,7 @@ import com.mofangyouxuan.model.ChangeFlow;
 import com.mofangyouxuan.model.Order;
 import com.mofangyouxuan.model.OrderBal;
 import com.mofangyouxuan.model.PartnerBasic;
+import com.mofangyouxuan.model.PartnerSettle;
 import com.mofangyouxuan.model.UserBasic;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.ChangeFlowService;
@@ -226,10 +227,12 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	}
 	
 	/**
-	 * 解冻商家
-	 * 1、减少冻结余额，增加可用余额；
+	 * 交易确认完成
+	 * 1、商家资金解冻：减少冻结余额，增加可用余额；
 	 * 2、执行推广用户系统分润；
 	 * 3、执行推广卖家系统分润；
+	 * 4、平台收取服务费；
+	 * 5、商家退款用户支付手续费；
 	 * @param orderBal	订单对账结果
 	 * @param userId		买家ID
 	 * @param mchtVipId	商家会员账户
@@ -243,6 +246,7 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	public String dealFinish(OrderBal orderBal,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId) throws Exception {
 		UserBasic buyUser = this.userBasicService.get(userId);
 		PartnerBasic partner = this.partnerBasicService.getByBindUser(mchtVipId);
+		PartnerSettle settle = this.partnerBasicService.getSettle(partner.getPartnerId());
 		PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
 		if(sysPartner == null || buyUser == null || partner == null) {
 			throw new Exception("获取用户或商家信息失败！");
@@ -260,23 +264,23 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
 		}
-		//推广用户分润
+		//推广用户平台分润
 		if(buyUser != null && buyUser.getSenceId()!=null) {
 			VipBasic spreadVip = this.vipBasicService.get(buyUser.getSenceId());
 			if(spreadVip != null) {
 				Long profit = orderBal.getSpreaderUSettle().multiply(new BigDecimal(100)).longValue();
-				ret = this.shareProfit(sysPartner,profit, spreadVip.getVipId(), oprId, "推广用户购买商品奖励",orderId);
+				ret = this.shareProfit(sysPartner,profit, spreadVip.getVipId(), oprId, "交易完成确认，平台发送交易奖励",orderId);
 				if(!"00".equals(ret)) {
 					throw new Exception(ret);
 				}
 			}
 		}
-		//推广商家分润
+		//推广商家平台分润
 		if(partner.getUpPartnerId() != null) {
 			PartnerBasic spPartner = this.partnerBasicService.getByID(partner.getUpPartnerId());
 			if(spPartner != null) {
 				Long profit = orderBal.getSpreaderPSettle().multiply(new BigDecimal(100)).longValue();
-				ret = this.shareProfit(sysPartner,profit, spPartner.getVipId(), oprId, "推广商家出售商品奖励",orderId);
+				ret = this.shareProfit(sysPartner,profit, spPartner.getVipId(), oprId, "交易完成确认，平台发送交易奖励",orderId);
 				if(!"00".equals(ret)) {
 					throw new Exception(ret);
 				}
@@ -284,18 +288,30 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 		}
 		//系统收取服务费
 		Long syssrvFee = orderBal.getSyssrvSettle().multiply(new BigDecimal(100)).longValue();
-		ret = this.addBal(syssrvFee, sysPartner.getVipId(), oprId, "收取服务费", CashFlowTP.CFTP10, orderId);
+		ret = this.addBal(syssrvFee, sysPartner.getVipId(), oprId, "平台收取服务费", CashFlowTP.CFTP10, orderId);
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
 		}
 		//商家支付服务费
-		ret = this.subBal(syssrvFee, mchtVipId, oprId, "支付服务费", CashFlowTP.CFTP20, orderId);
+		ret = this.subBal(syssrvFee, mchtVipId, oprId, "交易完成确认，支付服务费给平台", CashFlowTP.CFTP20, orderId);
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
 		}
+		//商家退款支付手续费
+		if(settle != null && "1".equals(settle.getIsRetfee())) {
+			Long payFee = orderBal.getPayFee().multiply(new BigDecimal(100)).longValue();
+			ret = this.subBal(payFee, mchtVipId, oprId, "交易完成确认，退支付手续费给买家", CashFlowTP.CFTP27, orderId);
+			if(!"00".equals(ret)) {
+				throw new Exception(ret);
+			}
+			ret = this.addBal(payFee, userId, oprId, "交易完成确认，商家退支付手续费", CashFlowTP.CFTP19, orderId);
+			if(!"00".equals(ret)) {
+				throw new Exception(ret);
+			}
+		}
 		Order updOrder = new Order();
 		updOrder.setOrderId(orderId);
-		updOrder.setStatus("CM");
+		updOrder.setStatus("CM"); //资金结算完成
 		this.orderService.update(updOrder);
 		
 		params = new HashMap<String,Object>();
@@ -672,8 +688,8 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 	 * @author jeekhan
 	 */
 	public static enum CashFlowTP{
-		 CFTP10(10,"服务费(收取)"),CFTP11(11,"客户退款"),CFTP12(12,"交易分润"),CFTP13(13,"平台奖励"), CFTP14(14,"资金解冻"), CFTP15(15,"积分兑换"), CFTP16(16,"现金红包"), CFTP17(17,"退款失败"), CFTP18(18,"提现失败"), 
-		 CFTP20(20,"服务费(支付)"),CFTP21(21,"提现申请"), CFTP22(22,"客户消费"), CFTP23(23,"资金冻结"), CFTP24(24,"投诉罚款"), CFTP25(25,"申请退款"),CFTP26(26,"交易分润"),
+		 CFTP10(10,"服务费(收取)"),CFTP11(11,"客户退款"),CFTP12(12,"交易分润"),CFTP13(13,"平台奖励"), CFTP14(14,"资金解冻"), CFTP15(15,"积分兑换"), CFTP16(16,"现金红包"), CFTP17(17,"退款失败"), CFTP18(18,"提现失败"),CFTP19(19,"卖家退支付手续费"), 
+		 CFTP20(20,"服务费(支付)"),CFTP21(21,"提现申请"), CFTP22(22,"客户消费"), CFTP23(23,"资金冻结"), CFTP24(24,"投诉罚款"), CFTP25(25,"申请退款"),CFTP26(26,"交易分润"),CFTP27(27,"退支付手续费给买家"),
 		 CFTP31(31,"冻结交易买卖额"), CFTP32(32,"买单投诉冻结"), CFTP33(33,"提现冻结"), CFTP34(34,"申请退款"),
 		 CFTP41(41,"恢复可用余额"), CFTP42(42,"提现完成"), CFTP43(43,"交易完成"), CFTP44(44,"退款成功"),CFTP45(45,"退款失败");
 		

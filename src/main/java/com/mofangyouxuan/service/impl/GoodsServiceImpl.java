@@ -2,10 +2,13 @@ package com.mofangyouxuan.service.impl;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,12 +19,15 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
+import com.mofangyouxuan.mapper.CategoryMapper;
 import com.mofangyouxuan.mapper.GoodsMapper;
 import com.mofangyouxuan.mapper.GoodsSpecMapper;
 import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.service.GoodsService;
+import com.mofangyouxuan.service.ImageGalleryService;
+import com.mofangyouxuan.utils.CommonUtil;
 
 
 @Service
@@ -35,7 +41,9 @@ public class GoodsServiceImpl implements GoodsService{
 	@Autowired
 	private GoodsSpecMapper goodsSpecMapper;
 	@Autowired
-	private com.mofangyouxuan.mapper.CategoryMapper categoryMapper;
+	private CategoryMapper categoryMapper;
+	@Autowired
+	private ImageGalleryService imageGalleryService;
 	
 	/**
 	 * 根据ID获取指定商品信息
@@ -78,6 +86,8 @@ public class GoodsServiceImpl implements GoodsService{
 				spec.setUpdateOpr(goods.getUpdateOpr());
 				this.goodsSpecMapper.insert(spec);
 			}
+			//更新图片使用次数
+			this.updateImgUsingCnt(null, goods);
 			return goodsId;
 		}
 		return (long)ErrCodes.COMMON_DB_ERROR;
@@ -89,7 +99,7 @@ public class GoodsServiceImpl implements GoodsService{
 	 * @return 更新的记录数
 	 */
 	@Override
-	public int update(Goods goods) {
+	public int update(Goods old,Goods goods) {
 		Date currTime = new Date();
 		
 		goods.setUpdateTime(new Date());
@@ -105,6 +115,8 @@ public class GoodsServiceImpl implements GoodsService{
 			this.goodsSpecMapper.insert(spec);
 		}
 		int cnt = this.goodsMapper.updateByPrimaryKey(goods);
+		//更新图片使用次数
+		this.updateImgUsingCnt(old, goods);
 		return cnt;
 	}
 	
@@ -267,6 +279,104 @@ public class GoodsServiceImpl implements GoodsService{
 	 */
 	public List<Category> getCategories(){
 		return this.categoryMapper.selectAll();
+	}
+	
+	private Map<String,Integer> selImgFromGoodsDesc(Integer partnerId,String goodsDesc){
+		if(goodsDesc == null || goodsDesc.length()<1) {
+			return null;
+		}
+		List<String> list = CommonUtil.getImgStr(goodsDesc);
+		if(list == null || list.size()<1) {
+			return null;
+		}
+		Map<String,Integer> imgIdMap = new HashMap<String,Integer>();
+		String prefix = "/shop/gimage/" + partnerId + "/";
+		for(String str:list) {
+			str = str.trim();
+			if(str.startsWith(prefix)) {
+				String imgId = str.replace(prefix, "");
+				imgIdMap.put(imgId, imgIdMap.get(imgId)==null?1:imgIdMap.get(imgId)+1);
+			}
+		}
+		return imgIdMap;
+	}
+	
+	private void updateImgUsingCnt(Goods oldG,Goods newG) {
+		Map<String,Integer> oldImgMap = new HashMap<String,Integer>();
+		if(oldG != null) {
+			oldImgMap = this.selImgFromGoodsDesc(oldG.getPartnerId(), oldG.getGoodsDesc());
+			if(oldImgMap == null) {
+				oldImgMap = new HashMap<String,Integer>();
+			}
+			if(oldG.getMainImgPath() != null && oldG.getMainImgPath().length()>0) {
+				Integer cnt = oldImgMap.get(oldG.getMainImgPath().trim());
+				if(cnt == null) {
+					cnt = 1;
+				}else {
+					cnt += 1;
+				}
+				oldImgMap.put(oldG.getMainImgPath().trim(),cnt);
+			}
+			if(oldG.getCarouselImgPaths() != null && oldG.getCarouselImgPaths().length()>0) {
+				String[] arr = oldG.getCarouselImgPaths().split(",");
+				if(arr != null && arr.length > 0) {
+					for(String imgId:arr) {
+						Integer cnt = oldImgMap.get(imgId.trim());
+						if(cnt == null) {
+							cnt = 1;
+						}else {
+							cnt += 1;
+						}
+						oldImgMap.put(imgId.trim(),cnt);
+					}
+				}
+			}
+		}
+		
+		Map<String,Integer> newImgMap = this.selImgFromGoodsDesc(newG.getPartnerId(), newG.getGoodsDesc());
+		if(newImgMap == null) {
+			newImgMap = new HashMap<String,Integer>();
+		}
+		if(newG.getMainImgPath() != null && newG.getMainImgPath().length()>0) {
+			Integer cnt = newImgMap.get(newG.getMainImgPath().trim());
+			if(cnt == null) {
+				cnt = 1;
+			}else {
+				cnt += 1;
+			}
+			newImgMap.put(newG.getMainImgPath().trim(),cnt);
+		}
+		if(newG.getCarouselImgPaths() != null && newG.getCarouselImgPaths().length()>0) {
+			String[] arr = newG.getCarouselImgPaths().split(",");
+			if(arr != null && arr.length > 0) {
+				for(String imgId:arr) {
+					Integer cnt = newImgMap.get(imgId.trim());
+					if(cnt == null) {
+						cnt = 1;
+					}else {
+						cnt += 1;
+					}
+					newImgMap.put(imgId.trim(),cnt);
+				}
+			}
+		}
+		//新添加的图片
+		Set<String> addSet = new HashSet<String>(newImgMap.keySet());//新增
+		addSet.removeAll(oldImgMap.keySet());
+		Set<String> delSet = new HashSet<String>(oldImgMap.keySet());//删除
+		delSet.removeAll(newImgMap.keySet());
+		Set<String> samSet = new HashSet<String>(newImgMap.keySet());//保留
+		samSet.removeAll(addSet);
+		samSet.removeAll(delSet);
+		for(String imgId:addSet) {
+			this.imageGalleryService.updUsingCnt(newG.getPartnerId(), imgId,newImgMap.get(imgId));
+		}
+		for(String imgId:delSet) {
+			this.imageGalleryService.updUsingCnt(oldG.getPartnerId(), imgId,-oldImgMap.get(imgId));
+		}
+		for(String imgId:samSet) {
+			this.imageGalleryService.updUsingCnt(oldG.getPartnerId(), imgId,newImgMap.get(imgId)-oldImgMap.get(imgId));
+		}
 	}
 	
 }

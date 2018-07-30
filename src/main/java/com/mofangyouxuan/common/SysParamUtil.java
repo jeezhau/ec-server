@@ -26,6 +26,30 @@ public class SysParamUtil {
 		return this.sysPartnerId;
 	}
 	
+	//系统默认最低服务费费率1.2%，百分数，针对交易资金
+	private BigDecimal sysLowestServiceFeeRate = new BigDecimal(1.20);
+	public BigDecimal getSysLowestServiceFeeRate() {
+		return this.sysLowestServiceFeeRate;
+	}
+	
+	//系统默认最高服务费费率10%，百分数，针对交易资金
+	private BigDecimal sysHighestServiceFeeRate = new BigDecimal(10.00);
+	public BigDecimal getSysHighestServiceFeeRate() {
+		return this.sysHighestServiceFeeRate;
+	}
+	
+	//平台默认收取服务费费率3%,百分数，针对交易资金
+	private BigDecimal platform_service_fee_ratio = new BigDecimal(3.00);
+	public BigDecimal getDefaultServiceFeeRatio() {
+		return platform_service_fee_ratio;
+	}
+	
+	//推广商家可获得分润利率3%，百分数，针对收取到的服务费的比例
+	private BigDecimal default_partner_profit_ratio = new BigDecimal(3.00);
+	public BigDecimal getDefaultPartnerProfitRatio() {
+		return default_partner_profit_ratio;
+	}
+	
 	//微信支付手续费费率
 	@Value("${wxpay.fee-rate-use-wxpay}")
 	private BigDecimal wxFeeRate;		
@@ -247,33 +271,6 @@ public class SysParamUtil {
 			//e.printStackTrace();
 		}
 		return spread_user_profit_ratio;
-	}
-	
-	
-	//推广商家可获得所推广商家交易额的分润利率
-	@Value("${sys.spread_mcht_profit_ratio}")
-	private BigDecimal spread_mcht_profit_ratio;
-	public BigDecimal getSpreadMchtProfitRatio() {
-		try {
-			BigDecimal newParam = new BigDecimal(this.getSysParam("spread_mcht_profit_ratio"));
-			return newParam;
-		}catch(Exception e) {
-			//e.printStackTrace();
-		}
-		return spread_mcht_profit_ratio;
-	}
-	
-	//平台收取服务费费率
-	@Value("${sys.platform_service_fee_ratio}")
-	private BigDecimal platform_service_fee_ratio;
-	public BigDecimal getPlatformServiceFeeRatio() {
-		try {
-			BigDecimal newParam = new BigDecimal(this.getSysParam("platform_service_fee_ratio"));
-			return newParam;
-		}catch(Exception e) {
-			//e.printStackTrace();
-		}
-		return platform_service_fee_ratio;
 	}
 	
 	

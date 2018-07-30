@@ -85,11 +85,9 @@ sys:
   
   vip_activate_need_score: 500 #激活会员需要多少积分
   spread_per_user_score: 20     #每推广一个用户可获得多少积分
-  spread_user_profit_ratio: 0.001 #推广买家可获得所推广买家交易额的分润利率
-  spread_mcht_profit_ratio: 0.001 #推广商家可获得所推广商家交易额的分润利率
+  spread_user_profit_ratio: 0.1 #推广买家可获得所推广买家交易额的分润利率，百分数
   partner_open_need_socre: 1000   #开通合作伙伴需要多少积分
   trade_score_one_yuan: 1        #每消费一元获得多少积分
-  platform_service_fee_ratio: 0.018  #平台收取服务费费率
   
   postage-cnt-limit: 20 #每个合作伙伴可添加的运费模版数量限制，后续针对用户进行付费控制
   goods-cnt-limit: 30   #每个合作伙伴可添加的商品数量限制，后续针对用户进行付费控制
@@ -107,6 +105,7 @@ sys:
   user-collection-limit: 20 #每个用户可有的收藏数量
   
   vip-account-cnt-limit: 5 #会员用户的账户数量限制
+  
   
   
   

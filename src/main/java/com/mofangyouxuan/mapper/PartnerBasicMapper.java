@@ -21,6 +21,12 @@ public interface PartnerBasicMapper {
     
     int updateByPrimaryKeySelective(PartnerBasic record);
     
+    int updateStatusOwn(PartnerBasic record);
+    
+    int firstReview(PartnerBasic record);
+    
+    int lastReview(PartnerBasic record);
+    
     PartnerBasic selectByBindUser(Integer userId);
     
     int updateScore(@Param("partnerId")Integer partnerId,

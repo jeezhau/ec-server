@@ -23,42 +23,29 @@ import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.ImageGallery;
-import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.PartnerStaff;
-import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.ImageGalleryService;
-import com.mofangyouxuan.service.PartnerBasicService;
-import com.mofangyouxuan.service.PartnerStaffService;
-import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.service.impl.AuthSecret;
 import com.mofangyouxuan.utils.CommonUtil;
-import com.mofangyouxuan.utils.SignUtils;
 
 /**
  * 系统图库管理
  * 1、文件保存目录：主图目录/PARTNERID_[ID]/最近目录ID/文件名ID.后缀
- * 2、每个目录最多N1层，每个目录下最多M张图片；
+ * 2、每个目录最多N个文件；
  * 3、每个会员最多可添加P张照片；
+ * 4、目录的层级结构存与数据库中，文件系统中仅保存一个层级目录；
  * @author jeekhan
  *
  */
 @RestController
 @RequestMapping("/pimage")
-public class PartnerImageController {
-
+public class PartnerImageController {	
 	@Autowired
-	private VipBasicService vipBasicService ;
-	
+	private SysParamUtil sysParamUtil;	
 	@Autowired
-	private SysParamUtil sysParamUtil;
-	
+	private ImageGalleryService imageGalleryService;	
 	@Autowired
-	private PartnerBasicService partnerBasicService;
-	@Autowired
-	private PartnerStaffService partnerStaffService;
-	
-	@Autowired
-	private ImageGalleryService imageGalleryService;
-	
+	private AuthSecret authSecret;
 
 	
 	
@@ -78,32 +65,10 @@ public class PartnerImageController {
 		
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			jsonRet 	= this.authSecret.auth(partnerId, currUserId, passwd,PartnerStaff.TAG.pimage);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			if(image == null || image.isEmpty()) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
@@ -188,32 +153,10 @@ public class PartnerImageController {
 		
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			jsonRet 	= this.authSecret.auth(partnerId, currUserId, passwd,PartnerStaff.TAG.pimage);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			if(image == null || image.isEmpty()) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
@@ -276,84 +219,6 @@ public class PartnerImageController {
 	}
 	
 	/**
-	 * 重命名
-	 * @param imgId	文件ID
-	 * @param fileName	新文件名称
-	 * @param currUserId
-	 * @return
-	 */
-	@RequestMapping("/{partnerId}/rename")
-	public Object rename(@PathVariable("partnerId")Integer partnerId,
-			@RequestParam(value="imgId",required=true)String imgId,
-			@RequestParam(value="fileName",required=true)String fileName,
-			@RequestParam(value="currUserId",required=true)Integer currUserId,
-			@RequestParam(value="passwd",required=true)String passwd){
-		JSONObject jsonRet = new JSONObject();
-		try {
-			//数据检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
-			}
-			//数据处理
-			fileName = fileName.trim();
-			if(!fileName.matches("^[a-zA-Z0-9_\u4e00-\u9fa5]{2,10}$")) {
-				jsonRet.put("errcode", ErrCodes.IMAGE_PARAM_ERROR);
-				jsonRet.put("errmsg", "新文件名称长度为2-10个子母、数字、汉字字符" );
-				return jsonRet.toString();
-			}
-			if("Home".equals(fileName)) {
-				jsonRet.put("errcode", ErrCodes.IMAGE_PARAM_ERROR);
-				jsonRet.put("errmsg", "新文件名称不可是保留词汇：Home ！" );
-				return jsonRet.toString();
-			}
-			
-			//数据保存处理
-			ImageGallery old = this.imageGalleryService.get(imgId,partnerId);
-			if(old == null) {
-				jsonRet.put("errcode", ErrCodes.IMAGE_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该原文件！" );
-				return jsonRet.toString();
-			}
-			if(!old.getPartnerId().equals(partnerId)) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您没有权限执行该操作！" );
-				return jsonRet.toString();
-			}
-			old.setFileName(fileName);
-			jsonRet = this.imageGalleryService.rename(old);
-		} catch (Exception e) {
-			e.printStackTrace();
-			jsonRet = new JSONObject();
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet.toString();
-	}
-	
-	/**
 	 * 新建文件夹
 	 * @param upFolderImgId	上级文件路径
 	 * @param folderName		新建文件夹名称
@@ -368,32 +233,10 @@ public class PartnerImageController {
 			@RequestParam(value="passwd",required=true)String passwd){
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			jsonRet 	= this.authSecret.auth(partnerId, currUserId, passwd,PartnerStaff.TAG.pimage);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			//数据处理
 			folderName = folderName.trim();
@@ -465,32 +308,10 @@ public class PartnerImageController {
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			jsonRet 	= this.authSecret.auth(partnerId, currUserId, passwd,PartnerStaff.TAG.pimage);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			
 			//目录检查
@@ -526,6 +347,133 @@ public class PartnerImageController {
 	}
 	
 	/**
+	 * 文件移动
+	 * @param srcImgId	原文件ID
+	 * @param targetParentId	目标文件夹ID
+	 * @param currUserId
+	 * @return
+	 */
+	@RequestMapping("/{partnerId}/move")
+	public Object move(@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="srcImgId",required=true)String srcImgId,
+			@RequestParam(value="targetParentId",required=true)String targetParentId,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd){
+		JSONObject jsonRet = new JSONObject();
+		try {
+			//安全检查
+			jsonRet 	= this.authSecret.auth(partnerId, currUserId, passwd,PartnerStaff.TAG.pimage);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
+			}
+			//数据检查
+			ImageGallery srcImg = this.imageGalleryService.get(srcImgId, partnerId);
+			ImageGallery targetParent = this.imageGalleryService.get(targetParentId, partnerId);
+			if(srcImg == null) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "原文件:不存在！");
+				return jsonRet.toJSONString();
+			}
+			if(!"Home".equals(targetParentId) && (targetParent == null || !"1".equals(targetParent.getIsDir()))) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "目标文件夹:不存在！");
+				return jsonRet.toJSONString();
+			}
+			if(srcImg.getParentId().equals(targetParentId)) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "目标文件夹:不可与原文件的父文件夹相同！");
+				return jsonRet.toJSONString();
+			}
+			if(srcImg.getImgId().equals(targetParentId)) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "目标文件夹:不可与原文件相同！");
+				return jsonRet.toJSONString();
+			}
+			if(!srcImg.getPartnerId().equals(partnerId) || 
+					!"Home".equals(targetParentId) && !targetParent.getPartnerId().equals(partnerId)) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限执行该操作！");
+				return jsonRet.toJSONString();
+			}
+			//数据保存处理
+			jsonRet = this.imageGalleryService.move(srcImg, targetParentId);
+			if(!(jsonRet.containsKey("errcode") && jsonRet.getIntValue("errcode") == 0)) {
+				return jsonRet.toJSONString();
+			}
+			if("0".equals(srcImg.getIsDir())) {
+				//迁移文件
+				File oldFileDir = new File(sysParamUtil.getImageGalleryDir() + "PARTNERID_" + partnerId + "/" + ("Home".equals(srcImg.getParentId())?"":srcImg.getParentId()));
+				File oldFile = new File(oldFileDir, srcImg.getImgId() + "." + srcImg.getImgType());
+				File newFileDir = new File(sysParamUtil.getImageGalleryDir() + "PARTNERID_" + partnerId + "/" + targetParentId);
+				File newFile = new File(newFileDir, srcImg.getImgId() + "." + srcImg.getImgType());
+				FileUtils.moveFile(oldFile, newFile);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			jsonRet = new JSONObject();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+
+	/**
+	 * 重命名
+	 * @param imgId	文件ID
+	 * @param fileName	新文件名称
+	 * @param currUserId
+	 * @return
+	 */
+	@RequestMapping("/{partnerId}/rename")
+	public Object rename(@PathVariable("partnerId")Integer partnerId,
+			@RequestParam(value="imgId",required=true)String imgId,
+			@RequestParam(value="fileName",required=true)String fileName,
+			@RequestParam(value="currUserId",required=true)Integer currUserId,
+			@RequestParam(value="passwd",required=true)String passwd){
+		JSONObject jsonRet = new JSONObject();
+		try {
+			//安全检查
+			jsonRet 	= this.authSecret.auth(partnerId, currUserId, passwd,PartnerStaff.TAG.pimage);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
+			}
+			//数据处理
+			fileName = fileName.trim();
+			if(!fileName.matches("^[a-zA-Z0-9_\u4e00-\u9fa5]{2,10}$")) {
+				jsonRet.put("errcode", ErrCodes.IMAGE_PARAM_ERROR);
+				jsonRet.put("errmsg", "新文件名称长度为2-10个子母、数字、汉字字符" );
+				return jsonRet.toString();
+			}
+			if("Home".equals(fileName)) {
+				jsonRet.put("errcode", ErrCodes.IMAGE_PARAM_ERROR);
+				jsonRet.put("errmsg", "新文件名称不可是保留词汇：Home ！" );
+				return jsonRet.toString();
+			}
+			
+			//数据保存处理
+			ImageGallery old = this.imageGalleryService.get(imgId,partnerId);
+			if(old == null) {
+				jsonRet.put("errcode", ErrCodes.IMAGE_PARAM_ERROR);
+				jsonRet.put("errmsg", "系统中没有该原文件！" );
+				return jsonRet.toString();
+			}
+			if(!old.getPartnerId().equals(partnerId)) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限执行该操作！" );
+				return jsonRet.toString();
+			}
+			old.setFileName(fileName);
+			jsonRet = this.imageGalleryService.rename(old);
+		} catch (Exception e) {
+			e.printStackTrace();
+			jsonRet = new JSONObject();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+
+	/**
 	 * 删除文件
 	 * @param imgId		文件ID
 	 * @param currUserId	当前操作会员用户
@@ -539,32 +487,10 @@ public class PartnerImageController {
 		
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("pimage") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			jsonRet 	= this.authSecret.auth(partnerId, currUserId, passwd,PartnerStaff.TAG.pimage);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			//数据保存处理
 			ImageGallery old = this.imageGalleryService.get(imgId,partnerId);
@@ -651,74 +577,5 @@ public class PartnerImageController {
 	}
 	
 	
-	/**
-	 * 统计该文件夹下的文件数量,排除隐藏文件
-	 * @param folder
-	 * @return
-	 */
-	private int countFileCnt(File file) {
-		int cnt = 0;
-		if(!file.exists()) {//文件不存在
-			return 0;
-		}
-		if(!file.isDirectory()) {//普通文件
-			if(file.getName().startsWith(".")) {
-				return 0;
-			}
-			return 1;
-		}
-		File[] files = file.listFiles();
-		if(files == null || files.length<1) {//空目录
-			return 1;
-		}else {
-			cnt += 1; //非空目录
-		}
-		//迭代目录下的文件
-		
-		for(File f:files) {
-			int c = countFileCnt(f);
-			//System.out.println(f.getName() + ":" + c);
-			cnt += c;
-		}
-		return cnt;
-	}
 	
-	/**
-	 * 从指定文件夹下查找指定文件
-	 * @param folder
-	 * @param filename
-	 * @return
-	 */
-	private File findFile(File file,String filename) {
-		File target = null;
-		if(file == null) {
-			return null;
-		}
-		if(!file.exists()) {
-			return null;
-		}
-		if(!file.isDirectory()) {//非目录
-			if(file.getName().equals(filename)) {
-				return file;
-			}
-		}
-		File[] files = file.listFiles();
-		if(files == null || files.length<1) {
-			return null;
-		}
-		for(File f:files) {
-			target = findFile(f,filename);
-			if(target != null) {
-				return target;
-			}
-		}
-		return target;
-	}
-	
-	public static void main(String[] args) {
-		String path = "/Users/jeekhan/mfyx/image-gallery/PARTNERID_100008";
-		File file = new File(path);
-		int cnt = new PartnerImageController().countFileCnt(file);
-		System.out.println(cnt);
-	}
 }

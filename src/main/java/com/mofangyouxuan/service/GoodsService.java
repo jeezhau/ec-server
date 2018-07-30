@@ -38,7 +38,7 @@ public interface GoodsService {
 	 * @param goods
 	 * @return
 	 */
-	public int update(Goods goods);
+	public int update(Goods old,Goods goods);
 	
 	/**
 	 * 删除商品记录

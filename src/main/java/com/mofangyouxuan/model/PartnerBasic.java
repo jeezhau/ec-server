@@ -86,13 +86,15 @@ public class PartnerBasic {
     @Null
     private Date updateTime;
 
-    private String reviewLog;
+    private String freviewLog;
     //审批人员：上级合作伙伴ID#员工ID
-    private String reviewOpr;
+    private String freviewOpr;
+    private Date freviewTime;
 
-    @Null
-    private Date reviewTime;
-    
+    private String lreviewLog;
+    //审批人员：系统合作伙伴ID#员工ID
+    private String lreviewOpr;
+    private Date lreviewTime;
     //评分汇总
     private String scoreLogis;
     private String scoreServ;
@@ -268,29 +270,53 @@ public class PartnerBasic {
         this.updateTime = updateTime;
     }
 
-    public String getReviewLog() {
-        return reviewLog;
-    }
+	public String getFreviewLog() {
+		return freviewLog;
+	}
 
-    public void setReviewLog(String reviewLog) {
-        this.reviewLog = reviewLog == null ? null : reviewLog.trim();
-    }
+	public void setFreviewLog(String freviewLog) {
+		this.freviewLog = freviewLog;
+	}
 
-    public String getReviewOpr() {
-        return reviewOpr;
-    }
+	public String getFreviewOpr() {
+		return freviewOpr;
+	}
 
-    public void setReviewOpr(String reviewOpr) {
-        this.reviewOpr = reviewOpr;
-    }
+	public void setFreviewOpr(String freviewOpr) {
+		this.freviewOpr = freviewOpr;
+	}
 
-    public Date getReviewTime() {
-        return reviewTime;
-    }
+	public Date getFreviewTime() {
+		return freviewTime;
+	}
 
-    public void setReviewTime(Date reviewTime) {
-        this.reviewTime = reviewTime;
-    }
+	public void setFreviewTime(Date freviewTime) {
+		this.freviewTime = freviewTime;
+	}
+
+	public String getLreviewLog() {
+		return lreviewLog;
+	}
+
+	public void setLreviewLog(String lreviewLog) {
+		this.lreviewLog = lreviewLog;
+	}
+
+	public String getLreviewOpr() {
+		return lreviewOpr;
+	}
+
+	public void setLreviewOpr(String lreviewOpr) {
+		this.lreviewOpr = lreviewOpr;
+	}
+
+	public Date getLreviewTime() {
+		return lreviewTime;
+	}
+
+	public void setLreviewTime(Date lreviewTime) {
+		this.lreviewTime = lreviewTime;
+	}
 
 	public Double getDistance() {
 		return distance;

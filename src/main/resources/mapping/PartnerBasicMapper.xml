@@ -24,18 +24,22 @@
     <result column="status" jdbcType="CHAR" property="status" />
     <result column="update_opr" jdbcType="INTEGER" property="updateOpr" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
-    <result column="review_log" jdbcType="VARCHAR" property="reviewLog" />
-    <result column="review_opr" jdbcType="VARCHAR" property="reviewOpr" />
-    <result column="review_time" jdbcType="TIMESTAMP" property="reviewTime" />
+    <result column="freview_log" jdbcType="VARCHAR" property="freviewLog" />
+    <result column="freview_opr" jdbcType="VARCHAR" property="freviewOpr" />
+    <result column="freview_time" jdbcType="TIMESTAMP" property="freviewTime" />
+    <result column="lreview_log" jdbcType="VARCHAR" property="lreviewLog" />
+    <result column="lreview_opr" jdbcType="VARCHAR" property="lreviewOpr" />
+    <result column="lreview_time" jdbcType="TIMESTAMP" property="lreviewTime" />
     <result column="score_logis" jdbcType="VARCHAR" property="scoreLogis" />
     <result column="score_serv" jdbcType="VARCHAR" property="scoreServ" />
     <result column="score_goods" jdbcType="VARCHAR" property="scoreGoods" />
-   
   </resultMap>
+  
   <sql id="Base_Column_List">
     partner_id, vip_id, pb_tp, up_partnerId, country, province, city, area, addr, busi_name, legal_pername, legal_peridno, 
     comp_type, comp_name, licence_no, phone, location_x, location_y, introduce,status, 
-    update_opr, update_time, review_log, review_opr, review_time,score_logis,score_serv,score_goods
+    update_opr, update_time, freview_log, freview_opr, freview_time,lreview_log, lreview_opr, lreview_time,
+    score_logis,score_serv,score_goods
   </sql>
   
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -63,7 +67,9 @@
       addr, busi_name, legal_pername, 
       legal_peridno, comp_type,comp_name, licence_no, 
       phone, location_x, location_y, introduce,
-      status, update_opr, update_time, review_log, review_opr, review_time,
+      status, update_opr, update_time, 
+      freview_log, freview_opr, freview_time,
+      lreview_log, lreview_opr, lreview_time,
       score_logis,score_serv,score_goods
       )
     values (#{partnerId,jdbcType=INTEGER}, #{vipId,jdbcType=INTEGER}, #{pbTp,jdbcType=VARCHAR},#{upPartnerId,jdbcType=INTEGER},
@@ -72,7 +78,8 @@
       #{legalPeridno,jdbcType=VARCHAR}, #{compType,jdbcType=CHAR},#{compName,jdbcType=VARCHAR}, #{licenceNo,jdbcType=VARCHAR}, 
       #{phone,jdbcType=VARCHAR}, #{locationX,jdbcType=DECIMAL}, #{locationY,jdbcType=DECIMAL},
       #{introduce,jdbcType=VARCHAR}, #{status,jdbcType=CHAR}, #{updateOpr,jdbcType=INTEGER},#{updateTime,jdbcType=TIMESTAMP}, 
-      #{reviewLog,jdbcType=VARCHAR}, #{reviewOpr,jdbcType=VARCHAR}, #{reviewTime,jdbcType=TIMESTAMP},
+      #{freviewLog,jdbcType=VARCHAR}, #{freviewOpr,jdbcType=VARCHAR}, #{freviewTime,jdbcType=TIMESTAMP},
+      #{lreviewLog,jdbcType=VARCHAR}, #{lreviewOpr,jdbcType=VARCHAR}, #{lreviewTime,jdbcType=TIMESTAMP},
       #{scoreLogis,jdbcType=VARCHAR},#{scoreServ,jdbcType=VARCHAR},#{scoreGoods,jdbcType=VARCHAR}
       )
   </insert>
@@ -97,9 +104,8 @@
         status = #{status,jdbcType=CHAR},
         update_opr = #{updateOpr,jdbcType=INTEGER},
         update_time = #{updateTime,jdbcType=TIMESTAMP},
-        review_log = null,
-        review_opr = null,
-        review_time = null
+        freview_log = null,freview_opr = null,freview_time = null,
+        lreview_log = null,lreview_opr = null,lreview_time = null
     where partner_id = #{partnerId,jdbcType=INTEGER}
   </update>
 
@@ -159,29 +165,42 @@
       </if>
       <if test="introduce != null">
         introduce = #{introduce,jdbcType=VARCHAR},
-      </if>     
-      <if test="status != null">
+      </if>   
         status = #{status,jdbcType=CHAR},
-      </if>
-      <if test="updateOpr != null">
         update_opr = #{updateOpr,jdbcType=INTEGER},
-      </if>      
-      <if test="updateTime != null">
         update_time = #{updateTime,jdbcType=TIMESTAMP},
-      </if>
-      <if test="reviewLog != null">
-        review_log = #{reviewLog,jdbcType=VARCHAR},
-      </if>
-      <if test="reviewOpr != null">
-        review_opr = #{reviewOpr,jdbcType=VARCHAR},
-      </if>
-      <if test="reviewTime != null">
-        review_time = #{reviewTime,jdbcType=TIMESTAMP},
-      </if>
+        freview_log = null,freview_opr = null,freview_time = null,
+        lreview_log = null,lreview_opr = null,lreview_time = null,
     </set>
     where partner_id = #{partnerId,jdbcType=INTEGER}
   </update>
+ 
+   <!-- 自我变更合作伙伴状态：开关店铺 -->
+  <update id="updateStatusOwn" parameterType="map">
+    update tb_partner_basic
+       status = #{status,jdbcType=CHAR},
+       update_opr = #{updateOpr,jdbcType=INTEGER},
+       update_time = now()
+    where partner_id = #{partnerId,jdbcType=INTEGER}
+  </update>
+   
+  <!-- 上级初审抽查 -->
+  <update id="firstReview" parameterType="map">
+    update tb_partner_basic
+       status = #{status,jdbcType=CHAR},
+       #{freviewLog,jdbcType=VARCHAR}, #{freviewOpr,jdbcType=VARCHAR}, #{freviewTime,jdbcType=TIMESTAMP}
+    where partner_id = #{partnerId,jdbcType=INTEGER}
+  </update>
   
+  <!-- 系统终审抽查 -->
+  <update id="lastReview" parameterType="map">
+    update tb_partner_basic
+       status = #{status,jdbcType=CHAR},
+       #{lreviewLog,jdbcType=VARCHAR}, #{lreviewOpr,jdbcType=VARCHAR}, #{lreviewTime,jdbcType=TIMESTAMP}
+    where partner_id = #{partnerId,jdbcType=INTEGER}
+  </update>
+  
+  <!-- 系统更新合作伙伴的评价得分 -->
   <update id="updateScore" parameterType="map">
     update tb_partner_basic p
      set p.score_logis = concat(ifnull(substring_index(p.score_logis,'/',1),0)+ #{scoreLogis,jdbcType=INTEGER} , '/' , ifnull(substring_index(p.score_logis,'/',-1),0)+1),
