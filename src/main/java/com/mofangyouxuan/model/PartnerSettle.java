@@ -2,13 +2,11 @@ package com.mofangyouxuan.model;
 
 import java.math.BigDecimal;
 
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 public class PartnerSettle {
     private Integer partnerId;
 
-    @NotNull(message="是否退支付手续费：不可为空！")
     @Pattern(regexp="[01]",message="是否退支付手续费：取值【0-否，1-是】！")
     private String isRetfee;
 

@@ -500,7 +500,7 @@ public class PartnerBasicController {
 			//数据处理
 			basic.setStatus("0"); //待审核
 			if(oldSettle == null) {
-				this.partnerBasicService.add(oldSettle);
+				this.partnerBasicService.add(settle);
 			}
 			int cnt = this.partnerBasicService.updateBasic(basic,settle);
 			if(cnt < 1) {
@@ -833,13 +833,14 @@ public class PartnerBasicController {
 	 * 1、上级可对下级进行审核；
 	 * 2、顶级对所有合作伙伴进行最终审核；
 	 * 3、仅顶级审核通过后才算通过；
+	 * 4、设置对合作伙伴设置的结算信息
 	 * @param partnerId	待审批合作伙伴ID
 	 * @param review 	审批意见
 	 * @param result 	审批结果：S-通过，R-拒绝
 	 * @param rewPartnerId	审批人合作伙伴ID
 	 * @param operator	审批人ID，为上级合作伙伴的员工用户ID
 	 * @param passwd		审批人操作密码
-	 * 
+	 * @param settle		设置的结算信息，通过时有效
 	 * @return {errcode:0,errmsg:"ok"}
 	 * @throws JSONException
 	 */
@@ -849,7 +850,8 @@ public class PartnerBasicController {
 			@RequestParam(value="result",required=true)String result,
 			@RequestParam(value="rewPartnerId",required=true)Integer rewPartnerId,
 			@RequestParam(value="operator",required=true)Integer operator,
-			@RequestParam(value="passwd",required=true)String passwd){
+			@RequestParam(value="passwd",required=true)String passwd,
+			PartnerSettle settle){
 		JSONObject jsonRet = new JSONObject();
 		try {
 			if(!"S".equals(result) && !"R".equals(result) && !"1".equals(result)) {
@@ -907,12 +909,34 @@ public class PartnerBasicController {
 				return jsonRet.toString();
 			}
 			//数据处理保存
+			PartnerSettle oldSettle = this.partnerBasicService.getSettle(partnerId);
+			if(settle == null) {
+				if(oldSettle == null) {
+					settle = new PartnerSettle();
+				}else {
+					settle = oldSettle;
+				}
+			}else {
+				if(oldSettle != null) {
+					settle.setIsRetfee(oldSettle.getIsRetfee());
+				}
+			}
+			String errmsg = this.settleCheck(settle);
+			if(errmsg != null && errmsg.length()>1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", errmsg);
+				return jsonRet.toString();
+			}
 			int cnt ;
 			if(!rewPartnerId.equals(this.sysParamUtil.getSysPartnerId())) {//初审
-				result = result + "N";
-				cnt = this.partnerBasicService.firstReview(partnerId, rewPartnerId+"#"+operator, review, result);
+				if("S".equals(result)) {
+					result = "B";
+				}else if("R".equals(result)) {
+					result = "A";
+				}
+				cnt = this.partnerBasicService.firstReview(partnerId, rewPartnerId+"#"+operator, review, result,settle);
 			}else {//终审
-				cnt = this.partnerBasicService.lastReview(partnerId, rewPartnerId+"#"+operator, review, result);
+				cnt = this.partnerBasicService.lastReview(partnerId, rewPartnerId+"#"+operator, review, result,settle);
 			}
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);

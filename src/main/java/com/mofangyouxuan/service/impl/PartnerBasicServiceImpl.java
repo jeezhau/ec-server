@@ -119,13 +119,22 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 	 * @return 更新记录数
 	 */
 	@Override
-	public int firstReview(Integer partnerId,String reviewPidUid,String review,String result) {
+	public int firstReview(Integer partnerId,String reviewPidUid,String review,String result,PartnerSettle settle) {
 		PartnerBasic basic = new PartnerBasic();
 		basic.setPartnerId(partnerId);
 		basic.setFreviewOpr(reviewPidUid);
 		basic.setFreviewLog(review);
 		basic.setFreviewTime(new Date());
 		basic.setStatus(result);
+		if(result.startsWith("S")) {
+			PartnerSettle oldSettle = this.partnerSettleMapper.selectByPrimaryKey(partnerId);
+			if(oldSettle == null) {
+				settle.setPartnerId(partnerId);
+				this.partnerSettleMapper.insert(settle);
+			}else {
+				this.partnerSettleMapper.updateByPrimaryKeySelective(settle);
+			}
+		}
 		return this.partnerBasicMapper.firstReview(basic);
 	}
 	
@@ -138,13 +147,22 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 	 * @return 更新记录数
 	 */
 	@Override
-	public int lastReview(Integer partnerId,String reviewPidUid,String review,String result) {
+	public int lastReview(Integer partnerId,String reviewPidUid,String review,String result,PartnerSettle settle) {
 		PartnerBasic basic = new PartnerBasic();
 		basic.setPartnerId(partnerId);
 		basic.setLreviewOpr(reviewPidUid);
 		basic.setLreviewLog(review);
 		basic.setLreviewTime(new Date());
 		basic.setStatus(result);
+		if(result.startsWith("S")) {
+			PartnerSettle oldSettle = this.partnerSettleMapper.selectByPrimaryKey(partnerId);
+			if(oldSettle == null) {
+				settle.setPartnerId(partnerId);
+				this.partnerSettleMapper.insert(settle);
+			}else {
+				this.partnerSettleMapper.updateByPrimaryKeySelective(settle);
+			}
+		}
 		return this.partnerBasicMapper.lastReview(basic);
 	}
 

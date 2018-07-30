@@ -178,7 +178,7 @@
    <!-- 自我变更合作伙伴状态：开关店铺 -->
   <update id="updateStatusOwn" parameterType="map">
     update tb_partner_basic
-       status = #{status,jdbcType=CHAR},
+   set status = #{status,jdbcType=CHAR},
        update_opr = #{updateOpr,jdbcType=INTEGER},
        update_time = now()
     where partner_id = #{partnerId,jdbcType=INTEGER}
@@ -187,16 +187,20 @@
   <!-- 上级初审抽查 -->
   <update id="firstReview" parameterType="map">
     update tb_partner_basic
-       status = #{status,jdbcType=CHAR},
-       #{freviewLog,jdbcType=VARCHAR}, #{freviewOpr,jdbcType=VARCHAR}, #{freviewTime,jdbcType=TIMESTAMP}
+       set status = #{status,jdbcType=CHAR},
+       freview_log = #{freviewLog,jdbcType=VARCHAR}, 
+       freview_opr = #{freviewOpr,jdbcType=VARCHAR}, 
+       freview_time = #{freviewTime,jdbcType=TIMESTAMP}
     where partner_id = #{partnerId,jdbcType=INTEGER}
   </update>
   
   <!-- 系统终审抽查 -->
   <update id="lastReview" parameterType="map">
     update tb_partner_basic
-       status = #{status,jdbcType=CHAR},
-       #{lreviewLog,jdbcType=VARCHAR}, #{lreviewOpr,jdbcType=VARCHAR}, #{lreviewTime,jdbcType=TIMESTAMP}
+     set status = #{status,jdbcType=CHAR},
+       lreview_log = #{lreviewLog,jdbcType=VARCHAR}, 
+       lreview_opr = #{lreviewOpr,jdbcType=VARCHAR}, 
+       lreview_time = #{lreviewTime,jdbcType=TIMESTAMP}
     where partner_id = #{partnerId,jdbcType=INTEGER}
   </update>
   

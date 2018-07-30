@@ -67,7 +67,7 @@ public interface PartnerBasicService {
 	 * @param result	审批结果
 	 * @return 更新记录数
 	 */
-	public int firstReview(Integer partnerId,String reviewPidUid,String review,String result);
+	public int firstReview(Integer partnerId,String reviewPidUid,String review,String result,PartnerSettle settle);
 	
 	/**
 	 * 记录终审审批人员的审批结果
@@ -77,7 +77,7 @@ public interface PartnerBasicService {
 	 * @param result	审批结果
 	 * @return 更新记录数
 	 */
-	public int lastReview(Integer partnerId,String reviewPidUid,String review,String result);
+	public int lastReview(Integer partnerId,String reviewPidUid,String review,String result,PartnerSettle settle);
 	
 
 	/**
