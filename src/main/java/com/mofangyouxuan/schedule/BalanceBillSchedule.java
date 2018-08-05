@@ -52,8 +52,8 @@ public class BalanceBillSchedule {
 	 * 2、会员余额对账当日；
 	 */
 	@SuppressWarnings("unused")
-	//@Scheduled(cron="0 30 4,8,11,16,17,18,22 * * ?")
-	@Scheduled(cron="0 13 22 * * ?")
+	@Scheduled(cron="0 30 4,8,11,16,17,18,22 * * ?")
+	//@Scheduled(cron="0 13 22 * * ?") //测试
 	public void balanceBill() {
 		try {
 			Calendar cal = Calendar.getInstance();

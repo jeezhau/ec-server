@@ -866,11 +866,12 @@ public class PartnerBasicController {
 			}
 			//数据检查
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			if(partner == null || (!"0".equals(partner.getStatus()) && !partner.getStatus().contains("S") && !partner.getStatus().contains("R")) ) {
+			if(partner == null || (!"0".equals(partner.getStatus()) && !"B".equals(partner.getStatus()) && !"S".equals(partner.getStatus()))) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
 				jsonRet.put("errmsg", "该合作伙伴不存在或状态不正确！");
 				return jsonRet.toString();
 			}
+			
 			PartnerBasic rewPartner = this.partnerBasicService.getByID(rewPartnerId);
 			if(rewPartner == null) {
 				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);

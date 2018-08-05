@@ -260,7 +260,8 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 			throw new Exception("该订单没有交易成功流水信息");
 		}
 		//商家卖款解冻
-		String ret = this.doubleUnFreeze(orderBal.getPayAmount().multiply(new BigDecimal(100)).longValue(), mchtVipId, oprId, reason, CashFlowTP.CFTP14, reason, CashFlowTP.CFTP43,orderId);
+		Long orderAmount = orderBal.getPayAmount().subtract(orderBal.getPayFee()).multiply(new BigDecimal(100)).longValue();
+		String ret = this.doubleUnFreeze(orderAmount, mchtVipId, oprId, reason, CashFlowTP.CFTP14, reason, CashFlowTP.CFTP43,orderId);
 		if(!"00".equals(ret)) {
 			throw new Exception(ret);
 		}
@@ -948,16 +949,16 @@ public class ChangeFlowServiceImpl implements ChangeFlowService{
 			boolean isok = false;
 			if(isRefund) {//退款
 				if(cnt1 > 0) {//退款失败
-					if(bal == amount || bal+fee==amount) {
+					if(bal.equals(amount) || amount.equals(bal+fee)) {
 						isok = true;
 					}
 				}else {//退款成功，在退款完成时执行
-					if(bal==0 || bal == -fee) {
+					if(bal.equals(0l) || bal.equals(-fee)) {
 						isok = true;
 					}
 				}
 			}else {//支付
-				if(bal == amount) {//支付无退款
+				if(bal.equals(amount)) {//支付无退款
 					isok = true;
 					if(hasRefund == true ) {
 						return "00";

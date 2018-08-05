@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mofangyouxuan.mapper.LoginLogMapper">
+  <resultMap id="BaseResultMap" type="com.mofangyouxuan.model.LoginLog">
+    <result column="user_id" jdbcType="VARCHAR" property="userId" />
+    <result column="partner_id" jdbcType="INTEGER" property="partnerId" />
+    <result column="ip" jdbcType="VARCHAR" property="ip" />
+    <result column="referer" jdbcType="VARCHAR" property="referer" />
+    <result column="crt_time" jdbcType="TIMESTAMP" property="crtTime" />
+    <result column="source" jdbcType="VARCHAR" property="source" />
+    <result column="is_succ" jdbcType="VARCHAR" property="isSucc" />
+    <result column="sessionid" jdbcType="VARCHAR" property="sessionid" />
+  </resultMap>
+  
+  <insert id="insert" parameterType="com.mofangyouxuan.model.LoginLog">
+    insert into tb_login_log (user_id, partner_id,ip, referer, 
+      crt_time, source, is_succ,sessionid
+      )
+    values (#{userId,jdbcType=VARCHAR}, #{partnerId,jdbcType=INTEGER},#{ip,jdbcType=VARCHAR}, #{referer,jdbcType=VARCHAR}, 
+      #{crtTime,jdbcType=TIMESTAMP}, #{source,jdbcType=VARCHAR}, #{isSucc,jdbcType=VARCHAR},#{sessionid,jdbcType=VARCHAR}
+      )
+  </insert>
+  
+  <sql id="whereSql" >
+    <where >
+      <if test="params.userId != null">
+        and user_id = #{params.userId,jdbcType=VARCHAR}
+      </if>
+      <if test="params.partnerId != null">
+        and partner_id = #{params.partnerId,jdbcType=INTEGER}
+      </if>
+      <if test="params.ip != null">
+        and ip = #{params.ip,jdbcType=VARCHAR}
+      </if>
+      <if test="params.referer != null">
+        and referer = #{params.referer,jdbcType=VARCHAR}
+      </if>
+      <if test="params.beginCrtTime != null">
+        and crt_time &gt;= concat(#{params.beginCrtTime,jdbcType=VARCHAR},' 00:00:00')
+      </if>
+      <if test="params.endCrtTime != null">
+        and crt_time &lt;= concat(#{params.endCrtTime,jdbcType=VARCHAR},' 23:59:59')
+      </if>
+      <if test="params.source != null">
+        and source = #{params.source,jdbcType=VARCHAR}
+      </if>
+      <if test="params.isSucc != null">
+        and is_succ #{params.isSucc,jdbcType=VARCHAR}
+      </if>
+    </where>
+  </sql>
+  
+  <select id="countAll" parameterType="map" resultType="int">
+   select count(1) cnt
+   from tb_login_log t
+   <include refid="whereSql"></include>
+  </select>
+ 
+  <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
+   select *
+   from tb_login_log t
+   <include refid="whereSql"></include>
+   order by t.crt_time desc
+   limit #{pageCond.begin},#{pageCond.pageSize}
+  </select>
+  
+</mapper>

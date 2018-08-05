@@ -48,7 +48,7 @@ public class UnFreezeAndProfitSchedule {
 	 * 解冻资金
 	 */
 	@Scheduled(cron="0 0 4-8/4 * * ?")
-	//@Scheduled(cron="0 */3 * * * ?")
+	//@Scheduled(cron="0 */3 * * * ?") //测试
 	public void unFreezeAmount() {
 		JSONObject jsonSearch = new JSONObject();
 		jsonSearch.put("status", "41,54,57,58,66,67,68,DS,DR,DF"); //评价完成
@@ -86,16 +86,11 @@ public class UnFreezeAndProfitSchedule {
 					}
 					long gapDays = (new Date().getTime() - apprTime.getTime())/1000/3600/24; //单位天
 					if(gapDays > this.uFreezeDays) { //超时
-						//Long amount = order.getAmount().multiply(new BigDecimal(100)).longValue();
-						//OrderBal orderBal,Integer userId,Integer mchtVipId,Integer oprId,String reason,String orderId
 						OrderBal orderBal = this.orderService.getOBal(order.getOrderId());
-						if(orderBal != null && "SS".equals(orderBal.getStatus())) {
+						if(orderBal != null && (("SS".equals(orderBal.getStatus()) && orderBal.getRefundTime() !=null) ||
+								"S".equals(orderBal.getStatus()) && orderBal.getRefundTime() ==null)) {
 							this.changeFlowService.dealFinish(orderBal, order.getUserId(), order.getMchtUId(), 1, "商家卖款资金解冻【订单号：" + order.getOrderId() + "】", order.getOrderId());
 						}
-//						Order updOrder = new Order();
-//						updOrder.setOrderId(order.getOrderId());
-//						updOrder.setStatus("CM");
-//						this.orderService.update(updOrder);
 					}
 				}catch(Exception e) {
 					log.info("系统资金解冻与分润，系统异常：" + e.getMessage());

@@ -990,17 +990,16 @@ public class OrderServiceImpl implements OrderService{
 		}
 		Order order = this.get(orderId);
 		PayFlow payFlow = this.payFlowMapper.selectByPrimaryKey(flowId);
-		//用户最多应支付（退款）金额
 		BigDecimal feeRate = null;
 		if(payType.startsWith("3")){
 			feeRate = sysParamUtil.getAliFeeRate();
 		}else if(payType.startsWith("2")){
 			feeRate = sysParamUtil.getWxFeeRate();
 		}
-		BigDecimal payFee = order.getAmount().multiply(feeRate).setScale(2, BigDecimal.ROUND_CEILING); //计算手续费,元
-		BigDecimal needAllAmount = order.getAmount().add(payFee);	//用户最多应支付(退款)金额，元
 		boolean isBalOK = true; 	//是否对账成功
 		if(payFlow == null) {//没有支付流水信息
+			BigDecimal payFee = order.getAmount().multiply(feeRate).setScale(2, BigDecimal.ROUND_CEILING); //计算手续费,元
+			BigDecimal needAllAmount = order.getAmount().add(payFee);	//用户最多应支付(退款)金额，元
 			payFlow = new PayFlow();
 			payFlow.setFlowId(flowId);
 			payFlow.setMemo("系统无，微信有，对账插入");
@@ -1203,8 +1202,8 @@ public class OrderServiceImpl implements OrderService{
 		OrderBal obal = this.orderBalMapper.selectByPrimaryKey(order.getOrderId());
 		//分润数据
 		UserBasic buyUser = this.userBasicService.get(order.getUserId());
-		PartnerBasic partner = this.partnerBasicService.getByBindUser(order.getMchtUId());
-		PartnerSettle settle = this.partnerBasicService.getSettle(partner.getPartnerId());
+		PartnerBasic partner = this.partnerBasicService.getByID(order.getPartnerId());
+		PartnerSettle settle = this.partnerBasicService.getSettle(order.getPartnerId());
 		PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
 		if(sysPartner == null || buyUser == null || partner == null) {
 			throw new Exception("获取用户或商家信息失败！");
@@ -1216,8 +1215,8 @@ public class OrderServiceImpl implements OrderService{
 			//服务费费率
 			BigDecimal platformServiceFeeRate = this.sysParamUtil.getDefaultServiceFeeRatio();
 			if(settle != null && settle.getServiceFeeRate() != null && 
-					settle.getServiceFeeRate().compareTo(this.sysParamUtil.getSysLowestServiceFeeRate())<0 &&
-					settle.getServiceFeeRate().compareTo(this.sysParamUtil.getSysHighestServiceFeeRate())>0) {
+					settle.getServiceFeeRate().compareTo(this.sysParamUtil.getSysLowestServiceFeeRate())>0 &&
+					settle.getServiceFeeRate().compareTo(this.sysParamUtil.getSysHighestServiceFeeRate())<0) {
 				platformServiceFeeRate = settle.getServiceFeeRate();
 			}
 			platformServiceFeeRate = platformServiceFeeRate.divide(new BigDecimal(100));//百分比换算
@@ -1238,8 +1237,8 @@ public class OrderServiceImpl implements OrderService{
 				if(spPartner != null) {
 					BigDecimal spreadMchtProfitRate = this.sysParamUtil.getDefaultPartnerProfitRatio();
 					if(spSettle != null && spSettle.getShareProfitRate() != null &&
-							spSettle.getShareProfitRate().compareTo(new BigDecimal(0))<0 &&
-							spSettle.getShareProfitRate().compareTo(new BigDecimal(70))>0) {
+							spSettle.getShareProfitRate().compareTo(new BigDecimal(0))>0 &&
+							spSettle.getShareProfitRate().compareTo(new BigDecimal(70))<0) {
 						spreadMchtProfitRate = spSettle.getShareProfitRate();
 					}
 					spreadMchtProfitRate = spreadMchtProfitRate.divide(new BigDecimal(100));//百分数换算

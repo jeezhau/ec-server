@@ -99,13 +99,13 @@ public class GoodsController {
 			}
 
 			//规格库存检查
-			String ret = this.checkSpec(goods,jsonSpecArr);
+			JSONObject ret = this.checkSpec(goods,jsonSpecArr);
 			if(ret != null) {
 				return ret;
-			}	
+			}
 			//图片链接检查
 			ret = this.checkImgs(partnerId, goods);
-			if(ret != null && !"00".equals(ret)) {
+			if(ret != null) {
 				return ret;
 			}
 			//其他验证
@@ -207,13 +207,13 @@ public class GoodsController {
 			}
 
 			//规格库存检查
-			String ret = this.checkSpec(goods,jsonSpecArr);
+			JSONObject ret = this.checkSpec(goods,jsonSpecArr);
 			if(ret != null) {
 				return ret;
 			}
 			//图片链接检查
 			ret = this.checkImgs(partnerId, goods);
-			if(ret != null && !"00".equals(ret)) {
+			if(ret != null ) {
 				return ret;
 			}
 			//其他验证
@@ -308,14 +308,14 @@ public class GoodsController {
 	 * @param goods
 	 * @return
 	 */
-	private String checkImgs(Integer partnerId,Goods goods) {
+	private JSONObject checkImgs(Integer partnerId,Goods goods) {
 		StringBuilder sb = new StringBuilder();
 		if(goods.getGoodsDesc() == null || goods.getGoodsDesc().trim().length()<1) {
-			return "00";
+			return null;
 		}
 		List<String> list = CommonUtil.getImgStr(goods.getGoodsDesc());
 		if(list == null || list.size()<1) {
-			return "00";
+			return null;
 		}
 		for(String str:list) {
 			str = str.trim();
@@ -324,12 +324,15 @@ public class GoodsController {
 			}
 		}
 		if(sb.length()>0) {
-			return sb.toString();
+			JSONObject jsonRet = new JSONObject();
+			jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
+			jsonRet.put("errmsg", sb.toString());
+			return jsonRet;
 		}
-		return "00";
+		return null;
 	}
 	
-	private String checkSpec(Goods goods,String jsonSpecArr) {
+	private JSONObject checkSpec(Goods goods,String jsonSpecArr) {
 		JSONObject jsonRet = null;
 		//规格检查
 		List<GoodsSpec> specList = JSONArray.parseArray(jsonSpecArr, GoodsSpec.class);
@@ -337,7 +340,7 @@ public class GoodsController {
 			jsonRet = new JSONObject();
 			jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 			jsonRet.put("errmsg", "规格信息记录数量为1-30条！");
-			return jsonRet.toString();
+			return jsonRet;
 		}
 		StringBuilder sb = new StringBuilder();
 		BigDecimal priceLowest = new BigDecimal(99999999.99);
@@ -376,7 +379,7 @@ public class GoodsController {
 			jsonRet = new JSONObject();
 			jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 			jsonRet.put("errmsg", "规格信息不合规：" + sb.toString());
-			return jsonRet.toString();
+			return jsonRet;
 		}
 		for(int i=0;i<specList.size();i++) {
 			for(int j=i+1;j<specList.size();j++) {
@@ -384,7 +387,7 @@ public class GoodsController {
 					jsonRet = new JSONObject();
 					jsonRet.put("errcode", ErrCodes.GOODS_PARAM_ERROR);
 					jsonRet.put("errmsg", "规格信息中不可出现同规格名称的记录！");
-					return jsonRet.toString();
+					return jsonRet;
 				}
 			}
 		}
@@ -651,7 +654,7 @@ public class GoodsController {
 	 * @return {errcode:0,errmsg:'ok'}
 	 */
 	@RequestMapping("/{partnerId}/changeSpec/{goodsId}")
-	public String changeSpec(@PathVariable("partnerId")Integer partnerId,
+	public JSONObject changeSpec(@PathVariable("partnerId")Integer partnerId,
 			@RequestParam(value="currUserId",required=true)Integer currUserId,
 			@RequestParam(value="passwd",required=true)String passwd,
 			@PathVariable(value="goodsId",required=true)Long goodsId,
@@ -663,7 +666,7 @@ public class GoodsController {
 			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
 				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
 				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
+				return jsonRet;
 			}
 			VipBasic vip = this.vipBasicService.get(currUserId);
 			Integer updateOpr = null;
@@ -685,17 +688,17 @@ public class GoodsController {
 			if(!isPass) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+				return jsonRet;
 			}
 			Goods goods = this.goodsService.get(false, goodsId,true);
 			if(goods == null || !goods.getPartnerId().equals(partnerId)) {
 				jsonRet.put("errmsg", "您没有权限执行该操作！");
 				jsonRet.put("errcode", ErrCodes.PARTNER_NO_EXISTS);
-				return jsonRet.toString();
+				return jsonRet;
 			}
 			//规格库存检查
 			Goods updGoods = new Goods();
-			String ret = this.checkSpec(updGoods,jsonSpecArr);
+			JSONObject ret = this.checkSpec(updGoods,jsonSpecArr);
 			if(ret != null) {
 				return ret;
 			}			//数据保存
@@ -712,8 +715,7 @@ public class GoodsController {
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
 			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
 		}
-		return jsonRet.toString();
-		
+		return jsonRet;
 	}
 	
 	/**

@@ -27,6 +27,7 @@ import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.Order;
+import com.mofangyouxuan.model.OrderBal;
 import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.PayFlow;
@@ -638,8 +639,7 @@ public class OrderController {
 	/**
 	 * 根据ID获取订单信息
 	 * @param orderId
-	 * @param 需要显示哪些分类字段：needReceiver,needLogistics,needAppr,needAfterSales,needGoodsAndUser
-	 * @return {errcode:0,errmsg:"ok",order:{...}}
+	 * @return {errcode:0,errmsg:"ok",order:{...},orderBal:{...}}
 	 */
 	@RequestMapping("/get/{orderId}")
 	public Object getOrderByID(@PathVariable("orderId")String orderId) {
@@ -651,9 +651,11 @@ public class OrderController {
 				jsonRet.put("errcode", ErrCodes.ORDER_NO_EXISTS);
 				jsonRet.put("errmsg", "该订单系统中不存在！");
 			}else {
+				OrderBal orderBal = this.orderService.getOBal(orderId);
 				jsonRet.put("errcode", 0);
 				jsonRet.put("errmsg", "ok");
 				jsonRet.put("order", order);
+				jsonRet.put("orderBalStat", (orderBal != null?orderBal.getStatus():""));
 			}
 		}catch(Exception e) {
 			e.printStackTrace();

@@ -93,6 +93,8 @@ public class ErrCodes {
 	public static int CASH_APPLY_HAS_REC = -112001;	//已有提现记录
 	public static int CASH_APPLY_NO_FULL_BAL = -112002;	//已有提现记录
 	
+	//登录控制：113
+	public static int LOGIN_ERRCNT_LIMIT = -113001;	//登录错误次数限制
 	
 }
 

@@ -48,7 +48,7 @@ public class AutoAppraiseSchedule {
 	 * 自动评价
 	 */
 	@Scheduled(cron="0 0 4-8/4 * * ?")
-	//@Scheduled(cron="0 * * * * ?")
+	//@Scheduled(cron="0 * * * * ?")  //测试
 	public void autoAppraise() {
 		JSONObject jsonSearch = new JSONObject();
 		jsonSearch.put("status", "40,56"); //待评价
