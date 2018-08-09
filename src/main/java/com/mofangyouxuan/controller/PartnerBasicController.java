@@ -44,6 +44,7 @@ import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.PartnerBasicService;
 import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.service.impl.AuthSecret;
 import com.mofangyouxuan.utils.FileFilter;
 import com.mofangyouxuan.utils.SignUtils;
 
@@ -71,9 +72,10 @@ public class PartnerBasicController {
 	private PartnerBasicService partnerBasicService;
 	@Autowired
 	private PartnerStaffService partnerStaffService;
-	
 	@Autowired
 	private SysParamUtil sysParamUtil;
+	@Autowired
+	private AuthSecret authSecret;
 	
 	@InitBinder
 	protected void initBinder(WebDataBinder binder) {
@@ -535,38 +537,14 @@ public class PartnerBasicController {
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据检查
+			//安全检查
 			PartnerBasic old = this.partnerBasicService.getByID(partnerId);
-			if(old == null ) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴信息！");
-				return jsonRet.toString();
-			}
 			VipBasic vip = this.vipBasicService.get(old.getVipId());
-			if(vip == null) {
-				jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-				jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-				return jsonRet.toString();
+			jsonRet 	= this.authSecret.auth(old, vip, passwd,PartnerStaff.TAG.basic);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && currUserId.equals(old.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("basic") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
-			}
+			
 			String oldStatus = old.getStatus();
 			if(!"S".equals(oldStatus) && !"C".equals(oldStatus)) { //正常或关闭
 				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);

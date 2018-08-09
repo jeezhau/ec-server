@@ -27,10 +27,9 @@ import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.ComplainLogService;
 import com.mofangyouxuan.service.OrderService;
 import com.mofangyouxuan.service.PartnerBasicService;
-import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
-import com.mofangyouxuan.utils.SignUtils;
+import com.mofangyouxuan.service.impl.AuthSecret;
 
 /**
  * 用户投诉管理
@@ -51,9 +50,9 @@ public class ComplainController {
 	@Autowired
 	private PartnerBasicService partnerBasicService;
 	@Autowired
-	private PartnerStaffService partnerStaffService;
-	@Autowired
 	private SysParamUtil sysParamUtil;
+	@Autowired
+	private AuthSecret authSecret;
 	
 	/**
 	 * 用户对购买的订单进行投诉或商家对上级合作伙伴的投诉
@@ -187,7 +186,14 @@ public class ComplainController {
 		return jsonRet;
 	}
 
-	
+	/**
+	 * 投诉上级合作伙伴
+	 * @param oprPId 投诉者合作伙伴
+	 * @param log
+	 * @param result
+	 * @param passwd
+	 * @return
+	 */
 	@RequestMapping("/{oprPId}/partner/save")
 	public Object complainPartner(@PathVariable("oprPId")Integer oprPId,
 			@Valid ComplainLog log,BindingResult result,
@@ -206,37 +212,12 @@ public class ComplainController {
 				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
 				return jsonRet.toString();
 			}
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			PartnerBasic partner = this.partnerBasicService.getByID(oprPId);
-			if(partner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
-				jsonRet.put("errmsg", "获取合作伙伴信息失败！");
-				return jsonRet.toString();
-			}
-			if(log.getOprId().equals(partner.getVipId())) { //绑定会员
-				VipBasic vip = this.vipBasicService.get(log.getOprId());
-				if(vip == null || !"1".equals(vip.getStatus()) ) {
-					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-					return jsonRet.toString();
-				}
-				if(signPwd.equals(vip.getPasswd())) {
-					isPass = true;
-				}
-			}
-			if(isPass != true) {
-				PartnerStaff staff = this.partnerStaffService.get(oprPId, log.getOprId());
-				if(staff != null && staff.getTagList() != null && 
-						staff.getTagList().contains(PartnerStaff.TAG.complain4p.getValue()) && signPwd.equals(staff.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(oprPId);
+			VipBasic oprVip = this.vipBasicService.get(log.getOprId());
+			jsonRet 	= this.authSecret.auth(myPartner, oprVip, passwd,PartnerStaff.TAG.complain4p);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			//数据检查
 			if(log.getPartnerId() == null) {
@@ -251,7 +232,7 @@ public class ComplainController {
 				return jsonRet.toString();
 			}
 			//上下级关系检查
-			if(!log.getPartnerId().equals(partner.getUpPartnerId())) {
+			if(!log.getPartnerId().equals(myPartner.getUpPartnerId())) {
 				jsonRet.put("errmsg", "您无权对该合作伙伴进行投诉！");
 				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
 				return jsonRet.toString();
@@ -283,9 +264,11 @@ public class ComplainController {
 	}
 	
 	/**
-	 * 删除投诉
-	 * @param logId
-	 * @param userId
+	 * 删除投诉 
+	 * @param partnerId 投诉者合作伙伴
+	 * @param cplanId
+	 * @param operator	投诉操作人ID
+	 * @param passwd
 	 * @return
 	 */
 	@RequestMapping("/{partnerId}/partner/delete/{cplanId}")
@@ -295,41 +278,16 @@ public class ComplainController {
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
-			if(partner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
-				jsonRet.put("errmsg", "获取合作伙伴信息失败！");
-				return jsonRet.toString();
-			}
-			if(operator.equals(partner.getVipId())) { //绑定会员
-				VipBasic vip = this.vipBasicService.get(operator);
-				if(vip == null || !"1".equals(vip.getStatus()) ) {
-					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-					return jsonRet.toString();
-				}
-				if(signPwd.equals(vip.getPasswd())) {
-					isPass = true;
-				}
-			}
-			if(isPass != true) {
-				PartnerStaff staff = this.partnerStaffService.get(partnerId, operator);
-				if(staff != null && staff.getTagList() != null && 
-						staff.getTagList().contains(PartnerStaff.TAG.complain4p.getValue()) && signPwd.equals(staff.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			VipBasic oprVip = this.vipBasicService.get(operator);
+			jsonRet 	= this.authSecret.auth(myPartner, oprVip, passwd,PartnerStaff.TAG.complain4p);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			//数据处理
 			ComplainLog old = this.complainLogService.get(cplanId);
-			if(old == null || !partner.getPartnerId().equals(old.getOprPid())) {
+			if(old == null || !myPartner.getPartnerId().equals(old.getOprPid())) {
 				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您无权执行该操作！");
 			}else {
@@ -359,37 +317,10 @@ public class ComplainController {
 			@RequestParam(value="content",required=true)String content) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
-			if(sysPartner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
-				jsonRet.put("errmsg", "获取合作伙伴信息失败！");
-				return jsonRet.toString();
-			}
-			if(operator.equals(sysPartner.getVipId())) { //绑定会员
-				VipBasic vip = this.vipBasicService.get(operator);
-				if(vip == null || !"1".equals(vip.getStatus()) ) {
-					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-					return jsonRet.toString();
-				}
-				if(signPwd.equals(vip.getPasswd())) {
-					isPass = true;
-				}
-			}
-			if(isPass != true) {
-				PartnerStaff staff = this.partnerStaffService.get(this.sysParamUtil.getSysPartnerId(), operator);
-				if(staff != null && staff.getTagList() != null && 
-						staff.getTagList().contains(PartnerStaff.TAG.ComplainDeal.getValue()) && signPwd.equals(staff.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			jsonRet 	= this.authSecret.auth(this.sysParamUtil.getSysPartnerId(), operator, passwd,PartnerStaff.TAG.ComplainDeal);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			
 			//数据处理
@@ -430,37 +361,10 @@ public class ComplainController {
 				jsonRet.put("errmsg", "系统访问参数不正确！");
 				return jsonRet.toString();
 			}
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
-			if(sysPartner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
-				jsonRet.put("errmsg", "获取合作伙伴信息失败！");
-				return jsonRet.toString();
-			}
-			if(operator.equals(sysPartner.getVipId())) { //绑定会员
-				VipBasic vip = this.vipBasicService.get(operator);
-				if(vip == null || !"1".equals(vip.getStatus()) ) {
-					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-					return jsonRet.toString();
-				}
-				if(signPwd.equals(vip.getPasswd())) {
-					isPass = true;
-				}
-			}
-			if(isPass != true) {
-				PartnerStaff staff = this.partnerStaffService.get(this.sysParamUtil.getSysPartnerId(), operator);
-				if(staff != null && staff.getTagList() != null && 
-						staff.getTagList().contains(PartnerStaff.TAG.ComplainRevisit.getValue()) && signPwd.equals(staff.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			jsonRet 	= this.authSecret.auth(this.sysParamUtil.getSysPartnerId(), operator, passwd,PartnerStaff.TAG.ComplainRevisit);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			//数据处理
 			ComplainLog old = this.complainLogService.get(logId);

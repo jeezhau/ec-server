@@ -11,6 +11,8 @@ public interface GoodsSpecMapper {
     int insert(GoodsSpec record);
 
 	int deleteAll(Long goodsId);
+	
+	int deleteSpec(@Param("goodsId")Long goodsId,@Param("name")String name);
 
     int updateStock(@Param("goodsId")Long goodsId,@Param("name")String name,@Param("changeVal")Integer changeVal);
 

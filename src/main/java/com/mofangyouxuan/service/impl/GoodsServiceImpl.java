@@ -2,7 +2,6 @@ package com.mofangyouxuan.service.impl;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -132,16 +131,16 @@ public class GoodsServiceImpl implements GoodsService{
 	}
 	
 	/**
-	 * 变更商品规格与库存:需要确保同步
+	 * 变更商品规格与库存()
 	 * @param goodsId	商品ID
 	 * @param specDetail	变更的规格信息
-	 * @param updType	变更方式：1-重置规格库存，2-增加库存，3-减少库存
+	 * @param updType	变更方式：1-重置规格库存(不包含名称)，2-增加库存，3-减少库存
 	 * @param updStockSum	需要变更的库存
 	 * @param updPriceLowest	需要变更的最低价（全覆盖时有用）
 	 * @return 更新记录数
 	 */
 	@Override
-	public int changeSpec(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest,Integer updateOpr){
+	public int changeSP(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest,Integer updateOpr){
 		Goods goods = this.get(false, goodsId,true);
 		if(goods == null) {
 			return ErrCodes.GOODS_NO_GOODS;
@@ -150,13 +149,19 @@ public class GoodsServiceImpl implements GoodsService{
 		Goods updG = new Goods();
 		updG.setGoodsId(goodsId);
 		updG.setStockSum(goods.getStockSum());
-		if(updType == 1) {//重置规格库存
+		if(updType == 1) {//重置规格库存(不包含名称)
+			List<GoodsSpec> sysSpec = this.goodsSpecMapper.selectAll(goodsId);
 			this.goodsSpecMapper.deleteAll(goodsId);
 			for(GoodsSpec spec:applySpec) {
-				spec.setGoodsId(goods.getGoodsId());
-				spec.setUpdateTime(currTime);
-				spec.setUpdateOpr(goods.getUpdateOpr());
-				this.goodsSpecMapper.insert(spec);
+				for(GoodsSpec sgs:sysSpec) {
+					if(spec.getName().equals(sgs.getName())) {
+						this.goodsSpecMapper.deleteSpec(goodsId, spec.getName());
+						spec.setGoodsId(goods.getGoodsId());
+						spec.setUpdateTime(currTime);
+						spec.setUpdateOpr(goods.getUpdateOpr());
+						this.goodsSpecMapper.insert(spec);
+					}
+				}
 			}
 			updG.setStockSum(updStockSum);
 			updG.setPriceLowest(updPriceLowest);

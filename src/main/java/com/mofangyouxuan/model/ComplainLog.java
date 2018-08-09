@@ -16,13 +16,13 @@ public class ComplainLog {
 	@NotNull(message="投诉人ID：不可为空！")
     private Integer oprId;
 	
-	private Integer oprPid;
+	private Integer oprPid; //投诉者所属合作伙伴
 
 	@NotNull(message="投诉对象类型：不可为空！")
 	@Pattern(regexp="[12]",message="投诉对象类型：取值为【1-商品订单，2-合作伙伴】！")
 	private String cpType;
 	
-    private Integer partnerId;
+    private Integer partnerId; //被投诉的合作伙伴
 
     private Long goodsId;
 

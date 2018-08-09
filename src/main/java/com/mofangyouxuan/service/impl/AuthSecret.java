@@ -36,7 +36,7 @@ public class AuthSecret {
 		//操作员与密码验证
 		Boolean isPass = false;
 		String signPwd = SignUtils.encodeSHA256Hex(passwd);
-		if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+		if(vip != null && myPartner.getVipId().equals(vip.getVipId())) { //绑定会员
 			if(signPwd.equals(vip.getPasswd())) { //会员密码验证
 				isPass = true;
 			}
@@ -76,7 +76,7 @@ public class AuthSecret {
 		//操作员与密码验证
 		Boolean isPass = false;
 		String signPwd = SignUtils.encodeSHA256Hex(passwd);
-		if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
+		if(vip != null && myPartner.getVipId().equals(vip.getVipId())) { //绑定会员
 			if(signPwd.equals(vip.getPasswd())) { //会员密码验证
 				isPass = true;
 			}

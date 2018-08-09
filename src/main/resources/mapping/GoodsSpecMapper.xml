@@ -23,10 +23,15 @@
       )
   </insert>
   
-  <update id="deleteAll" parameterType="long">
+  <delete id="deleteAll" parameterType="long">
 	delete from tb_goods_spec
 	where goods_id = #{goodsId,jdbcType=INTEGER}
-  </update>
+  </delete>
+  
+  <delete id="deleteSpec" parameterType="map">
+	delete from tb_goods_spec
+	where goods_id = #{goodsId,jdbcType=INTEGER} and name = #{name,jdbcType=VARCHAR}
+  </delete>
   
   <update id="updateStock" parameterType="map">
     update tb_goods_spec
@@ -35,8 +40,8 @@
   </update>
   
   <select id="selectAll" parameterType="long" resultMap="BaseResultMap">
-  select * 
-  from tb_goods_spec
+   select * 
+   from tb_goods_spec
    where goods_id = #{goodsId,jdbcType=INTEGER}
   </select>
 </mapper>

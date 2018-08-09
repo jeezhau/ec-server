@@ -27,9 +27,9 @@ import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.AftersaleService;
 import com.mofangyouxuan.service.OrderService;
 import com.mofangyouxuan.service.PartnerBasicService;
-import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.service.impl.AuthSecret;
 import com.mofangyouxuan.utils.SignUtils;
 
 /**
@@ -47,11 +47,11 @@ public class AftersaleController {
 	@Autowired
 	private PartnerBasicService partnerBasicService;
 	@Autowired
-	private PartnerStaffService partnerStaffService;
-	@Autowired
 	private OrderService orderService;
 	@Autowired
 	private AftersaleService aftersaleService;
+	@Autowired
+	private AuthSecret authSecret;
 
 	@Autowired
 	private SysParamUtil sysParamUtil;
@@ -416,29 +416,14 @@ public class AftersaleController {
 				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
 				return jsonRet.toString();
 			}
+			
+			//安全检查
 			VipBasic vip = this.vipBasicService.get(currUserId);
-			//操作员与密码验证
-			Integer updateOpr = null;
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-					updateOpr = vip.getVipId();
-				}
+			jsonRet 	= this.authSecret.auth(myPartner, vip, passwd,PartnerStaff.TAG.aftersale);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("aftersale") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-					updateOpr = operator.getUserId();
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
-			}
+			
 			Order order = this.orderService.get(orderId);
 			if(order == null || !myPartner.getPartnerId().equals(order.getPartnerId())) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
@@ -523,7 +508,7 @@ public class AftersaleController {
 				Aftersale aftersale = this.aftersaleService.getByID(orderId);
 				JSONObject asr = new JSONObject();
 				asr.put("time", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(currTime));
-				asr.put("operator", updateOpr);
+				asr.put("operator", currUserId);
 				asr.put("type", nextStat.startsWith("5") ? "换货处理":"退款(货)处理");
 				asr.put("content", asCtn);
 				String oldAsr = aftersale.getDealResult()==null ? "[]" : aftersale.getDealResult();

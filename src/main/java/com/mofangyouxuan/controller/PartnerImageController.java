@@ -48,7 +48,6 @@ public class PartnerImageController {
 	private AuthSecret authSecret;
 
 	
-	
 	/**
 	 * 图片上传
 	 * @param folderImgId	所属文件夹ID

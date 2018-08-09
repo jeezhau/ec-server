@@ -48,7 +48,7 @@ public interface GoodsService {
 	public int delete(Goods goods);
 	
 	/**
-	 * 变更商品规格与库存
+	 * 变更商品规格与库存(不可变更名称)
 	 * 
 	 * @param goodsId	商品ID
 	 * @param applySpec	变更的规格信息
@@ -57,7 +57,7 @@ public interface GoodsService {
 	 * @param updPriceLowest	需要变更的最低价（全覆盖时有用）
 	 * @return
 	 */
-	public int changeSpec(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest,Integer updateOpr);
+	public int changeSP(Long goodsId,List<GoodsSpec> applySpec,int updType,Integer updStockSum, BigDecimal updPriceLowest,Integer updateOpr);
 	
 	/**
 	 * 记录商品审批结果

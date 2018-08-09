@@ -19,13 +19,11 @@ import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
 import com.mofangyouxuan.model.CashApply;
-import com.mofangyouxuan.model.PartnerBasic;
 import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.CashApplyService;
-import com.mofangyouxuan.service.PartnerBasicService;
-import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.service.impl.AuthSecret;
 import com.mofangyouxuan.utils.SignUtils;
 
 @RestController
@@ -37,11 +35,9 @@ public class CashApplyController {
 	@Autowired
 	private VipBasicService vipBasicService;
 	@Autowired
-	private PartnerBasicService partnerBasicService;
-	@Autowired
-	private PartnerStaffService partnerStaffService;
-	@Autowired
 	private SysParamUtil sysParamUtil;
+	@Autowired
+	private AuthSecret authSecret;
 	
 	/**
 	 * 提交提现申请
@@ -181,37 +177,10 @@ public class CashApplyController {
 				jsonRet.put("errmsg", "处理备注：长度不可超过1000字符！");
 				return jsonRet.toString();
 			}
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			PartnerBasic sysPartner = this.partnerBasicService.getByID(this.sysParamUtil.getSysPartnerId());
-			if(sysPartner == null) {
-				jsonRet.put("errcode", ErrCodes.PARTNER_STATUS_ERROR);
-				jsonRet.put("errmsg", "获取合作伙伴信息失败！");
-				return jsonRet.toString();
-			}
-			if(operator.equals(sysPartner.getVipId())) { //绑定会员
-				VipBasic vip = this.vipBasicService.get(operator);
-				if(vip == null || !"1".equals(vip.getStatus()) ) {
-					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-					return jsonRet.toString();
-				}
-				if(signPwd.equals(vip.getPasswd())) {
-					isPass = true;
-				}
-			}
-			if(isPass != true) {
-				PartnerStaff staff = this.partnerStaffService.get(this.sysParamUtil.getSysPartnerId(), operator);
-				if(staff != null && staff.getTagList() != null && 
-						staff.getTagList().contains(PartnerStaff.TAG.ComplainDeal.getValue()) && signPwd.equals(staff.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全检查
+			jsonRet 	= this.authSecret.auth(this.sysParamUtil.getSysPartnerId(), operator, passwd,PartnerStaff.TAG.CashapplyDeal);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			//数据处理
 			VipBasic vipBasic = this.vipBasicService.getVipBal(vipId);

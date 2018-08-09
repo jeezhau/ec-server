@@ -198,6 +198,7 @@ public class PartnerStaff {
 		
 		ComplainDeal("ComplainDeal","投诉处理"),
 		ComplainRevisit("ComplainRevisit","投诉回访"),
+		CashapplyDeal("CashapplyDeal","提现处理")
 		;
 		private String value;
 		private String desc;

@@ -513,7 +513,7 @@ public class OrderServiceImpl implements OrderService{
 		//更新库存:减少
 		//Order order = this.get(false, false, false, false, true, payFlow.getOrderId());
 		List<GoodsSpec> buySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
-		this.goodsService.changeSpec(order.getGoodsId(), buySpec, 3, null, null,1);
+		this.goodsService.changeSP(order.getGoodsId(), buySpec, 3, null, null,1);
 	}
 	
 	
@@ -963,7 +963,7 @@ public class OrderServiceImpl implements OrderService{
 		this.orderMapper.updateByPrimaryKeySelective(newO);
 		//更新库存:增加
 		List<GoodsSpec> buySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
-		this.goodsService.changeSpec(order.getGoodsId(), buySpec, 2, null, null,1);
+		this.goodsService.changeSP(order.getGoodsId(), buySpec, 2, null, null,1);
 		
 	}
 	

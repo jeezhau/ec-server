@@ -39,11 +39,11 @@ import com.mofangyouxuan.pay.WXPay;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.OrderService;
 import com.mofangyouxuan.service.PartnerBasicService;
-import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.PostageService;
 import com.mofangyouxuan.service.ReceiverService;
 import com.mofangyouxuan.service.UserBasicService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.service.impl.AuthSecret;
 import com.mofangyouxuan.utils.NonceStrUtil;
 import com.mofangyouxuan.utils.SignUtils;
 
@@ -71,8 +71,6 @@ public class OrderController {
 	@Autowired
 	private PartnerBasicService partnerBasicService;
 	@Autowired
-	private PartnerStaffService partnerStaffService;
-	@Autowired
 	private GoodsService goodsService;
 	@Autowired
 	private ReceiverService receiverService;
@@ -83,6 +81,8 @@ public class OrderController {
 
 	@Autowired
 	private SysParamUtil sysParamUtil;
+	@Autowired
+	private AuthSecret authSecret;
 	
 	/**
 	 * 创建订单
@@ -1148,6 +1148,7 @@ public class OrderController {
 			@PathVariable(value="orderId",required=true)String orderId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
+			
 			Order order = this.orderService.get(orderId);
 			PartnerBasic partner = this.partnerBasicService.getByID(partnerId);
 			if(order == null || partner == null) {
@@ -1201,35 +1202,12 @@ public class OrderController {
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据检查
+			//安全检查
 			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
 			VipBasic vip = this.vipBasicService.get(currUserId);
-			//操作员与密码验证
-			Integer updateOpr = null;
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-					updateOpr = vip.getVipId();
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("saleorder") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-					updateOpr = operator.getUserId();
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			jsonRet 	= this.authSecret.auth(myPartner, vip, passwd,PartnerStaff.TAG.saleorder);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			
 			Order order = this.orderService.get(orderId);
@@ -1247,7 +1225,7 @@ public class OrderController {
 			Order nO = new Order();
 			nO.setOrderId(order.getOrderId());
 			nO.setStatus("30");	//待收货
-			nO.setSendOpr(updateOpr);
+			nO.setSendOpr(currUserId);
 			nO.setSendTime(new Date()); //设置发货时间
 			nO.setLogisticsComp(logisticsComp);
 			nO.setLogisticsNo(logisticsNo);

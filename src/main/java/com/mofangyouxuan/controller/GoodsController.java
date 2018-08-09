@@ -39,10 +39,9 @@ import com.mofangyouxuan.model.PartnerStaff;
 import com.mofangyouxuan.model.VipBasic;
 import com.mofangyouxuan.service.GoodsService;
 import com.mofangyouxuan.service.PartnerBasicService;
-import com.mofangyouxuan.service.PartnerStaffService;
 import com.mofangyouxuan.service.VipBasicService;
+import com.mofangyouxuan.service.impl.AuthSecret;
 import com.mofangyouxuan.utils.CommonUtil;
-import com.mofangyouxuan.utils.SignUtils;
 
 /**
  * 商品管理
@@ -62,9 +61,9 @@ public class GoodsController {
 	@Autowired
 	private PartnerBasicService  partnerBasicService;
 	@Autowired
-	private PartnerStaffService partnerStaffService;
-	@Autowired
 	private SysParamUtil sysParamUtil;
+	@Autowired
+	private AuthSecret authSecret;
 	
 	@InitBinder
 	protected void initBinder(WebDataBinder binder) {
@@ -123,44 +122,20 @@ public class GoodsController {
 				jsonRet.put("errmsg", sb.toString());
 				return jsonRet.toString();
 			}
-			//数据与权限检查
+			//安全与权限检查
 			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
 			VipBasic vip = this.vipBasicService.get(goods.getUpdateOpr());
-			Integer updateOpr = null;
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-					updateOpr = vip.getVipId();
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, goods.getUpdateOpr()); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("goods") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-					updateOpr = operator.getUserId();
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			jsonRet 	= this.authSecret.auth(myPartner, vip, passwd,PartnerStaff.TAG.goods);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			if(!goods.getPartnerId().equals(myPartner.getPartnerId())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_PRIVILEGE_ERROR);
 				jsonRet.put("errmsg", "您无权执行该操作！");
 				return jsonRet.toString();
 			}
-			
 			//数据处理保存
 			goods.setSaledCnt(0);
-			goods.setUpdateOpr(updateOpr);
 			goods.setReviewResult(Goods.REWSTAT.forreview.getValue()); 
 			goods.setReviewLog(null);
 			goods.setReviewTime(null);
@@ -232,34 +207,12 @@ public class GoodsController {
 				return jsonRet.toString();
 			}
 			
-			//数据与权限检查
+			//安全与权限检查
 			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
 			VipBasic vip = this.vipBasicService.get(goods.getUpdateOpr());
-			Integer updateOpr = null;
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-					updateOpr = vip.getVipId();
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, goods.getUpdateOpr()); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("goods") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-					updateOpr = operator.getUserId();
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			jsonRet 	= this.authSecret.auth(myPartner, vip, passwd,PartnerStaff.TAG.goods);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			if(!goods.getPartnerId().equals(myPartner.getPartnerId())) {
 				jsonRet.put("errcode", ErrCodes.GOODS_PRIVILEGE_ERROR);
@@ -282,7 +235,6 @@ public class GoodsController {
 			
 			//更新其他信息
 			goods.setSaledCnt(old.getSaledCnt());
-			goods.setUpdateOpr(updateOpr);
 			goods.setReviewResult(Goods.REWSTAT.forreview.getValue()); 
 			goods.setReviewLog("");
 			goods.setReviewTime(null);
@@ -479,35 +431,13 @@ public class GoodsController {
 			@RequestParam(value="newStatus",required=true)String newStatus) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据与权限检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet.toString();
-			}
+			//安全与权限检查
 			VipBasic vip = this.vipBasicService.get(currUserId);
-			Integer updateOpr = null;
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-					updateOpr = vip.getVipId();
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("goods") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-					updateOpr = operator.getUserId();
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
-			}
+			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
+			jsonRet 	= this.authSecret.auth(myPartner, vip, passwd,PartnerStaff.TAG.goods);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
+			} 
 			String[] arr = goodsIds.split(",");
 			Set<Long> okSet = new HashSet<Long>();
 			Set<String> errSet = new HashSet<String>();
@@ -522,7 +452,7 @@ public class GoodsController {
 			List<Goods> list = new ArrayList<Goods>();
 			for(Long id:okSet) {
 				Goods g = this.goodsService.get(false,id,true);
-				if(g != null && g.getPartnerId().equals(myPartner.getPartnerId())) {//权限验证
+				if(g != null && g.getPartnerId().equals(partnerId)) {//权限验证
 					list.add(g);
 				}else {
 					errSet.add(id.toString());
@@ -535,7 +465,7 @@ public class GoodsController {
 				return jsonRet.toString();
 			}
 			if(list.size()>0) {
-				this.goodsService.changeStatus(list, newStatus,updateOpr);
+				this.goodsService.changeStatus(list, newStatus,currUserId);
 			}
 			
 			if(errSet.size() > 0) {
@@ -603,30 +533,11 @@ public class GoodsController {
 				return jsonRet.toString();
 			}
 			
-			//操作员与密码验证
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(operator.equals(rewPartner.getVipId())) { //绑定会员
-				VipBasic vip = this.vipBasicService.get(operator);
-				if(vip == null || !"1".equals(vip.getStatus()) ) {
-					jsonRet.put("errcode", ErrCodes.VIP_NO_USER);
-					jsonRet.put("errmsg", "系统中没有该会员或未激活！");
-					return jsonRet.toString();
-				}
-				if(signPwd.equals(vip.getPasswd())) {
-					isPass = true;
-				}
-			}
-			if(isPass != true) {
-				PartnerStaff staff = this.partnerStaffService.get(rewPartnerId, operator);
-				if(staff != null && staff.getTagList() != null && staff.getTagList().contains(PartnerStaff.TAG.reviewappr.getValue()) && signPwd.equals(staff.getPasswd())) { //员工密码验证
-					isPass = true;
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
-				return jsonRet.toString();
+			//安全与权限检查
+			VipBasic vip = this.vipBasicService.get(operator);
+			jsonRet 	= this.authSecret.auth(rewPartner, vip, passwd, PartnerStaff.TAG.reviewgds);
+			if(jsonRet.getIntValue("errcode") != 0) {
+				return jsonRet.toJSONString();
 			}
 			
 			int cnt = this.goodsService.review(old, rewPartnerId,operator, result, review);
@@ -661,33 +572,9 @@ public class GoodsController {
 			@RequestParam(value="jsonSpecArr",required=true)String jsonSpecArr) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			//数据与权限检查
-			PartnerBasic myPartner = this.partnerBasicService.getByID(partnerId);
-			if(myPartner == null || !("S".equals(myPartner.getStatus()) || "C".equals(myPartner.getStatus())) ){
-				jsonRet.put("errcode", ErrCodes.PARTNER_PARAM_ERROR);
-				jsonRet.put("errmsg", "系统中没有该合作伙伴的信息！");
-				return jsonRet;
-			}
-			VipBasic vip = this.vipBasicService.get(currUserId);
-			Integer updateOpr = null;
-			Boolean isPass = false;
-			String signPwd = SignUtils.encodeSHA256Hex(passwd);
-			if(vip != null && myPartner.getUpdateOpr().equals(vip.getVipId())) { //绑定会员
-				if(signPwd.equals(vip.getPasswd())) { //会员密码验证
-					isPass = true;
-					updateOpr = vip.getVipId();
-				}
-			}
-			if(isPass != true ) {
-				PartnerStaff operator = this.partnerStaffService.get(partnerId, currUserId); //员工&& operator != null) {
-				if(operator != null && operator.getTagList() != null && operator.getTagList().contains("goods") && signPwd.equals(operator.getPasswd())) { //员工密码验证
-					isPass = true;
-					updateOpr = operator.getUserId();
-				}
-			}
-			if(!isPass) {
-				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您无权对该合作伙伴进行管理(或密码不正确)！");
+			//安全与权限检查
+			jsonRet 	= this.authSecret.auth(partnerId, currUserId, passwd, PartnerStaff.TAG.goods);
+			if(jsonRet.getIntValue("errcode") != 0) {
 				return jsonRet;
 			}
 			Goods goods = this.goodsService.get(false, goodsId,true);
@@ -702,7 +589,7 @@ public class GoodsController {
 			if(ret != null) {
 				return ret;
 			}			//数据保存
-			int cnt = this.goodsService.changeSpec(goodsId, JSONArray.parseArray(jsonSpecArr, GoodsSpec.class), 1,updGoods.getStockSum(), updGoods.getPriceLowest(),updateOpr);
+			int cnt = this.goodsService.changeSP(goodsId, JSONArray.parseArray(jsonSpecArr, GoodsSpec.class), 1,updGoods.getStockSum(), updGoods.getPriceLowest(),currUserId);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
