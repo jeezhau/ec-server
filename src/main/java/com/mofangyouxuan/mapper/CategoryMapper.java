@@ -1,6 +1,9 @@
 package com.mofangyouxuan.mapper;
 
 import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Param;
 
 import com.mofangyouxuan.model.Category;
 
@@ -9,14 +12,12 @@ public interface CategoryMapper {
 
     int insert(Category record);
 
-    int insertSelective(Category record);
-
     Category selectByPrimaryKey(Integer id);
-
-    int updateByPrimaryKeySelective(Category record);
 
     int updateByPrimaryKey(Category record);
     
-    List<Category> selectAll();
+    List<Category> selectAll(@Param("params")Map<String,Object> params);
+    
+    int countAll(@Param("params")Map<String,Object> params);
     
 }

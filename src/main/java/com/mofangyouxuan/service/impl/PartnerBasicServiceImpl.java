@@ -173,10 +173,12 @@ public class PartnerBasicServiceImpl implements PartnerBasicService{
 	 * @return 更新记录数
 	 */
 	@Override
-	public int changeStatusOwn(Integer partnerId,String newStatus) {
+	public int changeStatusOwn(Integer partnerId,Integer operator,String newStatus) {
 		PartnerBasic basic = new PartnerBasic();
+		basic.setUpdateOpr(operator);
 		basic.setPartnerId(partnerId);
 		basic.setStatus(newStatus);
+		basic.setUpdateTime(new Date());
 		return this.partnerBasicMapper.updateByPrimaryKeySelective(basic);
 	}
 

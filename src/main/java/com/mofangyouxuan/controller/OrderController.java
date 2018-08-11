@@ -670,8 +670,8 @@ public class OrderController {
 	 * 查询指定查询条件、排序条件、分页条件的订单信息；
 	 * 商品ID与合作伙伴ID不可都为空
 	 * @param jsonShowGroups		显示字段分组:{needReceiver,needLogistics,needGoodsAndUser}
-	 * @param jsonSearchParams	查询条件:{userId,goodsId, partnerId,upPartnerId,status,keywords,categoryId:,dispatchMode,postageId:,appraiseStatus,appr4User}
-	 * @param jsonSortParams		排序条件:{createTime:"N#0/1",sendTime:"N#0/1",signTime:"N#0/1"}
+	 * @param jsonSearchParams	查询条件:{userId,goodsId, partnerId,upPartnerId,status,keywords,categoryId:,dispatchMode,postageId:,appraiseStatus,incart}
+	 * @param jsonSortParams		排序条件:{createTime:"N#0/1",sendTime:"N#0/1",signTime:"N#0/1",status:"N#0/1"}
 	 * @param jsonPageCond		分页信息:{begin:, pageSize:}
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
 	 */
@@ -733,6 +733,37 @@ public class OrderController {
 		}
 	}
 
+	/**
+	 * 查询指定查询条件统计订单数量；
+	 * 商品ID与合作伙伴ID不可都为空
+	 * @param jsonSearchParams	查询条件:{userId,goodsId, partnerId,upPartnerId,status,keywords,categoryId:,dispatchMode,postageId:,appraiseStatus,incart}
+	 * @return {errcode:0,errmsg:"ok",cnt} 
+	 */
+	@RequestMapping("/countall")
+	public Object countOrders(@RequestParam(value="jsonSearchParams",required=true)String jsonSearchParams) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			JSONObject jsonSearch = JSONObject.parseObject(jsonSearchParams);
+			if(!jsonSearch.containsKey("goodsId") && !jsonSearch.containsKey("partnerId") && 
+					!jsonSearch.containsKey("userId") && !jsonSearch.containsKey("upPartnerId")) {
+				jsonRet.put("errcode", ErrCodes.ORDER_SEARCH_PARAM);
+				jsonRet.put("errmsg", "下单用户ID、商品ID和合作伙伴ID不可都为空！");
+				return jsonRet.toString();
+			}
+			int cnt = this.orderService.countAll(jsonSearch);
+			jsonRet.put("cnt", cnt);
+			jsonRet.put("errcode", ErrCodes.GOODS_NO_GOODS);
+			jsonRet.put("errmsg", "ok");
+			return jsonRet.toString();
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+			return jsonRet.toString();
+		}
+	}
+	
+	
 	/**
 	 * 查询指定查询条件、排序条件、分页条件的订单信息；
 	 * 用户ID 或 合作伙伴ID不可都为空
@@ -866,6 +897,8 @@ public class OrderController {
 
 	/**
 	 * 创建支付订单
+	 * 1、根据选择的支付方式创建址支付订单；
+	 * 2、将订单从购物车中移出；
 	 * @param orderId	订单ID
 	 * @param payType	支付方式
 	 * @param userId		用户ID
@@ -942,6 +975,198 @@ public class OrderController {
 			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
 		}
 		return jsonRet.toString();
+	}
+	
+	/**
+	 * 删除购物车中订单
+	 * 将订单从购物车中删除；
+	 * @param orderId	订单ID
+	 * @param userId		用户ID
+	 * @param passwd		会员操作密码
+	 * @return {errcode,errmsg}
+	 */
+	@RequestMapping("/{userId}/remove/{orderId}")
+	public Object removeIncart(@PathVariable(value="orderId",required=true)String orderId,
+			@PathVariable(value="userId",required=true)Integer userId,
+			
+			String passwd) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			UserBasic user = this.userBasicService.get(userId);
+			VipBasic userVip = this.vipBasicService.getVipBal(userId);
+			Order order = this.orderService.get(orderId);
+			if(user == null || userVip == null || order == null) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				return jsonRet.toJSONString();
+			}
+			if(!user.getUserId().equals(order.getUserId())) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单！");
+				return jsonRet.toJSONString();
+			}
+			if("1".equals(order.getIncart()) && "10".equals(order.getStatus())) {
+				int cnt = this.orderService.delete(order);
+				if(cnt > 0) {
+					jsonRet.put("errcode", 0);
+					jsonRet.put("errmsg", "ok");
+				}else {
+					jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+					jsonRet.put("errmsg", "数据保存出现错误！" );
+				}
+			}else {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "该订单当前不可从购物车中删除！");
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "系统异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toString();
+	}
+	
+	/**
+	 * 更新订单
+	 * @param orderId	订单ID
+	 * @param userId		用户ID
+	 * @param order		新的订单信息
+	 * @param passwd		会员操作密码
+	 * @return {errcode,errmsg}
+	 */
+	@RequestMapping("/{userId}/update")
+	public Object update(@PathVariable(value="userId",required=true)Integer userId,
+			@Valid Order order,BindingResult result,
+			String passwd) {
+		JSONObject jsonRet = new JSONObject();
+		try {
+			UserBasic user = this.userBasicService.get(userId);
+			if(user == null || !"1".equals(user.getStatus())) {
+				jsonRet.put("errcode", ErrCodes.USER_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该用户！");
+				return jsonRet.toString();
+			}
+			if(!order.getUserId().equals(userId)) {
+				jsonRet.put("errmsg", "您没有权限处理该订单！！");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				return jsonRet.toString();
+			}
+			//信息验证结果处理
+			if(result.hasErrors()){
+				StringBuilder sb = new StringBuilder();
+				List<ObjectError> list = result.getAllErrors();
+				for(ObjectError e :list){
+					sb.append(e.getDefaultMessage());
+				}
+				jsonRet.put("errmsg", sb.toString());
+				jsonRet.put("errcode", ErrCodes.RECEIVER_PARAM_ERROR);
+				return jsonRet.toString();
+			}
+
+			//商品、配送信息检查
+			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
+			if(goods == null || !"S".equals(goods.getPartner().getStatus()) || 
+					!"1".equals(goods.getStatus()) || !Goods.REWSTAT.normal.getValue().equals(goods.getReviewResult())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
+				jsonRet.put("errmsg", "该商品当前不支持下单购买！");
+				return jsonRet.toString();
+			}
+			if(user.getUserId().equals(goods.getPartner().getVipId())) {
+				jsonRet.put("errcode", ErrCodes.GOODS_STATUS_ERROR);
+				jsonRet.put("errmsg", "您不可以购买自己的商品！");
+				return jsonRet.toString();
+			}
+			Receiver receiver = this.receiverService.getById(order.getRecvId());
+			if(receiver == null) {
+				jsonRet.put("errcode", ErrCodes.RECEIVER_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该收货人信息！");
+				return jsonRet.toString();
+			}
+			Postage postage = this.postageService.get(order.getPostageId());
+			if(postage == null) {
+				jsonRet.put("errcode", ErrCodes.POSTAGE_NO_EXISTS);
+				jsonRet.put("errmsg", "系统中没有该运费模板信息！");
+				return jsonRet.toString();
+			}else {
+				//同城配送
+				if("1".equals(postage.getIsCityWide())) {
+					Integer postage_distLimit = postage.getDistLimit(); //同城配送距离限制
+					if(postage_distLimit == null) {
+						postage_distLimit = 0;
+					}
+					Integer distance = this.getDistance(goods.getPartner(), receiver);
+					//可配送检查
+					if(!(distance != null && (0 == postage_distLimit || postage_distLimit <= distance))) {//可送
+						jsonRet.put("errcode", ErrCodes.ORDER_ERROR_POSTAGE);
+						jsonRet.put("errmsg", "该配送模式不支持该收件地区配送！");
+						return jsonRet.toString();
+					}
+				}else {//全国配送
+					String postage_provLimit = postage.getProvLimit(); //全国配送省份限制
+					if(postage_provLimit == null) {
+						postage_provLimit = "全国";
+					}
+					//省份检查
+					if(!("全国".equals(postage_provLimit.trim()) || postage_provLimit.contains(receiver.getProvince()))){//可送
+						jsonRet.put("errcode", ErrCodes.ORDER_ERROR_POSTAGE);
+						jsonRet.put("errmsg", "该配送模式不支持该收件地区配送！");
+						return jsonRet.toString();
+					}
+				}
+			}
+			List<GoodsSpec> applySpec = JSONArray.parseArray(order.getGoodsSpec(), GoodsSpec.class);
+			if(applySpec == null || applySpec.size()<1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "您的购买信息不可为空！");
+				return jsonRet.toString();
+			}
+			Map<String,Object> buyStatistics = new HashMap<String,Object>();
+			
+			Order old = this.orderService.get(order.getOrderId());
+			if(old == null || !old.getUserId().equals(userId)) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PRIVILEGE_ERROR);
+				jsonRet.put("errmsg", "您没有权限处理该订单信息！");
+				return jsonRet.toJSONString();
+			}
+			if(!"10".equals(old.getStatus())) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "该订单当前不可从购物车中删除！");
+				return jsonRet.toJSONString();
+			}
+			//订单数据检查
+			String errStr = this.checkOrderData(goods, applySpec, userId, buyStatistics);
+			if(errStr != null) {
+				return errStr;
+			}
+			if(applySpec.size()<1 || (Integer)buyStatistics.get("count") < 1) {
+				jsonRet.put("errcode", ErrCodes.COMMON_PARAM_ERROR);
+				jsonRet.put("errmsg", "您的购买信息不可为空！");
+				return jsonRet.toString();
+			}
+			//计算运费
+			Double carrage = this.getCarrage(postage, this.getDistance(goods.getPartner(), receiver),
+					(Integer)buyStatistics.get("weight"), (Double)buyStatistics.get("amount"));
+			//数据处理
+			Double amount = (Double)buyStatistics.get("amount");
+			amount += carrage;
+			String am = new DecimalFormat("#0.00").format(amount); 
+			order.setAmount(new BigDecimal(am));
+			order.setCarrage(new BigDecimal(carrage));
+			order.setGoodsSpec(JSONArray.toJSONString(applySpec));
+			int cnt = this.orderService.update(order);
+			if(cnt > 0) {
+				jsonRet.put("errcode", 0);
+				jsonRet.put("errmsg", "ok");
+			}else {
+				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
+				jsonRet.put("errmsg", "数据保存出现错误！" );
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
+			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
+		}
+		return jsonRet.toJSONString();
 	}
 	
 	/**

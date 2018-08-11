@@ -79,6 +79,8 @@ sys:
   user-img-path: '/var/mfyx/user-img/' #用户图片主目录
   partner-img-dir: '/var/mfyx/partner-img/'   #合作伙伴照片主目录
   image-gallery-dir: '/var/mfyx/image-gallery/' #系统图库主目录
+  category-img-dir: '/var/mfyx/category-img/' #分类图片主目录
+  
   image-folder-level-limit: 3   #文件夹最多三层
   image-file-all-limit: 100     #每个会员最多可有100个文件（普通文件和目录）
   image-folder-file-limit: 100   #每个文件夹下最多可有100个文件（普通文件和目录）

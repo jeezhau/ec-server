@@ -33,6 +33,7 @@
     <result column="score_logis" jdbcType="VARCHAR" property="scoreLogis" />
     <result column="score_serv" jdbcType="VARCHAR" property="scoreServ" />
     <result column="score_goods" jdbcType="VARCHAR" property="scoreGoods" />
+    <result column="distance" jdbcType="INTEGER" property="distance" />
   </resultMap>
   
   <sql id="Base_Column_List">
@@ -44,14 +45,14 @@
   
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
-    <include refid="Base_Column_List" />
+    <include refid="Base_Column_List" />, '0' as distance 
     from tb_partner_basic
     where partner_id = #{partnerId,jdbcType=INTEGER}
   </select>
  
   <select id="selectByBindUser" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
-    <include refid="Base_Column_List" />
+    <include refid="Base_Column_List" />, '0' as distance 
     from tb_partner_basic
     where vip_id = #{vipId,jdbcType=INTEGER}
   </select>
@@ -84,7 +85,7 @@
       )
   </insert>
 
-   <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PartnerBasic">
+  <update id="updateByPrimaryKey" parameterType="com.mofangyouxuan.model.PartnerBasic">
     update tb_partner_basic
     set country = #{country,jdbcType=VARCHAR},
         province = #{province,jdbcType=VARCHAR},
@@ -224,6 +225,11 @@
       <if test="params.upPartnerId != null">
         and up_partnerId = #{params.upPartnerId,jdbcType=INTEGER}
       </if>      
+      <if test="params.keywords != null and params.keywords != ''">
+        and (busi_name like concat('%',#{params.keywords,jdbcType=VARCHAR},'%')
+         or introduce like concat('%',#{introduce,jdbcType=VARCHAR},'%')
+        )
+      </if>
       <if test="params.country != null and params.country != ''">
         and country = #{params.country,jdbcType=VARCHAR}
       </if>
@@ -275,8 +281,19 @@
   <select id="selectAll" parameterType="map" resultMap="BaseResultMap">
    select 
     <include refid="Base_Column_List" />
+    <if test="params.city != null">
+       <if test="params.currUserLocX != null and params.currUserLocY != null ">
+        , getdistance(#{params.currUserLocX,jdbcType=DECIMAL}, #{params.currUserLocY,jdbcType=DECIMAL}, p.location_x, p.location_y) distance 
+       </if>
+       <if test="params.currUserLocX == null or params.currUserLocY == null ">
+        , '0' distance
+       </if>
+    </if>
+    <if test="params.city == null ">
+       , '0' as distance
+    </if>
     from tb_partner_basic 
-     <include refid="whereSql" />
+    <include refid="whereSql" />
     <if test="sorts">
     ${sorts}
     </if>
@@ -288,6 +305,7 @@
     from tb_partner_basic 
      <include refid="whereSql" />
   </select>
+  
   
   
 </mapper>

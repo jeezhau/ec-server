@@ -31,7 +31,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
 import com.mofangyouxuan.common.SysParamUtil;
-import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.model.PartnerBasic;
@@ -605,26 +604,6 @@ public class GoodsController {
 		return jsonRet;
 	}
 	
-	/**
-	 * 获取所有的商品分类
-	 * @return {errcode:0,errmsg:"",categories:[{},{},...]}
-	 */
-	@RequestMapping("/category")
-	public Object getGoodsCategory() {
-		JSONObject jsonRet = new JSONObject();
-		try {
-			List<Category> list = this.goodsService.getCategories();
-			jsonRet.put("errcode", 0);
-			jsonRet.put("errmsg", "ok");
-			jsonRet.put("categories", list);
-			return jsonRet;
-		}catch(Exception e) {
-			//异常处理
-			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
-			jsonRet.put("errmsg", "出现异常，异常信息：" + e.getMessage());
-		}
-		return jsonRet.toString();
-	}
 	
 	private Object searchGoods(boolean needPartner,String jsonSearchParams,String jsonSortParams,String jsonPageCond) {
 		JSONObject jsonRet = new JSONObject();

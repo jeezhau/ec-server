@@ -28,6 +28,7 @@
     <result column="sign_user" jdbcType="VARCHAR" property="signUser" />
     <result column="sign_time" jdbcType="TIMESTAMP" property="signTime" />
     <result column="sign_prolong" jdbcType="INTEGER" property="signProlong" />
+    <result column="incart" jdbcType="VARCHAR" property="incart" />
     
     <result column="goods_name" jdbcType="VARCHAR" property="goodsName" />
     <result column="goods_main_img_path" jdbcType="VARCHAR" property="goodsMainImgPath" />
@@ -43,7 +44,7 @@
   
   <sql id="Column_List_Base">
     o.order_id, o.user_id, o.goods_id, o.goods_spec, o.carrage, o.amount, o.create_time, o.remark, o.status, 
-    o.dispatch_mode, o.postage_id,o.send_opr, o.send_time, o.sign_user, o.sign_time,sign_prolong
+    o.dispatch_mode, o.postage_id,o.send_opr, o.send_time, o.sign_user, o.sign_time,sign_prolong,incart
   </sql>
   <sql id="Column_List_Receiver">
     o.recv_name, o.recv_phone, o.recv_country, o.recv_province, o.recv_city,  o.recv_area, o.recv_addr
@@ -82,7 +83,8 @@
       recv_phone, recv_country, recv_province, 
       recv_city, recv_area, recv_addr, 
       logistics_comp, logistics_no,logistics, send_opr,send_time, 
-      sign_user, sign_time, sign_prolong
+      sign_user, sign_time, sign_prolong,
+      incart
       )
     values (#{orderId,jdbcType=VARCHAR}, #{userId,jdbcType=INTEGER}, #{goodsId,jdbcType=INTEGER}, 
       #{goodsSpec,jdbcType=VARCHAR}, #{carrage,jdbcType=DECIMAL}, #{amount,jdbcType=DECIMAL}, 
@@ -92,7 +94,8 @@
       #{recvCity,jdbcType=VARCHAR}, #{recvArea,jdbcType=VARCHAR}, #{recvAddr,jdbcType=VARCHAR}, 
       #{logisticsComp,jdbcType=VARCHAR}, #{logisticsNo,jdbcType=VARCHAR},#{logistics,jdbcType=LONGVARCHAR}, 
       #{sendOpr,jdbcType=INTEGER}, #{sendTime,jdbcType=TIMESTAMP}, 
-      #{signUser,jdbcType=VARCHAR}, #{signTime,jdbcType=TIMESTAMP}, #{signProlong,jdbcType=INTEGER}
+      #{signUser,jdbcType=VARCHAR}, #{signTime,jdbcType=TIMESTAMP}, #{signProlong,jdbcType=INTEGER},
+      #{incart,jdbcType=VARCHAR}
       )
   </insert>
   
@@ -174,6 +177,9 @@
       <if test="signProlong != null">
         sign_prolong = #{signProlong,jdbcType=INTEGER},
       </if>
+      <if test="incart != null">
+        incart = #{incart,jdbcType=VARCHAR},
+      </if>
     </set>
     where order_id = #{orderId,jdbcType=VARCHAR}
   </update>
@@ -204,7 +210,8 @@
       send_time = #{sendTime,jdbcType=TIMESTAMP},
       sign_user = #{signUser,jdbcType=VARCHAR},
       sign_time = #{signTime,jdbcType=TIMESTAMP},
-      sing_prolong = #{singProlong,jdbcType=INTEGER}
+      sing_prolong = #{singProlong,jdbcType=INTEGER},
+      incart = #{incart,jdbcType=VARCHAR},
     where order_id = #{orderId,jdbcType=VARCHAR}
   </update>
   
@@ -264,6 +271,9 @@
       <if test="params.goodsStatus != null">
         and g.status = #{params.goodsStatus,jdbcType=CHAR}
       </if>
+      <if test="params.incart != null">
+        and o.incart = #{params.incart,jdbcType=CHAR}
+      </if>
     </where>
   </sql>
   
@@ -306,6 +316,7 @@
    from tb_order_info o
    join tb_goods_info g on o.goods_id = g.goods_id 
    <where>
+     and o.incart = '0' 
     <if test="userId != null">
      and o.user_id = #{userId,jdbcType=INTEGER}
     </if>

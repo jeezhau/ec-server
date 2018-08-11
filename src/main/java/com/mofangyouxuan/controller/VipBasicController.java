@@ -338,41 +338,41 @@ public class VipBasicController {
 	private Map<String,Object> getSearchParamsMap(JSONObject jsonParams){
 		Map<String,Object> params = new HashMap<String,Object>();
  
-		if(jsonParams.containsKey("vipId")) { //会员ID
+		if(jsonParams.containsKey("vipId") && jsonParams.getInteger("vipId") != null) { //会员ID
 			params.put("vipId", jsonParams.getInteger("vipId"));
 		}
-		if(jsonParams.containsKey("changeType")) {//变更类型
-			params.put("changeType", jsonParams.getString("changeType"));
+		if(jsonParams.containsKey("changeType") && jsonParams.getString("changeType").trim().length()>0) {//变更类型
+			params.put("changeType", jsonParams.getString("changeType").trim());
 		}
-		if(jsonParams.containsKey("amountDown")) { //金额下限
+		if(jsonParams.containsKey("amountDown") && jsonParams.getDouble("amountDown") != null) { //金额下限
 			params.put("amountDown", jsonParams.getDouble("amountDown"));
 		}
-		if(jsonParams.containsKey("amountUp")) {//金额上限
+		if(jsonParams.containsKey("amountUp") && jsonParams.getDouble("amountUp") != null) {//金额上限
 			params.put("amountUp", jsonParams.getDouble("amountUp"));
 		}
-		if(jsonParams.containsKey("beginCrtTime")) { //创建开始时间
-			params.put("beginCrtTime", jsonParams.getString("beginCrtTime"));
+		if(jsonParams.containsKey("beginCrtTime") && jsonParams.getString("beginCrtTime").trim().length()>0) { //创建开始时间
+			params.put("beginCrtTime", jsonParams.getString("beginCrtTime").trim());
 		}
-		if(jsonParams.containsKey("endCrtTime")) { //创建结束时间
-			params.put("endCrtTime", jsonParams.getString("endCrtTime"));
+		if(jsonParams.containsKey("endCrtTime") && jsonParams.getString("endCrtTime").trim().length()>0) { //创建结束时间
+			params.put("endCrtTime", jsonParams.getString("endCrtTime").trim());
 		}
-		if(jsonParams.containsKey("beginSumTime")) { //累积开始时间
-			params.put("beginSumTime", jsonParams.getString("beginSumTime"));
+		if(jsonParams.containsKey("beginSumTime") && jsonParams.getString("beginSumTime").trim().length()>0) { //累积开始时间
+			params.put("beginSumTime", jsonParams.getString("beginSumTime").trim());
 		}
-		if(jsonParams.containsKey("endSumTime")) { //累积结束时间
-			params.put("endSumTime", jsonParams.getString("endSumTime"));
+		if(jsonParams.containsKey("endSumTime") && jsonParams.getString("endSumTime").trim().length()>0) { //累积结束时间
+			params.put("endSumTime", jsonParams.getString("endSumTime").trim());
 		}
-		if(jsonParams.containsKey("createOpr")) { //创建人
+		if(jsonParams.containsKey("createOpr") && jsonParams.getInteger("createOpr") != null) { //创建人
 			params.put("createOpr", jsonParams.getInteger("createOpr"));
 		}
-		if(jsonParams.containsKey("reason")) { //理由
-			params.put("reason", jsonParams.getString("reason"));
+		if(jsonParams.containsKey("reason") && jsonParams.getString("reason").trim().length()>0) { //理由
+			params.put("reason", jsonParams.getString("reason").trim());
 		}
-		if(jsonParams.containsKey("sumFlag")) { //累积标志
-			params.put("sumFlag", jsonParams.getString("sumFlag"));
+		if(jsonParams.containsKey("sumFlag") && jsonParams.getString("sumFlag").trim().length()>0) { //累积标志
+			params.put("sumFlag", jsonParams.getString("sumFlag").trim());
 		}
-		if(jsonParams.containsKey("orderId")) { //订单ID
-			params.put("orderId", jsonParams.getString("orderId"));
+		if(jsonParams.containsKey("orderId") && jsonParams.getString("orderId").trim().length()>0) { //订单ID
+			params.put("orderId", jsonParams.getString("orderId").trim());
 		}
 		return params;
 	}

@@ -26,7 +26,7 @@ public class Order {
 
     private Date createTime;
 
-    @Size(max=60,message=" 备注信息：最长600字符！")
+    @Size(max=600,message=" 备注信息：最长600字符！")
     private String remark;
 
     private String status;
@@ -84,6 +84,10 @@ public class Order {
     private Integer signProlong;
     
     private String logistics;
+    
+    @NotNull(message=" 是否加入购物车：不可为空！")
+    @Pattern(regexp="^[01]$",message=" 是否加入购物车：取值为【0-否、1-是】！")
+    private String incart;
     
     //补充字段，仅方便商品显示
     private String goodsName;
@@ -321,6 +325,15 @@ public class Order {
 
 	public void setLogistics(String logistics) {
 		this.logistics = logistics;
+	}
+
+	
+	public String getIncart() {
+		return incart;
+	}
+
+	public void setIncart(String incart) {
+		this.incart = incart;
 	}
 
 	public Long getRecvId() {

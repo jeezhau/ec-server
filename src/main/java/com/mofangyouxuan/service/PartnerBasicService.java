@@ -86,7 +86,7 @@ public interface PartnerBasicService {
 	 * @param newStatus 新的状态：S-正常，C-关闭
 	 * @return 更新记录数
 	 */
-	public int changeStatusOwn(Integer partnerId,String newStatus);
+	public int changeStatusOwn(Integer partnerId,Integer operator,String newStatus);
 	
 	/**
 	 * 更新商家的评价得分

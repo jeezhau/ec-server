@@ -11,6 +11,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
@@ -557,7 +559,7 @@ public class PartnerBasicController {
 			}else {
 				newStatus = "S";
 			}
-			int cnt = this.partnerBasicService.changeStatusOwn(partnerId, newStatus);
+			int cnt = this.partnerBasicService.changeStatusOwn(partnerId, currUserId,newStatus);
 			if(cnt < 1) {
 				jsonRet.put("errcode", ErrCodes.COMMON_DB_ERROR);
 				jsonRet.put("errmsg", "数据保存至数据库失败！");
@@ -669,7 +671,7 @@ public class PartnerBasicController {
 			FileUtils.copyInputStreamToFile(image.getInputStream(), newFile);
 			//变更状态
 			if(partner != null) {
-				this.partnerBasicService.changeStatusOwn(partner.getPartnerId(), "0");
+				this.partnerBasicService.changeStatusOwn(partner.getPartnerId(), userId,"0");
 			}
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
@@ -934,16 +936,45 @@ public class PartnerBasicController {
 	
 	/**
 	 * 查询指定查询条件、排序条件、分页条件的信息；
-	 * @param jsonSearchParams	查询条件:{partnerId,pbTp,upPartnerId,country,province,city,area,busiName,legalPername,legalPeridno,compType,compName,licenceNo,phone,status,beginUpdateTime,endUpdateTime}
+	 * @param upPartnerId	上级合作伙伴ID
+	 * @param jsonSearchParams	查询条件:{partnerId,pbTp,upPartnerId,keywords,country,province,city,area,busiName,legalPername,legalPeridno,compType,compName,licenceNo,phone,status,beginUpdateTime,endUpdateTime,currUserLocX,currUserLocY}
 	 * @param jsonPageCond		分页信息:{begin:, pageSize:}
+	 * @param jsonSortParams  	排序条件 {time:"N#0/1",dist:"N#0",sale:"N"#0/1}；time 表示按更新时间排序，N为排序位置，0为升序，1为降序；dist表示按距离排序，仅对有城市条件使用;
 	 * @return {errcode:0,errmsg:"ok",pageCond:{},datas:[{}...]} 
 	 */
 	@RequestMapping("/getall/{upPartnerId}")
 	public Object getAll(@PathVariable("upPartnerId")Integer upPartnerId,
-			String jsonSearchParams,String jsonPageCond) {
+			String jsonSearchParams,String jsonSortParams,String jsonPageCond) {
 		JSONObject jsonRet = new JSONObject();
 		try {
-			String sorts = " order by update_time desc ";
+			String strSorts = null;
+			if(jsonSortParams != null && jsonSortParams.length()>0) {
+				JSONObject jsonSort = JSONObject.parseObject(jsonSortParams);
+				Map<Integer,String> sortMap = new HashMap<Integer,String>();
+				if(jsonSort.containsKey("time")) {
+					String value = jsonSort.getString("time");
+					if(value != null && value.length()>0) {
+						String[] arr = value.split("#");
+						sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " update_time asc " : " update_time desc " );
+					}
+				}
+				if(jsonSort.containsKey("dist")) {
+					String value = jsonSort.getString("dist");
+					if(value != null && value.length()>0) {
+						String[] arr = value.split("#");
+						sortMap.put(new Integer(arr[0]), " distance asc " );
+					}
+				}
+				Set<Integer> set = new TreeSet<Integer>(sortMap.keySet());
+				StringBuilder sb = new StringBuilder();
+				for(Integer key:set) {
+					sb.append(",");
+					sb.append(sortMap.get(key));
+				}
+				if(sb.length()>0) {
+					strSorts = " order by " + sb.substring(1);
+				}
+			}
 			Map<String,Object> params = this.getSearchMap(jsonSearchParams);
 			if(!upPartnerId.equals(this.sysParamUtil.getSysPartnerId())) {
 				params.put("upPartnerId", upPartnerId);
@@ -969,7 +1000,7 @@ public class PartnerBasicController {
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "没有获取到满足条件的记录信息！");
 			if(cnt>0) {
-				List<PartnerBasic> list = this.partnerBasicService.getAll(params, sorts, pageCond);
+				List<PartnerBasic> list = this.partnerBasicService.getAll(params, strSorts, pageCond);
 				if(list != null && list.size()>0) {
 					jsonRet.put("datas", list);
 					jsonRet.put("errcode", 0);
@@ -1000,14 +1031,21 @@ public class PartnerBasicController {
 		if(jsonSearch.containsKey("upPartnerId")) {
 			params.put("upPartnerId", jsonSearch.getString("upPartnerId"));
 		}
+		if(jsonSearch.containsKey("keywords")) {
+			params.put("keywords", jsonSearch.getString("keywords"));
+		}
 		if(jsonSearch.containsKey("country")) {
 			params.put("country", jsonSearch.getString("country"));
 		}
 		if(jsonSearch.containsKey("province")) {
 			params.put("province", jsonSearch.getString("province"));
 		}
-		if(jsonSearch.containsKey("city")) {
+		if(jsonSearch.containsKey("city")) {//指定城市
 			params.put("city", jsonSearch.getString("city"));
+			if(jsonSearch.containsKey("currUserLocX") && jsonSearch.containsKey("currUserLocY")) {
+				params.put("currUserLocX", jsonSearch.getBigDecimal("currUserLocX"));
+				params.put("currUserLocY", jsonSearch.getBigDecimal("currUserLocY"));
+			}
 		}
 		if(jsonSearch.containsKey("area")) {
 			params.put("area", jsonSearch.getString("area"));
@@ -1042,6 +1080,7 @@ public class PartnerBasicController {
 		if(jsonSearch.containsKey("endUpdateTime")) {
 			params.put("endUpdateTime", jsonSearch.getString("endUpdateTime"));
 		}
+
 		return params;
 	}
 	

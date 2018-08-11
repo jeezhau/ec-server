@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.mofangyouxuan.common.PageCond;
-import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.GoodsSpec;
 
@@ -95,10 +94,5 @@ public interface GoodsService {
 	 */
 	public int countAll(Map<String,Object> params);
 	
-	/**
-	 * 获取所有的商品分类数据
-	 * @return
-	 */
-	public List<Category> getCategories();
 	
 }

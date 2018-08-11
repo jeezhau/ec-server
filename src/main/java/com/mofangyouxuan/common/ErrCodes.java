@@ -96,6 +96,9 @@ public class ErrCodes {
 	//登录控制：113
 	public static int LOGIN_ERRCNT_LIMIT = -113001;	//登录错误次数限制
 	
+	//商品分类管理：114
+	public static int CATEGORY_HAS_EXISTS = -114001;	//已有该分类
+		
 }
 
 

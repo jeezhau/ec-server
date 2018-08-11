@@ -99,7 +99,6 @@ public class OrderServiceImpl implements OrderService{
 	 */
 	@Override
 	public int update(Order order) {
-		
 		int cnt = this.orderMapper.updateByPrimaryKeySelective(order);
 		return cnt;
 	}
@@ -111,7 +110,6 @@ public class OrderServiceImpl implements OrderService{
 	 */
 	@Override
 	public int delete(Order order) {
-		
 		int cnt = this.orderMapper.deleteByPrimaryKey(order.getOrderId());
 		return cnt;
 	}
@@ -159,6 +157,7 @@ public class OrderServiceImpl implements OrderService{
 					sortMap.put(new Integer(arr[0]), ("0".equals(arr[1]))? " sign_time asc " : " sign_time desc " );
 				}
 			}
+			
 			Set<Integer> set = new TreeSet<Integer>(sortMap.keySet());
 			StringBuilder sb = new StringBuilder();
 			for(Integer key:set) {
@@ -216,7 +215,6 @@ public class OrderServiceImpl implements OrderService{
 	 */
 	private Map<String,Object> getSearParamsMap(JSONObject jsonParams){
 		Map<String,Object> params = new HashMap<String,Object>();
-		//params.put("status", "41,56");	//默认评价完成
 		
 		if(jsonParams.containsKey("userId")) { //下单用户
 			params.put("userId", jsonParams.getInteger("userId"));
@@ -264,6 +262,9 @@ public class OrderServiceImpl implements OrderService{
 		}
 		if(jsonParams.containsKey("endSignTime")) { //订单签收结束时间
 			params.put("endSignTime", jsonParams.getString("endSignTime"));
+		}
+		if(jsonParams.containsKey("incart")) { //订单签收结束时间
+			params.put("incart", jsonParams.getString("incart"));
 		}
 		return params;
 	}
@@ -348,7 +349,8 @@ public class OrderServiceImpl implements OrderService{
 	
 	/**
 	 * 生成预支付订单
-	 * 
+	 * 1、发送支付请求；
+	 * 2、移出购物车
 	 * @param user		买家基本信息
 	 * @param userVip	买家会员信息
 	 * @param order		订单信息
@@ -367,7 +369,7 @@ public class OrderServiceImpl implements OrderService{
 		String outPayUrl = null;		//外部支付须调起的支付页面
 		String payAccount = null;	//支付账户
 		String flowId = null;		//支付流水ID
-		Long totalAmount = null; //总实付金额
+		Long totalAmount = null; 	//总实付金额
 		if(oldFlow != null) {
 			if(!"00".equals(oldFlow.getStatus()) && !"01".equals(oldFlow.getStatus()) && !"F1".equals(oldFlow.getStatus())) {//非待支付或支付失败
 				jsonRet.put("errcode", -1);
@@ -446,6 +448,12 @@ public class OrderServiceImpl implements OrderService{
 			}
 			payAccount = userVip.getVipId() + "";
 			outTradeNo = jsonRet.getString("tradeNo");
+		}
+		//移出购物车
+		if("1".equals(order.getIncart())) {
+			Order updOrder = new Order();
+			updOrder.setIncart("0");
+			this.orderMapper.updateByPrimaryKeySelective(updOrder);
 		}
 		//支付流水数据处理保存
 		Date payTime = new Date();

@@ -18,10 +18,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.mofangyouxuan.common.ErrCodes;
 import com.mofangyouxuan.common.PageCond;
-import com.mofangyouxuan.mapper.CategoryMapper;
 import com.mofangyouxuan.mapper.GoodsMapper;
 import com.mofangyouxuan.mapper.GoodsSpecMapper;
-import com.mofangyouxuan.model.Category;
 import com.mofangyouxuan.model.Goods;
 import com.mofangyouxuan.model.GoodsSpec;
 import com.mofangyouxuan.service.GoodsService;
@@ -39,8 +37,6 @@ public class GoodsServiceImpl implements GoodsService{
 	private GoodsMapper goodsMapper;
 	@Autowired
 	private GoodsSpecMapper goodsSpecMapper;
-	@Autowired
-	private CategoryMapper categoryMapper;
 	@Autowired
 	private ImageGalleryService imageGalleryService;
 	
@@ -276,14 +272,6 @@ public class GoodsServiceImpl implements GoodsService{
 	@Override
 	public int countAll(Map<String,Object> params) {
 		return this.goodsMapper.countAll(params);
-	}
-
-	/**
-	 * 获取所有的商品分类数据
-	 * @return
-	 */
-	public List<Category> getCategories(){
-		return this.categoryMapper.selectAll();
 	}
 	
 	private Map<String,Integer> selImgFromGoodsDesc(Integer partnerId,String goodsDesc){
