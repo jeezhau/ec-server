@@ -39,6 +39,8 @@ public class PayFlow {
 
     private String memo;
 
+    private String batchId;
+    
     public String getFlowId() {
         return flowId;
     }
@@ -182,4 +184,13 @@ public class PayFlow {
     public void setMemo(String memo) {
         this.memo = memo == null ? null : memo.trim();
     }
+
+	public String getBatchId() {
+		return batchId;
+	}
+
+	public void setBatchId(String batchId) {
+		this.batchId = (batchId == null ? null : batchId.trim());
+	}
+    
 }

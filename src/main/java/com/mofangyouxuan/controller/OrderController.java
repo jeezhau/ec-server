@@ -3,10 +3,13 @@ package com.mofangyouxuan.controller;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.validation.Valid;
 
@@ -837,24 +840,47 @@ public class OrderController {
 	 * @param userId		用户ID
 	 * @return {errcode,errmsg,payType,payTime,amount,fee}
 	 */
-	@RequestMapping("/{userId}/payfinish/{orderId}")
-	public Object payFinish(@PathVariable(value="orderId",required=true)String orderId,
+	@RequestMapping("/{userId}/payfinish/{orderIds}")
+	public Object payFinish(@PathVariable(value="orderIds",required=true)String orderIds,
 			@PathVariable(value="userId",required=true)Integer userId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			VipBasic userVip = this.vipBasicService.get(userId);
-			Order order = this.orderService.get(orderId);
-			if(userVip == null || order == null) {
+			Set<String> orderArr = new TreeSet<String>();
+			for(String s:orderIds.split("_")) {
+				orderArr.add(s);
+			}
+			if(orderArr.size()>10) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				jsonRet.put("errmsg", "您选择批量支付的订单数量超过上限！");
 				return jsonRet.toJSONString();
 			}
-			if(!userVip.getVipId().equals(order.getUserId())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您没有权限处理该订单！");
+			List<Order> list = new ArrayList<Order>();
+			String errids = "";
+			String okids = "";
+			for(String orderId:orderArr) {
+				orderId = orderId.trim();
+				if(orderId.length()>20) {
+					Order order = this.orderService.get(orderId);
+					if(order == null) {
+						errids += "," + orderId;
+						continue;
+					}
+					if(userVip.getVipId().equals(order.getUserId())) {
+						list.add(order);
+						okids += "_" + orderId;
+					}else {
+						errids += "," + orderId;
+					}
+				}
+			}
+			if(errids.length()>0) {
+				jsonRet.put("errmsg", "您没有权限处理该下列订单，订单ID列表：【" + errids.substring(1)+ "】");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				return jsonRet.toJSONString();
 			}
-			jsonRet = this.orderService.payFinish(userVip, order);
+			orderIds = okids.substring(1);
+			jsonRet = this.orderService.payFinish(userVip, orderIds);
 		}catch(Exception e) {
 			e.printStackTrace();
 			jsonRet.put("errcode", ErrCodes.COMMON_EXCEPTION);
@@ -897,37 +923,91 @@ public class OrderController {
 
 	/**
 	 * 创建支付订单
-	 * 1、根据选择的支付方式创建址支付订单；
+	 * 1、根据选择的支付方式创建支付订单；
 	 * 2、将订单从购物车中移出；
-	 * @param orderId	订单ID
+	 * @param orderId	订单ID，多个ID使用_分隔
 	 * @param payType	支付方式
 	 * @param userId		用户ID
 	 * @param userIp		用户IP
 	 * @param passwd		会员操作密码
 	 * @return {errcode,errmsg,payType,outPayUrl,prepay_id,AliPayForm}
 	 */
-	@RequestMapping("/{userId}/createpay/{orderId}")
-	public Object createPrePay(@PathVariable(value="orderId",required=true)String orderId,
+	@RequestMapping("/{userId}/createpay/{orderIds}")
+	public Object createPrePay(@PathVariable(value="userId",required=true)Integer userId,
+			@PathVariable(value="orderIds",required=true)String orderIds,
 			@RequestParam(value="payType",required=true)String payType,
-			@PathVariable(value="userId",required=true)Integer userId,
 			@RequestParam(value="userIp",required=true)String userIp,
 			String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			UserBasic user = this.userBasicService.get(userId);
 			VipBasic userVip = this.vipBasicService.getVipBal(userId);
-			Order order = this.orderService.get(orderId);
-			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
-			if(user == null || userVip == null || order == null || goods == null) {
+			if(user == null || userVip == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
 				return jsonRet.toJSONString();
 			}
-			if(!user.getUserId().equals(order.getUserId())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您没有权限处理该订单！");
+			Set<String> orderArr = new TreeSet<String>();
+			for(String s:orderIds.split("_")) {
+				orderArr.add(s);
+			}
+			if(orderArr.size()>10) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "您选择批量支付的订单数量超过上限！");
 				return jsonRet.toJSONString();
 			}
+			List<Order> list = new ArrayList<Order>();
+			String errids = "";
+			String okids = "";
+			StringBuilder errmsgSb = new StringBuilder();
+			for(String orderId:orderArr) {
+				orderId = orderId.trim();
+				if(orderId.length()>20) {
+					Order order = this.orderService.get(orderId);
+					if(order == null) {
+						errids += "," + orderId;
+						continue;
+					}
+					Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
+					if(goods == null) {
+						errids += "," + orderId;
+						continue;
+					}
+					if(("10".equals(order.getStatus()) || "12".equals(order.getStatus())) && user.getUserId().equals(order.getUserId())) {//可支付
+						list.add(order);
+						okids += "_" + orderId;
+					}else {
+						errids += "," + orderId;
+					}
+					//库存检查
+					Map<String,Object> buyStatistics = new HashMap<String,Object>();
+					Double amount = 0.0;	//购买金额
+					Integer count = 0;	//购买数量
+					Integer weight = 0;	//购买毛重量
+					buyStatistics.put("amount", amount);
+					buyStatistics.put("count", count);
+					buyStatistics.put("weight", weight);
+					List<GoodsSpec> applySpec = JSONObject.parseArray(order.getGoodsSpec(), GoodsSpec.class);
+					List<GoodsSpec> sysSpec = goods.getSpecDetail();
+					String errmsg = this.checStock(applySpec, sysSpec, buyStatistics);
+					if(errmsg != null) {
+						errmsgSb.append("订单ID:" + orderId + "【" + errmsg + "】");
+					}
+				}
+			}
+			if(errids.length()>0) {
+				jsonRet.put("errmsg", "下列订单不存在或不可支付购买，订单ID列表：【" + errids.substring(1)+ "】");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				return jsonRet.toJSONString();
+			}
+			if(errmsgSb.length()>0) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", errmsgSb.toString());
+				return jsonRet.toJSONString();
+			}
+
+			orderIds = okids.substring(1);
+			
 			if(!"1".equals(payType) && 
 					!"21".equals(payType) && !"22".equals(payType) && !"23".equals(payType) &&
 					!"31".equals(payType) && !"32".equals(payType)) {
@@ -935,24 +1015,9 @@ public class OrderController {
 				jsonRet.put("errmsg", "支付方式取值不正确！");
 				return jsonRet.toJSONString();
 			}
-			//库存检查
-			Map<String,Object> buyStatistics = new HashMap<String,Object>();
-			Double amount = 0.0;	//购买金额
-			Integer count = 0;	//购买数量
-			Integer weight = 0;	//购买毛重量
-			buyStatistics.put("amount", amount);
-			buyStatistics.put("count", count);
-			buyStatistics.put("weight", weight);
-			List<GoodsSpec> applySpec = JSONObject.parseArray(order.getGoodsSpec(), GoodsSpec.class);
-			List<GoodsSpec> sysSpec = goods.getSpecDetail();
-			String errmsg = this.checStock(applySpec, sysSpec, buyStatistics);
-			if(errmsg != null) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", errmsg);
-				return jsonRet.toJSONString();
-			}
+			
 			//errcode,errmsg,payType,prepay_id,outPayUrl,total,AliPayForm}
-			jsonRet = this.orderService.createPrePay(user, userVip, order, goods.getPartner().getVipId(), payType, userIp);
+			jsonRet = this.orderService.createPrePay(user, userVip, orderIds,list, payType, userIp);
 			if(jsonRet.containsKey("prepay_id") && "21".equals(payType)) { //公众号支付
 				Long timestamp = System.currentTimeMillis()/1000;
 				String nonceStr = NonceStrUtil.getNonceStr(20);
@@ -1177,31 +1242,74 @@ public class OrderController {
 	 * @param passwd		会员操作密码
 	 * @return {errcode,errmsg}
 	 */
-	@RequestMapping(value="/{userId}/balpay/submit/{orderId}",method=RequestMethod.POST)
-	public Object submitBalPay(@PathVariable(value="orderId",required=true)String orderId,
+	@RequestMapping(value="/{userId}/balpay/submit/{orderIds}",method=RequestMethod.POST)
+	public Object submitBalPay(@PathVariable(value="orderIds",required=true)String orderIds,
 			@PathVariable(value="userId",required=true)Integer userId,
 			@RequestParam(value="passwd",required=true)String passwd) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			VipBasic userVip = this.vipBasicService.getVipBal(userId);
-			Order order = this.orderService.get(orderId);
-			Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
-			PayFlow payFlow = this.orderService.getLastedFlow(orderId, "1");
-			if(userVip == null || payFlow == null || order == null || goods == null) {
+			if(userVip == null) {
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
-				jsonRet.put("errmsg", "参数有误，系统中没有指定数据！");
+				jsonRet.put("errmsg", "参数有误，系统中没有该会员用户信息！");
 				return jsonRet.toJSONString();
 			}
 			
-			if(!userVip.getVipId().equals(payFlow.getUserId())) {
-				jsonRet.put("errcode", ErrCodes.ORDER_PRIVILEGE_ERROR);
-				jsonRet.put("errmsg", "您没有权限处理该订单！");
+			Set<String> orderArr = new TreeSet<String>();
+			for(String s:orderIds.split("_")) {
+				orderArr.add(s);
+			}
+			if(orderArr.size()>10) {
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				jsonRet.put("errmsg", "您选择批量支付的订单数量超过上限！");
 				return jsonRet.toJSONString();
 			}
-			if(!"00".equals(payFlow.getStatus()) ) {//非待支付
-				jsonRet.put("errcode", ErrCodes.ORDER_STATUS_ERROR);
-				jsonRet.put("errmsg", "该订单当前不可进行支付！");
-				return jsonRet;
+			List<Order> orderList = new ArrayList<Order>();
+			List<PayFlow> flowList = new ArrayList<PayFlow>();
+			String errids = "";
+			String okids = "";
+			Long totalAmount = 0l; //总支付金额
+			for(String orderId:orderArr) {
+				orderId = orderId.trim();
+				if(orderId.length()>20) {
+					Order order = this.orderService.get(orderId);
+					if(order == null) {
+						errids += "," + orderId;
+						continue;
+					}
+					Goods goods = this.goodsService.get(true, order.getGoodsId(),false);
+					if(goods == null) {
+						errids += "," + orderId;
+						continue;
+					}
+					PayFlow flow = this.orderService.getLastedFlow(orderId, "1");
+					if(flow == null) {
+						errids += "," + orderId;
+						continue;
+					}
+					if(("10".equals(order.getStatus()) || "12".equals(order.getStatus())) && 
+							userVip.getVipId().equals(order.getUserId()) && "00".equals(flow.getStatus()) ) {//可支付
+						orderList.add(order);
+						flowList.add(flow);
+						okids += "_" + orderId;
+						totalAmount += flow.getFeeAmount() + flow.getPayAmount();
+					}else {
+						errids += "," + orderId;
+					}
+				}
+			}
+			if(errids.length()>0) {
+				jsonRet.put("errmsg", "下列订单不存在或不可支付购买，订单ID列表：【" + errids.substring(1)+ "】");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				return jsonRet.toJSONString();
+			}
+
+			orderIds = okids.substring(1);
+			PayFlow batchFlow = this.orderService.getLastedFlow(orderIds, "1");
+			if(batchFlow == null || "00".equals(batchFlow.getStatus())) {
+				jsonRet.put("errmsg", "当前不可再对该批次订单执行统一支付！");
+				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
+				return jsonRet.toJSONString();
 			}
 			//密码验证
 			if(userVip.getPasswd() == null || userVip.getPasswd().length()<10) {
@@ -1214,14 +1322,14 @@ public class OrderController {
 				jsonRet.put("errmsg", "您的资金操作密码输入不正确！");
 				return jsonRet.toJSONString();
 			}
-			if(userVip.getBalance() < payFlow.getPayAmount()) {//判断余额是否够支付
+			if(userVip.getBalance() < totalAmount) {//判断余额是否够支付
 				jsonRet.put("errcode", -1);
 				jsonRet.put("errmsg", "余额支付失败，余额不足！");
 				return jsonRet;
 			}
-			this.orderService.execPaySucc(true,payFlow, userVip.getVipId(),order, goods.getPartner().getVipId(),"");
-			payFlow = this.orderService.getLastedFlow(orderId, "1");
-			this.orderService.balanceBill(false, payFlow);
+			this.orderService.execPaySucc(true,batchFlow, userVip.getVipId(),orderList, flowList,"");
+			batchFlow = this.orderService.getLastedFlow(orderIds, "1");
+			this.orderService.balanceBill(false, batchFlow);
 			jsonRet.put("errcode", 0);
 			jsonRet.put("errmsg", "ok");
 		}catch(Exception e) {

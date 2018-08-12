@@ -212,25 +212,30 @@ public class WXPay {
 	/**
 	 * 创建微信预先支付信息
 	 * @param payType	支付方式（21-公众号，22-H5）
-	 * @param order		订单信息
+	 * @param orderIds
+	 * @param orderList		订单信息
 	 * @param payFlowId		支付流水号
 	 * @param totalAmount	总金额
 	 * @param openId			公众号粉丝用户的OPNEID
 	 * @param userIP			支付用户的IP
 	 * @return {errcode,errmsg,payFlowId,trade_type,prepay_id,code_url,mweb_url}
 	 */
-	public JSONObject createPrePay(String payType,Order order,String payFlowId,Long totalAmount,String openId,String userIP) {
+	public JSONObject createPrePay(String payType,String orderIds,List<Order> orderList,String payFlowId,Long totalAmount,String openId,String userIP) {
 		JSONObject jsonRet = new JSONObject();
 		String tradeType = this.getPayTypeName(payType);
-		JSONObject wxRet = unifiedOrder(tradeType,order,payFlowId, totalAmount, openId, userIP);
+		boolean isBatch = false;
+		if(orderList.size()>1) {
+			isBatch = true;
+		}
+		JSONObject wxRet = unifiedOrder(tradeType,orderList,payFlowId, totalAmount, openId, userIP);
 		if(wxRet.containsKey("prepay_id")) {//成功
 			wxRet.put("payFlowId", payFlowId);
 			return wxRet;
 		}else {//失败
 			if("ORDERCLOSED".equals(jsonRet.getString("errcode"))) {//已关闭
 				//再次申请
-				payFlowId = CommonUtil.genPayFlowId(order.getOrderId(), payFlowId); //生成新流水单号
-				wxRet = unifiedOrder(tradeType,order, payFlowId,totalAmount, openId, userIP);
+				payFlowId = CommonUtil.genPayFlowId(orderIds, payFlowId,isBatch); //生成新流水单号
+				wxRet = unifiedOrder(tradeType,orderList, payFlowId,totalAmount, openId, userIP);
 				if(wxRet.containsKey("prepay_id")) {//成功
 					wxRet.put("payFlowId", payFlowId);
 					return wxRet;
@@ -243,8 +248,8 @@ public class WXPay {
 				wxRet = closeOrder(payFlowId);
 				if(wxRet.getIntValue("errcode") == 0) { //关单成功
 					//再次申请
-					payFlowId = CommonUtil.genPayFlowId(order.getOrderId(), payFlowId);
-					wxRet = unifiedOrder(tradeType,order, payFlowId,totalAmount, openId, userIP);
+					payFlowId = CommonUtil.genPayFlowId(orderIds, payFlowId,isBatch);
+					wxRet = unifiedOrder(tradeType,orderList, payFlowId,totalAmount, openId, userIP);
 					if(wxRet.containsKey("prepay_id")) {//成功
 						wxRet.put("payFlowId", payFlowId);
 						return wxRet;
@@ -276,9 +281,13 @@ public class WXPay {
 	 * @param ip				支付用户的IP
 	 * @return {errcode,errmsg,prepay_id,code_url,mweb_url}
 	 */
-	private JSONObject unifiedOrder(String tradeType,Order order,String payFlowId,Long totalAmount,String openId,String ip) {
+	private JSONObject unifiedOrder(String tradeType,List<Order> orderList,String payFlowId,Long totalAmount,String openId,String ip) {
 		JSONObject jsonRet = new JSONObject();
 		try {
+			String subject = "";
+			for(Order order:orderList) {
+				subject += ";" + order.getPartnerBusiName() + "-" + order.getGoodsName();
+			}
 			Map<String,String> params = new HashMap<String,String>();
 			String nonceStr = NonceStrUtil.getNonceStr(20);
 			params.put("appid", appId);
@@ -286,8 +295,8 @@ public class WXPay {
 			params.put("device_info", "WEB");
 			params.put("nonce_str", nonceStr);
 			params.put("sign_type", "MD5");
-			params.put("body", order.getPartnerBusiName() + "-" + order.getGoodsName());
-			params.put("detail", "<![CDATA[{ \"goods_detail\":" + order.getGoodsSpec() + "]]>");
+			params.put("body", subject.substring(1));
+			params.put("detail", "");
 			params.put("attach", payFlowId);//附加数据
 			params.put("out_trade_no", payFlowId);	//支付流水号
 			params.put("fee_type", "CNY");		//标价币种
@@ -298,7 +307,7 @@ public class WXPay {
 			//params.put("goods_tag", "");	//订单优惠标记，使用代金券或立减优惠功能时需要的参数
 			params.put("notify_url", notifyServerUrl + payNotifyUrl);		//异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数
 			params.put("trade_type", tradeType);			//交易类型:JSAPI-公众号支付,NATIVE-扫码支付,APP-APP支付，MWEB-H5支付
-			params.put("product_id", order.getGoodsId()+"");
+			params.put("product_id", orderList.get(0).getGoodsId()+""); //取第一个订单商品的ID
 			//params.put("limit_pay", "");		//上传此参数no_credit--可限制用户不能使用信用卡支付
 			if("JSAPI".equals(tradeType)) {
 				params.put("openid", openId);	//用户标识
@@ -368,7 +377,7 @@ public class WXPay {
 	/**
 	 * 微信申请退款
 	 * 同一退款单号多次请求只退一笔
-	 * @param flowId
+	 * @param flowId			退款单号
 	 * @param totalAmount	总支付金额
 	 * @param refundAmount	退款金额
 	 * @param wxFinishOrderNo
@@ -452,10 +461,11 @@ public class WXPay {
 	
 	/**
 	 * 支付结果查询
-	 * @param 		系统支付单号
+	 * @param flowId		系统支付单号
+	 * @param outFinishId	微信支付单号
 	 * @return {errcode,errmsg,transaction_id,total_fee,cash_fee}
 	 */
-	public JSONObject queryOrder(String flowId) {
+	public JSONObject queryOrder(String flowId,String outFinishId) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			Map<String,String> params = new HashMap<String,String>();
@@ -464,15 +474,17 @@ public class WXPay {
 			params.put("mch_id", wxMchtId);
 			params.put("nonce_str", nonceStr);
 			params.put("sign_type", "MD5");
-			params.put("out_trade_no",flowId);	//商户系统内部订单号
-			
+			params.put("transaction_id",outFinishId);	//商户系统内部订单号
+			params.put("out_trade_no", flowId);
 			//获取签名
 			String sign = signMap(params);
 			params.put("sign", sign);
 			
 			Element root = DocumentHelper.createElement("xml");
 			for(Map.Entry<String, String> entry:params.entrySet()) {
-				root.addElement(entry.getKey()).addText(entry.getValue());
+				if(entry.getValue() != null && entry.getValue().trim().length()>0) {
+					root.addElement(entry.getKey()).addText(entry.getValue());
+				}
 			}
 			
 			logger.info("微信订单查询，发送请求：" + root.asXML());

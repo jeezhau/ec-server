@@ -89,33 +89,33 @@ public interface OrderService {
 	 * 
 	 * @param user		买家基本信息
 	 * @param userVip	买家会员信息
-	 * @param order		订单信息
-	 * @param mchtVipId	卖家会员ID
+	 * @param orderIds	排序的订单ID列表
+	 * @param orderList	订单列表信息
 	 * @param payType	支付方式
 	 * @param ip		买家IP地址
 	 * @return
 	 */
-	public JSONObject createPrePay(UserBasic user,VipBasic userVip,Order order,Integer mchtVipId,String payType,String ip);
+	public JSONObject createPrePay(UserBasic user,VipBasic userVip,String orderIds,List<Order> orderList,String payType,String ip);
 	
 	/**
 	 * 执行支付处理
 	 * @param useBal		是否使用余额支付
 	 * @param payFlow
 	 * @param userVipId
-	 * @param order
-	 * @param mchtVipId
+	 * @param orderList
+	 * @param flowList
 	 * @throws Exception 
 	 */
-	public void execPaySucc(boolean useBal,PayFlow payFlow,Integer userVipId,Order order,Integer mchtVipId,String outFinishId) throws Exception;
+	public void execPaySucc(boolean useBal,PayFlow payFlow,Integer userVipId,List<Order> orderList,List<PayFlow> flowList,String outFinishId) throws Exception;
 	
 	/**
 	 * 客户端支付完成
 	 * @param userVip
-	 * @param order
+	 * @param orderIds
 	 * @return
 	 * @throws Exception 
 	 */
-	public JSONObject payFinish(VipBasic userVip,Order order) throws Exception ;
+	public JSONObject payFinish(VipBasic userVip,String orderIds) throws Exception ;
 	
 	String outPaySucc(String payFlowId, Long totalAmount, String outFinishId) throws Exception;
 

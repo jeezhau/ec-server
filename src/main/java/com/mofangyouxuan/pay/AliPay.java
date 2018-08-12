@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -104,23 +105,29 @@ public class AliPay {
 	/**
 	 * 创建阿里支付申请
 	 * @param payType	支付方式（31-手机WAP，32-WEB）
-	 * @param order		订单信息
+	 * @param orderIds		排序的订单ID，使用_分隔
+	 * @param orderList		订单信息
 	 * @param payFlowId		支付流水号
 	 * @param totalAmount	总金额，单位分
 	 * @param userIP			支付用户的IP
 	 * @return {errcode,errmsg,tradeNo,AliPayForm}
 	 */
-	public JSONObject createPayApply(String payType,Order order,String payFlowId,BigDecimal totalAmount) {
+	public JSONObject createPayApply(String payType,String orderIds,List<Order> orderList,String payFlowId,BigDecimal totalAmount) {
 		JSONObject jsonRet = new JSONObject();
+		String subject = "";
+		for(Order order:orderList) {
+			subject += ";" + order.getPartnerBusiName() + "-" + order.getGoodsName();
+		}
+		subject = subject.substring(1);
 		AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do", APP_ID, APP_PRIVATE_KEY, "json", CHARSET, ALIPAY_PUBLIC_KEY, "RSA2"); //获得初始化的AlipayClient
 		if("31".equals(payType)) {
 			AlipayTradeWapPayRequest alipayRequest = new AlipayTradeWapPayRequest();//创建API对应的request
-			alipayRequest.setReturnUrl(returnServerUrl + payReturnUrl.replace("{orderId}", order.getOrderId()));
+			alipayRequest.setReturnUrl(returnServerUrl + payReturnUrl.replace("{orderId}", orderIds));
 			alipayRequest.setNotifyUrl(notifyServerUrl + payNotifyUrl);//在公共参数中设置回跳和通知地址
 			JSONObject bizContent = new JSONObject();
 			bizContent.put("out_trade_no", payFlowId);
 			bizContent.put("total_amount", totalAmount);
-			bizContent.put("subject", order.getPartnerBusiName() + "-" + order.getGoodsName());
+			bizContent.put("subject", subject);
 			//bizContent.put("body", order.getGoodsSpec());
 			bizContent.put("product_code", "QUICK_WAP_PAY");
 			((AlipayTradeWapPayRequest) alipayRequest).setBizContent(bizContent.toJSONString());//填充业务参数
@@ -140,12 +147,12 @@ public class AliPay {
 			return jsonRet;
 		}else {
 			AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();//创建API对应的request
-			alipayRequest.setReturnUrl(returnServerUrl +payReturnUrl.replace("{orderId}", order.getOrderId()));
+			alipayRequest.setReturnUrl(returnServerUrl +payReturnUrl.replace("{orderId}", orderIds));
 			alipayRequest.setNotifyUrl(notifyServerUrl + payNotifyUrl);//在公共参数中设置回跳和通知地址
 			JSONObject bizContent = new JSONObject();
 			bizContent.put("out_trade_no", payFlowId);
 			bizContent.put("total_amount", totalAmount);
-			bizContent.put("subject", order.getPartnerBusiName() + "-" + order.getGoodsName());
+			bizContent.put("subject", subject);
 			//bizContent.put("body", order.getGoodsSpec());
 			bizContent.put("product_code", "FAST_INSTANT_TRADE_PAY");
 		    alipayRequest.setBizContent(bizContent.toJSONString());//填充业务参数
@@ -248,12 +255,13 @@ public class AliPay {
 	 * @param flowId		系统支付单号
 	 * @return {errcode,errmsg,transaction_id,total_fee,cash_fee}
 	 */
-	public JSONObject queryOrder(String flowId) {
+	public JSONObject queryOrder(String flowId,String outFinishNo) {
 		JSONObject jsonRet = new JSONObject();
 		try {
 			AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do", APP_ID, APP_PRIVATE_KEY, "json", CHARSET, ALIPAY_PUBLIC_KEY, "RSA2"); //获得初始化的AlipayClient
 			AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();//创建API对应的request类
 			JSONObject bizContent = new JSONObject();
+			bizContent.put("trade_no", outFinishNo);
 			bizContent.put("out_trade_no", flowId);
 			request.setBizContent(bizContent.toJSONString());//设置业务参数
 			AlipayTradeQueryResponse response = alipayClient.execute(request);//通过alipayClient调用API，获得对应的response类

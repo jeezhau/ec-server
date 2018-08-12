@@ -6,9 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,15 +32,21 @@ public class CommonUtil {
 	
 	/**
 	 * 生成32位的支付流水ID
-	 * @param orderId
+	 * 如果是批量支付则第29位替换为B
+	 * @param orderId	订单ID
+	 * @param oldId		旧的流水ID
+	 * @param isBatch	是否批量支付流水
 	 * @return
 	 */
-	public static String genPayFlowId(String orderId,String oldId) {
+	public static String genPayFlowId(String orderId,String oldId,boolean isBatch) {
 		int next = 0;
 		if(oldId != null && oldId.length() == 32) {
 			next = Integer.parseInt(oldId.substring(30));
 		}
 		next += 1;
+		if(isBatch) {
+			orderId = orderId.substring(0, 29) + "B";
+		}
 		if(next<99) {
 			return orderId + "0" +next;
 		}
