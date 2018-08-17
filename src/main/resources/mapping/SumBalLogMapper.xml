@@ -75,7 +75,7 @@
    </where>
     group by t.vip_id,left(t.flow_time,4)
   </select>
-  
+  <!-- 合计所有 -->
   <select id="sumAllByVIP" parameterType="int" resultMap="BaseResultMap">
    select t.vip_id,'' flow_time,
   	sum(t.amount_addbal) amount_addbal, sum(t.amount_subbal) amount_subbal, 

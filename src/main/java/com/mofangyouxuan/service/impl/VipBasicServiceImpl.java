@@ -87,9 +87,8 @@ public class VipBasicServiceImpl implements VipBasicService{
 	}
 	
 	/**
-	 * 更新会员开通与余额信息
-	 * 1、检查会员开通状态；
-	 * 2、按日累积未统计的流水
+	 * 统计指定日期的资金明细
+	 * 1、按日累积未统计的流水
 	 * @param date 统计的日期
 	 * @param id	   会员ID，可为空
 	 * @return
@@ -121,7 +120,7 @@ public class VipBasicServiceImpl implements VipBasicService{
 			String ctype = (String) rec.get("ctype");
 			BigDecimal amount = (BigDecimal) rec.get("samount");
 			SumBalLog sumLog = this.sumBalLogMapper.selectByVipAndTime(vId, ftime);
-			boolean noLog = false;
+			boolean noLog = false; //是否已有旧的记录
 			if(sumLog == null) {
 				noLog = true;
 				sumLog = new SumBalLog();
@@ -208,15 +207,18 @@ public class VipBasicServiceImpl implements VipBasicService{
 	public VipBasic getVipBal(Integer vipId) throws Exception{
 		this.sumDetailFlowByDay(new Date(), vipId); //重新统计当日
 		SumBalLog sumAll = this.sumBalLogMapper.sumAllByVIP(vipId);
+		VipBasic updVip = new VipBasic();
+		updVip.setVipId(vipId);
 		if(sumAll != null && sumAll.getVipId() != null) {
 			Long balance = sumAll.getAmountAddbal()-sumAll.getAmountSubbal();
 			Long freeze = sumAll.getAmountAddfrz()-sumAll.getAmountSubfrz();
-			VipBasic updVip = new VipBasic();
-			updVip.setVipId(vipId);
 			updVip.setBalance(balance);
 			updVip.setFreeze(freeze);
-			this.vipBasicMapper.updateByPrimaryKeySelective(updVip);
+		}else {//没有数据则设置为0
+			updVip.setBalance(0l);
+			updVip.setFreeze(0l);
 		}
+		this.vipBasicMapper.updateByPrimaryKeySelective(updVip);
 		VipBasic vip = this.vipBasicMapper.selectByPrimaryKey(vipId);
 		return vip;
 	}

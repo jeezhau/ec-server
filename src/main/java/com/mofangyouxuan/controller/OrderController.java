@@ -1306,8 +1306,8 @@ public class OrderController {
 
 			orderIds = okids.substring(1);
 			PayFlow batchFlow = this.orderService.getLastedFlow(orderIds, "1");
-			if(batchFlow == null || "00".equals(batchFlow.getStatus())) {
-				jsonRet.put("errmsg", "当前不可再对该批次订单执行统一支付！");
+			if(batchFlow == null || !"00".equals(batchFlow.getStatus())) {
+				jsonRet.put("errmsg", "当前不可对该批次订单执行统一支付！");
 				jsonRet.put("errcode", ErrCodes.ORDER_PARAM_ERROR);
 				return jsonRet.toJSONString();
 			}

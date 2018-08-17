@@ -53,7 +53,7 @@ public class BalanceBillSchedule {
 	 */
 	@SuppressWarnings("unused")
 	@Scheduled(cron="0 30 4,8,11,16,17,18,22 * * ?")
-	//@Scheduled(cron="0 13 22 * * ?") //测试
+	//@Scheduled(cron="0 21 20 * * ?") //测试
 	public void balanceBill() {
 		try {
 			Calendar cal = Calendar.getInstance();
@@ -107,7 +107,7 @@ public class BalanceBillSchedule {
 				}
 				fw.close();
 				if(!hasErr) {
-					errOutFile.deleteOnExit();
+					errOutFile.delete();
 					FileUtils.write(okOutFile, "ok", "utf8");
 				}
 				fis.close();
@@ -157,7 +157,7 @@ public class BalanceBillSchedule {
 					}
 					fw.close();
 					if(!hasErr) {
-						errOutFile.deleteOnExit();
+						errOutFile.delete();
 						FileUtils.write(okOutFile, "ok", "utf8");
 					}
 					fis.close();

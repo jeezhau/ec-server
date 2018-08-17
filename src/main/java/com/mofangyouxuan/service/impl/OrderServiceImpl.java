@@ -506,6 +506,7 @@ public class OrderServiceImpl implements OrderService{
 				newFlow.setPayAmount(order.getAmount().multiply(new BigDecimal(100)).longValue());
 				newFlow.setUserId(user.getUserId());
 				newFlow.setStatus("00");
+				newFlow.setBatchId(batchFlowId);
 				this.payFlowMapper.insert(newFlow);
 			}
 		}
@@ -1130,7 +1131,7 @@ public class OrderServiceImpl implements OrderService{
 	 * 根据对账单数据指定订单支付对账
 	 * @param isRefund	是否为退款
 	 * @param outTrdaeNo	外部单号
-	 * @param flowId		系统支付流水号
+	 * @param batchFlowId系统支付流水号
 	 * @param payType	支付方式
 	 * @param status		外部交易状态
 	 * @param amount		外部交易金额，元
